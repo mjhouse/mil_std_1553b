@@ -1,5 +1,6 @@
 #![no_std]
 
+mod flags;
 mod errors;
 
 use errors::{Error,Result};
@@ -254,6 +255,12 @@ impl Data {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    macro_rules! debug {
+        ( $w: expr ) => {
+            println!("bits: {:#018b}", $w);
+        }
+    }
 
     #[test]
     fn test_status_set_get_terminal_flag() {
