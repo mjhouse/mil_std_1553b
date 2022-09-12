@@ -206,3 +206,14 @@ pub enum Terminal {
     NoFault,  // 0
     Fault,    // 1
 }
+
+/// Used for several health/fault/error flags:
+///     Terminal flag bit (fault within the RT - 19)
+///     Subsystem flag bit (health data for subsystems - 17)
+///     Message error bit (fault found in message - 11)
+pub enum Fault {
+    None,
+    Terminal,  // Terminal Flag bit
+    Subsystem, // Subsystem Flag bit
+    Message,   // MessageError bit
+}
