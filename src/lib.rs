@@ -2,8 +2,10 @@
 
 mod flags;
 mod errors;
+mod constants;
 
-use errors::{Error,Result};
+use constants::*;
+use errors::{Result,OUT_OF_BOUNDS};
 
 pub struct Word(u16);
 
@@ -16,11 +18,11 @@ pub struct Data(Word);
 impl Word {
 
     pub fn full() -> Self {
-        Self(0b1111111111111111)
+        Self(FULL_WORD)
     }
 
     pub fn empty() -> Self {
-        Self(0b0000000000000000)
+        Self(EMPTY_WORD)
     }
 
     pub fn new(value: u16) -> Self {
@@ -48,7 +50,7 @@ impl Word {
             Ok((self.0 & ((1 << 15) >> index)) != 0)
         }
         else {
-            Err(Error::OutOfBounds)
+            Err(OUT_OF_BOUNDS)
         }
     }
 
@@ -82,7 +84,7 @@ impl Word {
             Ok(state)
         }
         else {
-            Err(Error::OutOfBounds)
+            Err(OUT_OF_BOUNDS)
         }
     }
 
