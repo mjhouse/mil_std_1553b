@@ -5,6 +5,7 @@ use core::marker::PhantomData;
 mod flags;
 mod errors;
 mod constants;
+mod layout;
 
 use constants::*;
 

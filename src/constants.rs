@@ -10,7 +10,7 @@
 //!
 //! The bit-time reference is used in the standard, but because we're only dealing with 
 //! the 16-bit data from each word in this project we'll be using a zero-indexed reference
-//! in the action code.
+//! in the actual code.
 
 pub struct Field {
     pub mask: u16,
