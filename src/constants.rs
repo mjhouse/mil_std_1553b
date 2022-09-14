@@ -12,6 +12,17 @@
 //! the 16-bit data from each word in this project we'll be using a zero-indexed reference
 //! in the action code.
 
+pub struct Field {
+    pub mask: u16,
+    pub offset: u8,
+}
+
+impl Field {
+    pub const fn new(mask: u16, offset: u8) -> Self {
+        Self { mask, offset }
+    }
+}
+
 /// Constant for a "full" (all-ones) data value
 pub const FULL_WORD: u16                            = 0b1111111111111111;
 
@@ -29,7 +40,7 @@ pub const EMPTY_WORD: u16                           = 0b0000000000000000;
 ///
 /// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p.21/22)
 pub const COMMAND_TERMINAL_ADDRESS: u16             = 0b1111100000000000;
-pub const COMMAND_TERMINAL_ADDRESS_FIELD: (u16,u8)  = (COMMAND_TERMINAL_ADDRESS,11);
+pub const COMMAND_TERMINAL_ADDRESS_FIELD: Field     = Field::new(COMMAND_TERMINAL_ADDRESS,11);
 
 /// The next bit (bit time 9) makes up the Transmit/Receive (T/R) bit. This
 /// defines the direction of information flow and is always from the point of
@@ -40,7 +51,7 @@ pub const COMMAND_TERMINAL_ADDRESS_FIELD: (u16,u8)  = (COMMAND_TERMINAL_ADDRESS,
 ///
 /// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p.22)
 pub const COMMAND_TRANSMIT_RECEIVE: u16             = 0b0000010000000000;
-pub const COMMAND_TRANSMIT_RECEIVE_FIELD: (u16,u8)  = (COMMAND_TRANSMIT_RECEIVE,10);
+pub const COMMAND_TRANSMIT_RECEIVE_FIELD: Field     = Field::new(COMMAND_TRANSMIT_RECEIVE,10);
 
 
 /// The next five bits (bit times 10-14) make up the Subaddress (SA)/Mode
@@ -53,7 +64,7 @@ pub const COMMAND_TRANSMIT_RECEIVE_FIELD: (u16,u8)  = (COMMAND_TRANSMIT_RECEIVE,
 ///
 /// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p.22)
 pub const COMMAND_SUBADDRESS: u16                   = 0b0000001111100000;
-pub const COMMAND_SUBADDRESS_FIELD: (u16,u8)        = (COMMAND_SUBADDRESS,5);
+pub const COMMAND_SUBADDRESS_FIELD: Field           = Field::new(COMMAND_SUBADDRESS,5);
 
 
 /// The next five bit positions (bit times 15-19) define the Word Count (WC)
@@ -65,7 +76,7 @@ pub const COMMAND_SUBADDRESS_FIELD: (u16,u8)        = (COMMAND_SUBADDRESS,5);
 ///
 /// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p.22)
 pub const COMMAND_MODE_CODE: u16                    = 0b0000000000011111;
-pub const COMMAND_MODE_CODE_FIELD: (u16,u8)         = (COMMAND_MODE_CODE,0);
+pub const COMMAND_MODE_CODE_FIELD: Field            = Field::new(COMMAND_MODE_CODE,0);
 
 /// The next five bit positions (bit times 15-19) define the Word Count (WC)
 /// or Mode Code to be performed. If the Subaddress/Mode Code field is
@@ -76,7 +87,7 @@ pub const COMMAND_MODE_CODE_FIELD: (u16,u8)         = (COMMAND_MODE_CODE,0);
 ///
 /// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p.22)
 pub const COMMAND_WORD_COUNT: u16                   = 0b0000000000011111;
-pub const COMMAND_WORD_COUNT_FIELD: (u16,u8)        = (COMMAND_WORD_COUNT,0);
+pub const COMMAND_WORD_COUNT_FIELD: Field           = Field::new(COMMAND_WORD_COUNT,0);
 
 /// The first five bits (bit times 4-8) of the information field are the Terminal
 /// Address (TA). These five bits should match the corresponding field within
@@ -88,7 +99,7 @@ pub const COMMAND_WORD_COUNT_FIELD: (u16,u8)        = (COMMAND_WORD_COUNT,0);
 ///
 /// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p.24)
 pub const STATUS_TERMINAL_ADDRESS: u16              = 0b1111100000000000;
-pub const STATUS_TERMINAL_ADDRESS_FIELD: (u16,u8)   = (STATUS_TERMINAL_ADDRESS,11);
+pub const STATUS_TERMINAL_ADDRESS_FIELD: Field      = Field::new(STATUS_TERMINAL_ADDRESS,11);
 
 /// The next bit (bit time 9) is the Message Error (ME) bit. This bit is set by
 /// the remote terminal upon detection of an error in the message or upon
@@ -100,7 +111,7 @@ pub const STATUS_TERMINAL_ADDRESS_FIELD: (u16,u8)   = (STATUS_TERMINAL_ADDRESS,1
 ///
 /// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p.24)
 pub const STATUS_MESSAGE_ERROR: u16                 = 0b0000010000000000;
-pub const STATUS_MESSAGE_ERROR_FIELD: (u16,u8)      = (STATUS_MESSAGE_ERROR,10);
+pub const STATUS_MESSAGE_ERROR_FIELD: Field         = Field::new(STATUS_MESSAGE_ERROR,10);
 
 /// The Instrumentation bit (bit time 10) is provided to differentiate between a
 /// command word and a status word (remember they both have the same sync
@@ -121,7 +132,7 @@ pub const STATUS_MESSAGE_ERROR_FIELD: (u16,u8)      = (STATUS_MESSAGE_ERROR,10);
 ///
 /// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p.24/25)
 pub const STATUS_INSTRUMENTATION: u16               = 0b0000001000000000;
-pub const STATUS_INSTRUMENTATION_FIELD: (u16,u8)    = (STATUS_INSTRUMENTATION,9);
+pub const STATUS_INSTRUMENTATION_FIELD: Field       = Field::new(STATUS_INSTRUMENTATION,9);
 
 /// The Service Request bit (bit time 11) is provided so that the remote
 /// terminal can inform the bus controller that it needs to be serviced. This bit
@@ -131,7 +142,7 @@ pub const STATUS_INSTRUMENTATION_FIELD: (u16,u8)    = (STATUS_INSTRUMENTATION,9)
 ///
 /// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p.25)
 pub const STATUS_SERVICE_REQUEST: u16               = 0b0000000100000000;
-pub const STATUS_SERVICE_REQUEST_FIELD: (u16,u8)    = (STATUS_SERVICE_REQUEST,8);
+pub const STATUS_SERVICE_REQUEST_FIELD: Field       = Field::new(STATUS_SERVICE_REQUEST,8);
 
 /// Bit times 12-14 are reserved for future growth of the standard and must be
 /// set to a logic "0". The bus controller should declare a message in error if
@@ -139,7 +150,7 @@ pub const STATUS_SERVICE_REQUEST_FIELD: (u16,u8)    = (STATUS_SERVICE_REQUEST,8)
 ///
 /// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p.25)
 pub const STATUS_RESERVED_BITS: u16                 = 0b0000000011100000;
-pub const STATUS_RESERVED_BITS_FIELD: (u16,u8)      = (STATUS_RESERVED_BITS,5);
+pub const STATUS_RESERVED_BITS_FIELD: Field         = Field::new(STATUS_RESERVED_BITS,5);
 
 /// The Broadcast Command Received bit (bit time 15) indicates that the
 /// remote terminal received a valid broadcast command. On receiving a valid
@@ -150,7 +161,7 @@ pub const STATUS_RESERVED_BITS_FIELD: (u16,u8)      = (STATUS_RESERVED_BITS,5);
 ///
 /// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p.25)
 pub const STATUS_BROADCAST_RECEIVED: u16            = 0b0000000000010000;
-pub const STATUS_BROADCAST_RECEIVED_FIELD: (u16,u8) = (STATUS_BROADCAST_RECEIVED,4);
+pub const STATUS_BROADCAST_RECEIVED_FIELD: Field    = Field::new(STATUS_BROADCAST_RECEIVED,4);
 
 /// The Busy bit (bit time 16) is provided as a feedback to the bus controller as
 /// to when the remote terminal is unable to move data between the remote
@@ -159,7 +170,7 @@ pub const STATUS_BROADCAST_RECEIVED_FIELD: (u16,u8) = (STATUS_BROADCAST_RECEIVED
 ///
 /// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p.25)
 pub const STATUS_TERMINAL_BUSY: u16                 = 0b0000000000001000;
-pub const STATUS_TERMINAL_BUSY_FIELD: (u16,u8)      = (STATUS_TERMINAL_BUSY,3);
+pub const STATUS_TERMINAL_BUSY_FIELD: Field         = Field::new(STATUS_TERMINAL_BUSY,3);
 
 /// The Subsystem Flag bit (bit time 17) is used to provide "health" data
 /// regarding the subsystems to which the remote terminal is connected.
@@ -171,7 +182,7 @@ pub const STATUS_TERMINAL_BUSY_FIELD: (u16,u8)      = (STATUS_TERMINAL_BUSY,3);
 ///
 /// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p.26)
 pub const STATUS_SUBSYSTEM_FLAG: u16                = 0b0000000000000100;
-pub const STATUS_SUBSYSTEM_FLAG_FIELD: (u16,u8)     = (STATUS_SUBSYSTEM_FLAG,2);
+pub const STATUS_SUBSYSTEM_FLAG_FIELD: Field        = Field::new(STATUS_SUBSYSTEM_FLAG,2);
 
 /// The Dynamic Bus Control Acceptance bit (bit time 18) informs the bus
 /// controller that the remote terminal has received the Dynamic Bus Control
@@ -182,7 +193,7 @@ pub const STATUS_SUBSYSTEM_FLAG_FIELD: (u16,u8)     = (STATUS_SUBSYSTEM_FLAG,2);
 ///
 /// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p.27)
 pub const STATUS_BUS_CONTROL_ACCEPT: u16            = 0b0000000000000010;
-pub const STATUS_BUS_CONTROL_ACCEPT_FIELD: (u16,u8) = (STATUS_BUS_CONTROL_ACCEPT,1);
+pub const STATUS_BUS_CONTROL_ACCEPT_FIELD: Field    = Field::new(STATUS_BUS_CONTROL_ACCEPT,1);
 
 /// The Terminal Flag bit (bit time 19) informs the bus controller of a fault or
 /// failure within the remote terminal circuitry (only the remote terminal). A
@@ -194,4 +205,4 @@ pub const STATUS_BUS_CONTROL_ACCEPT_FIELD: (u16,u8) = (STATUS_BUS_CONTROL_ACCEPT
 ///
 /// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p.27)
 pub const STATUS_TERMINAL_FLAG: u16                = 0b0000000000000001;
-pub const STATUS_TERMINAL_FLAG_FIELD: (u16,u8)     = (STATUS_TERMINAL_FLAG,0);
+pub const STATUS_TERMINAL_FLAG_FIELD: Field        = Field::new(STATUS_TERMINAL_FLAG,0);
