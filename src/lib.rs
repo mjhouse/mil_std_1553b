@@ -188,13 +188,23 @@ mod tests {
     //         println!("bits: {:#018b}", $w);
     //     }
     // }
+    
+    macro_rules! verify {
+        ( $word:typ, $function:expr, $value:expr, $result:expr ) => {
+            let mut word = $word::new(0);
+            word.$function($value);
+            assert_eq!(word.data,$result);
+        }
+    }
 
     #[test]
     fn test_status_set_get_terminal_flag() {
-        let mut word = StatusWord::new(0);
-        word.set_terminal_flag(1);
-        let flag = word.get_terminal_flag();
-        assert_eq!(flag,1);
+        verify!(StatusWord,set_terminal_flag,0b1,0b0000000000000001)
+        
+//        let mut word = StatusWord::new(0);
+//        word.set_terminal_flag(1);
+//        let flag = word.get_terminal_flag();
+//        assert_eq!(flag,1);
     }
 
     #[test]
