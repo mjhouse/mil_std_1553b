@@ -21,19 +21,25 @@ macro_rules! get {
     }
 }
 
-pub struct Command {
+pub enum Word {
+    Command(CommandWord),
+    Status(StatusWord),
+    Data(DataWord)
+}
+
+pub struct CommandWord {
     data: u16,
 }
 
-pub struct Status {
+pub struct StatusWord {
     data: u16,
 }
 
-pub struct Data {
+pub struct DataWord {
     data: u16,
 }
 
-impl Command {
+impl CommandWord {
 
     pub fn new(data: u16) -> Self {
         Self { data }
@@ -81,7 +87,7 @@ impl Command {
 
 }
 
-impl Status {
+impl StatusWord {
 
     pub fn new(data: u16) -> Self {
         Self { data }
@@ -161,7 +167,7 @@ impl Status {
 
 }
 
-impl Data {
+impl DataWord {
 
     pub fn new(data: u16) -> Self {
         Self { data }
@@ -185,7 +191,7 @@ mod tests {
 
     #[test]
     fn test_status_set_get_terminal_flag() {
-        let mut word = Status::new(0);
+        let mut word = StatusWord::new(0);
         word.set_terminal_flag(1);
         let flag = word.get_terminal_flag();
         assert_eq!(flag,1);
@@ -193,7 +199,7 @@ mod tests {
 
     #[test]
     fn test_status_set_get_dynamic_bus_acceptance() {
-        let mut word = Status::new(0);
+        let mut word = StatusWord::new(0);
         word.set_dynamic_bus_acceptance(1);
         let flag = word.get_dynamic_bus_acceptance();
         assert_eq!(flag,1);
@@ -201,7 +207,7 @@ mod tests {
 
     #[test]
     fn test_status_set_get_subsystem_flag() {
-        let mut word = Status::new(0);
+        let mut word = StatusWord::new(0);
         word.set_subsystem_flag(1);
         let flag = word.get_subsystem_flag();
         assert_eq!(flag,1);
@@ -209,7 +215,7 @@ mod tests {
 
     #[test]
     fn test_status_set_get_busy() {
-        let mut word = Status::new(0);
+        let mut word = StatusWord::new(0);
         word.set_busy(1);
         let flag = word.get_busy();
         assert_eq!(flag,1);
@@ -217,7 +223,7 @@ mod tests {
 
     #[test]
     fn test_status_set_get_broadcast_command_received() {
-        let mut word = Status::new(0);
+        let mut word = StatusWord::new(0);
         word.set_broadcast_command_received(1);
         let flag = word.get_broadcast_command_received();
         assert_eq!(flag,1);
@@ -225,7 +231,7 @@ mod tests {
 
     #[test]
     fn test_status_set_get_service_request() {
-        let mut word = Status::new(0);
+        let mut word = StatusWord::new(0);
         word.set_service_request(1);
         let flag = word.get_service_request();
         assert_eq!(flag,1);
@@ -233,7 +239,7 @@ mod tests {
 
     #[test]
     fn test_status_set_get_instrumentation() {
-        let mut word = Status::new(0);
+        let mut word = StatusWord::new(0);
         word.set_instrumentation(1);
         let flag = word.get_instrumentation();
         assert_eq!(flag,1);
@@ -241,7 +247,7 @@ mod tests {
 
     #[test]
     fn test_status_set_get_message_error() {
-        let mut word = Status::new(0);
+        let mut word = StatusWord::new(0);
         word.set_message_error(1);
         let flag = word.get_message_error();
         assert_eq!(flag,1);
@@ -249,7 +255,7 @@ mod tests {
 
     #[test]
     fn test_command_set_get_mode_code() {
-        let mut word = Command::new(0);
+        let mut word = CommandWord::new(0);
         word.set_mode_code(31);
         let code = word.get_mode_code();
         assert_eq!(code,31);
@@ -257,7 +263,7 @@ mod tests {
 
     #[test]
     fn test_command_set_get_sub_address() {
-        let mut word = Command::new(0);
+        let mut word = CommandWord::new(0);
         word.set_sub_address(31);
         let address = word.get_sub_address();
         assert_eq!(address,31);
@@ -265,7 +271,7 @@ mod tests {
 
     #[test]
     fn test_command_set_get_tr() {
-        let mut word = Command::new(0);
+        let mut word = CommandWord::new(0);
         word.set_transmit_receive(1);
         let flag = word.get_transmit_receive();
         assert_eq!(flag,1);
@@ -273,7 +279,7 @@ mod tests {
 
     #[test]
     fn test_command_set_get_address() {
-        let mut word = Command::new(0);
+        let mut word = CommandWord::new(0);
         word.set_terminal_address(31);
         let address = word.get_terminal_address();
         assert_eq!(address,31);
@@ -281,49 +287,10 @@ mod tests {
 
     #[test]
     fn test_status_set_get_address() {
-        let mut word = Status::new(0);
+        let mut word = StatusWord::new(0);
         word.set_terminal_address(31);
         let address = word.get_terminal_address();
         assert_eq!(address,31);
     }
 
-    // #[test]
-    // fn test_set_bit_index_positive() {
-    //     let mut word = Word::empty();
-    //     word.set(0,true).unwrap();
-    //     word.set(9,true).unwrap();
-    //     word.set(15,true).unwrap();
-    //     let err = word.set(21,true).is_err();
-
-    //     let b0 = word.get(0).unwrap();
-    //     let b9 = word.get(9).unwrap();
-    //     let b15 = word.get(15).unwrap();
-    //     let b21 = word.get(21).is_err();
-
-    //     assert!(b0);
-    //     assert!(b9);
-    //     assert!(b15);
-    //     assert!(b21);
-    //     assert!(err);
-    // }
-
-    // #[test]
-    // fn test_set_bit_index_negative() {
-    //     let mut word = Word::full();
-    //     word.set(0,false).unwrap();
-    //     word.set(9,false).unwrap();
-    //     word.set(15,false).unwrap();
-    //     let err = word.set(21,false).is_err();
-
-    //     let b0 = word.get(0).unwrap();
-    //     let b9 = word.get(9).unwrap();
-    //     let b15 = word.get(15).unwrap();
-    //     let b21 = word.get(21).is_err();
-
-    //     assert!(!b0);
-    //     assert!(!b9);
-    //     assert!(!b15);
-    //     assert!(b21);
-    //     assert!(err);
-    // }
 }
