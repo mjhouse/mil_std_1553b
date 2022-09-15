@@ -21,7 +21,31 @@ macro_rules! get {
     }
 }
 
+pub fn take(data: &[u8]) -> Word {
+    
+    // remove and take the first two bytes and the 
+    // first nibble of a third (leaving 0000 in place of the nibble)
+    
+    // put first three bits in a u8
+    
+    // put last bit in a u8
+    
+    // reorganize the remaining 16 bits into a u16
+    
+    // check the parity bit to determine whether the word was 
+    // transmitted without error
+    
+    // check the first 3 bits to determine whether the word is 
+    // a status/command or data word
+    
+    // check the the instrumentation bit to determine if a 
+    // word is status or command.
+    
+    Word::None
+}
+
 pub enum Word {
+    None,
     Command(CommandWord),
     Status(StatusWord),
     Data(DataWord)
