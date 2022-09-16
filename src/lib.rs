@@ -206,125 +206,161 @@ impl DataWord {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // macro_rules! debug {
-    //     ( $w: expr ) => {
-    //         println!("bits: {:#018b}", $w);
-    //     }
-    // }
     
-    macro_rules! verify {
-        ( $word:typ, $function:expr, $value:expr, $result:expr ) => {
-            let mut word = $word::new(0);
-            word.$function($value);
+    macro_rules! verify_set {
+        ( $word:ty, $function:ident, $result:expr ) => {
+            // create a new instance of the word type
+            let mut word = <$word>::new(0);
+
+            // call the function on the word 
+            <$word>::$function(&mut word, 0b11111111);
+
+            // assert that the u16 data is correct
             assert_eq!(word.data,$result);
         }
     }
 
-    #[test]
-    fn test_status_set_get_terminal_flag() {
-        verify!(StatusWord,set_terminal_flag,0b1,0b0000000000000001)
-        
-//        let mut word = StatusWord::new(0);
-//        word.set_terminal_flag(1);
-//        let flag = word.get_terminal_flag();
-//        assert_eq!(flag,1);
+    macro_rules! verify_get {
+        ( $word:ty, $function:ident, $result:expr ) => {
+            // create a new instance of the word type
+            let mut word = <$word>::new(FULL_WORD);
+
+            // call the function on the word 
+            let value = <$word>::$function(&mut word);
+
+            // assert that the u8 result is correct
+            assert_eq!(value,$result);
+        }
     }
 
     #[test]
-    fn test_status_set_get_dynamic_bus_acceptance() {
-        let mut word = StatusWord::new(0);
-        word.set_dynamic_bus_acceptance(1);
-        let flag = word.get_dynamic_bus_acceptance();
-        assert_eq!(flag,1);
+    fn test_status_set_terminal_flag() {
+        verify_set!(StatusWord,set_terminal_flag,0b0000000000000001);
     }
 
     #[test]
-    fn test_status_set_get_subsystem_flag() {
-        let mut word = StatusWord::new(0);
-        word.set_subsystem_flag(1);
-        let flag = word.get_subsystem_flag();
-        assert_eq!(flag,1);
+    fn test_status_get_terminal_flag() {
+        verify_get!(StatusWord,get_terminal_flag,0b00000001);
     }
 
     #[test]
-    fn test_status_set_get_busy() {
-        let mut word = StatusWord::new(0);
-        word.set_busy(1);
-        let flag = word.get_busy();
-        assert_eq!(flag,1);
+    fn test_status_set_dynamic_bus_acceptance() {
+        verify_set!(StatusWord,set_dynamic_bus_acceptance,0b0000000000000010);
     }
 
     #[test]
-    fn test_status_set_get_broadcast_command_received() {
-        let mut word = StatusWord::new(0);
-        word.set_broadcast_command_received(1);
-        let flag = word.get_broadcast_command_received();
-        assert_eq!(flag,1);
+    fn test_status_get_dynamic_bus_acceptance() {
+        verify_get!(StatusWord,get_dynamic_bus_acceptance,0b00000001);
     }
 
     #[test]
-    fn test_status_set_get_service_request() {
-        let mut word = StatusWord::new(0);
-        word.set_service_request(1);
-        let flag = word.get_service_request();
-        assert_eq!(flag,1);
+    fn test_status_set_subsystem_flag() {
+        verify_set!(StatusWord,set_subsystem_flag,0b0000000000000100);
     }
 
     #[test]
-    fn test_status_set_get_instrumentation() {
-        let mut word = StatusWord::new(0);
-        word.set_instrumentation(1);
-        let flag = word.get_instrumentation();
-        assert_eq!(flag,1);
+    fn test_status_get_subsystem_flag() {
+        verify_get!(StatusWord,get_subsystem_flag,0b00000001);
     }
 
     #[test]
-    fn test_status_set_get_message_error() {
-        let mut word = StatusWord::new(0);
-        word.set_message_error(1);
-        let flag = word.get_message_error();
-        assert_eq!(flag,1);
+    fn test_status_set_busy() {
+        verify_set!(StatusWord,set_busy,0b0000000000001000);
     }
 
     #[test]
-    fn test_command_set_get_mode_code() {
-        let mut word = CommandWord::new(0);
-        word.set_mode_code(31);
-        let code = word.get_mode_code();
-        assert_eq!(code,31);
+    fn test_status_get_busy() {
+        verify_get!(StatusWord,get_busy,0b00000001);
     }
 
     #[test]
-    fn test_command_set_get_sub_address() {
-        let mut word = CommandWord::new(0);
-        word.set_sub_address(31);
-        let address = word.get_sub_address();
-        assert_eq!(address,31);
+    fn test_status_set_broadcast_command_received() {
+        verify_set!(StatusWord,set_broadcast_command_received,0b0000000000010000);
     }
 
     #[test]
-    fn test_command_set_get_tr() {
-        let mut word = CommandWord::new(0);
-        word.set_transmit_receive(1);
-        let flag = word.get_transmit_receive();
-        assert_eq!(flag,1);
+    fn test_status_get_broadcast_command_received() {
+        verify_get!(StatusWord,get_broadcast_command_received,0b00000001);
     }
 
     #[test]
-    fn test_command_set_get_address() {
-        let mut word = CommandWord::new(0);
-        word.set_terminal_address(31);
-        let address = word.get_terminal_address();
-        assert_eq!(address,31);
+    fn test_status_set_service_request() {
+        verify_set!(StatusWord,set_service_request,0b0000000100000000);
     }
 
     #[test]
-    fn test_status_set_get_address() {
-        let mut word = StatusWord::new(0);
-        word.set_terminal_address(31);
-        let address = word.get_terminal_address();
-        assert_eq!(address,31);
+    fn test_status_get_service_request() {
+        verify_get!(StatusWord,get_service_request,0b00000001);
+    }
+
+    #[test]
+    fn test_status_set_instrumentation() {
+        verify_set!(StatusWord,set_instrumentation,0b0000001000000000);
+    }
+
+    #[test]
+    fn test_status_get_instrumentation() {
+        verify_get!(StatusWord,get_instrumentation,0b00000001);
+    }
+
+    #[test]
+    fn test_status_set_message_error() {
+        verify_set!(StatusWord,set_message_error,0b0000010000000000);
+    }
+
+    #[test]
+    fn test_status_get_message_error() {
+        verify_get!(StatusWord,get_message_error,0b00000001);
+    }
+
+    #[test]
+    fn test_command_set_mode_code() {
+        verify_set!(CommandWord,set_mode_code,0b0000000000011111);
+    }
+
+    #[test]
+    fn test_command_get_mode_code() {
+        verify_get!(CommandWord,get_mode_code,0b00011111);
+    }
+
+    #[test]
+    fn test_command_set_sub_address() {
+        verify_set!(CommandWord,set_sub_address,0b0000001111100000);
+    }
+
+    #[test]
+    fn test_command_get_sub_address() {
+        verify_get!(CommandWord,get_sub_address,0b00011111);
+    }
+
+    #[test]
+    fn test_command_set_transmit_receive() {
+        verify_set!(CommandWord,set_transmit_receive,0b0000010000000000);
+    }
+
+    #[test]
+    fn test_command_get_transmit_receive() {
+        verify_get!(CommandWord,get_transmit_receive,0b00000001);
+    }
+
+    #[test]
+    fn test_command_set_terminal_address() {
+        verify_set!(CommandWord,set_terminal_address,0b1111100000000000);
+    }
+
+    #[test]
+    fn test_command_get_terminal_address() {
+        verify_get!(CommandWord,get_terminal_address,0b00011111);
+    }
+
+    #[test]
+    fn test_status_set_terminal_address() {
+        verify_set!(StatusWord,set_terminal_address,0b1111100000000000);
+    }
+
+    #[test]
+    fn test_status_get_terminal_address() {
+        verify_get!(StatusWord,get_terminal_address,0b00011111);
     }
 
 }
