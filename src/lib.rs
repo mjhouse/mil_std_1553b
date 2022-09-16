@@ -1,4 +1,4 @@
-#![no_std]
+// #![no_std]
 
 use core::marker::PhantomData;
 
@@ -11,6 +11,7 @@ use constants::*;
 
 macro_rules! set {
     ( $target:expr, $field:ident, $value:expr ) => {
+        $target &= !$field.mask;
         $target |= ((($value as u16) << $field.offset) & $field.mask);
     }
 }
@@ -44,6 +45,7 @@ pub fn take(data: &[u8]) -> Word {
     Word::None
 }
 
+#[derive(Debug,PartialEq)]
 pub enum Word {
     None,
     Command(CommandWord),
@@ -51,14 +53,24 @@ pub enum Word {
     Data(DataWord)
 }
 
+#[derive(Debug,PartialEq)]
+pub enum Address {
+    None,
+    Terminal(u8),
+    Subsystem(u8),
+}
+
+#[derive(Debug,PartialEq)]
 pub struct CommandWord {
     data: u16,
 }
 
+#[derive(Debug,PartialEq)]
 pub struct StatusWord {
     data: u16,
 }
 
+#[derive(Debug,PartialEq)]
 pub struct DataWord {
     data: u16,
 }
@@ -67,6 +79,19 @@ impl CommandWord {
 
     pub fn new(data: u16) -> Self {
         Self { data }
+    }
+
+    pub fn address(&self) -> Address {
+        let address = self.get_terminal_address();
+        Address::Terminal(address)
+    }
+
+    pub fn subaddress(&self) -> Address {
+        match self.get_subaddress() {
+            // 0 or 31 is a mode code command
+            0 | 31  => Address::None,
+            address => Address::Subsystem(address),
+        }
     }
 
     pub fn get_terminal_address(&self) -> u8 {
@@ -85,11 +110,11 @@ impl CommandWord {
         set!(self.data,COMMAND_TRANSMIT_RECEIVE_FIELD,value);
     }
 
-    pub fn get_sub_address(&self) -> u8 {
+    pub fn get_subaddress(&self) -> u8 {
         get!(self.data,COMMAND_SUBADDRESS_FIELD)
     }
 
-    pub fn set_sub_address(&mut self, value: u8) {
+    pub fn set_subaddress(&mut self, value: u8) {
         set!(self.data,COMMAND_SUBADDRESS_FIELD,value);
     }
 
@@ -207,6 +232,12 @@ impl DataWord {
 mod tests {
     use super::*;
     
+    macro_rules! debug_bytes {
+        ( $w: expr ) => {
+            println!("bits: {:#018b}", $w);
+        }
+    }
+
     macro_rules! verify_set {
         ( $word:ty, $function:ident, $result:expr ) => {
             // create a new instance of the word type
@@ -324,13 +355,13 @@ mod tests {
     }
 
     #[test]
-    fn test_command_set_sub_address() {
-        verify_set!(CommandWord,set_sub_address,0b0000001111100000);
+    fn test_command_set_subaddress() {
+        verify_set!(CommandWord,set_subaddress,0b0000001111100000);
     }
 
     #[test]
-    fn test_command_get_sub_address() {
-        verify_get!(CommandWord,get_sub_address,0b00011111);
+    fn test_command_get_subaddress() {
+        verify_get!(CommandWord,get_subaddress,0b00011111);
     }
 
     #[test]
@@ -361,6 +392,30 @@ mod tests {
     #[test]
     fn test_status_get_terminal_address() {
         verify_get!(StatusWord,get_terminal_address,0b00011111);
+    }
+
+    #[test]
+    fn test_command_get_set_address() {
+        let mut word = CommandWord::new(EMPTY_WORD);
+        word.set_terminal_address(0b11111);
+        assert_eq!(word.address(),Address::Terminal(0b11111));
+    }
+
+    #[test]
+    fn test_command_get_set_subaddress() {
+        let mut word = CommandWord::new(EMPTY_WORD);
+        word.set_subaddress(0b00011111);
+
+        assert_eq!(word.data,0b0000001111100000);
+        assert_eq!(word.subaddress(),Address::None);
+
+        word.set_subaddress(0b00000);
+
+        assert_eq!(word.data,0b0000000000000000);
+        assert_eq!(word.subaddress(),Address::None);
+
+        word.set_subaddress(0b10101);
+        assert_eq!(word.subaddress(),Address::Subsystem(0b10101));
     }
 
 }
