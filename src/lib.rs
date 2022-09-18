@@ -89,19 +89,19 @@ impl CommandWord {
         }
     }
 
-    pub fn is_mode_code(&self) -> bool {
+    pub fn has_mode_code(&self) -> bool {
         self.subaddress() == Address::None
     }
 
     pub fn mode_code(&self) -> Result<ModeCode> {
-        if !self.is_mode_code() {
-            return Err(NOT_MODE_CODE);
+        if self.has_mode_code() {
+            ModeCode::from_data(
+                self.get_transmit_receive(),
+                self.get_mode_code()
+            )
+        } else {
+            Err(NOT_MODE_CODE)
         }
-
-        let tr = self.get_transmit_receive();
-        let mc = self.get_mode_code();
-
-        ModeCode::from_data(tr,mc)
     }
 
     pub fn get_terminal_address(&self) -> u8 {
