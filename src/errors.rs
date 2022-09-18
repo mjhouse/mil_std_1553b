@@ -2,6 +2,8 @@ pub type Result<T> = core::result::Result<T,Error>;
 
 // shortcuts for errors
 pub const OUT_OF_BOUNDS: Error = Error::Logic(LogicError::OutOfBounds);
+pub const INVALID_CODE: Error = Error::Logic(LogicError::InvalidCode);
+pub const NOT_MODE_CODE: Error = Error::Logic(LogicError::NotModeCode);
 
 /// Terminal Flag Bit (STATUS WORD)
 ///    The Terminal Flag bit (bit time 19) informs the bus controller of a fault or
@@ -64,6 +66,8 @@ pub enum SystemError {
 pub enum LogicError {
     None,
     OutOfBounds,
+    InvalidCode,
+    NotModeCode,
 }
 
 #[derive(Debug)]

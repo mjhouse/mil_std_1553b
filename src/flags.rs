@@ -1,3 +1,87 @@
+use crate::errors::*;
+
+// Mode Codes are defined by the standard to provide the bus controller with
+// data bus management and error handling/recovery capability. The mode
+// codes are divided into two groups: those with, and those without, a data
+// word.
+// 
+// The data word that is associated with the mode codes—and only one word
+// per mode code is allowed—contains information pertinent to the control of
+// the bus and does not generally contain information required by the
+// subsystem (the exception may be the Synchronize with Data Word Mode
+// Code). The mode codes are defined by bit times 15-19 of the command
+// word. The most significant bit (bit 15) can be used to differentiate between
+// the two-mode code groups. When a data word is associated with the mode
+// code, the T/R bit determines if the data word is transmitted or received by
+// the remote terminal. The mode codes are listed in Table 5.
+#[repr(u8)]
+pub enum ModeCode {
+    DynamicBusControl,
+    Synchronize,
+    TransmitStatusWord,
+    TransmitVectorWord,
+
+    TransmitLastCommandWord,
+    TransmitBITWord,
+
+    TransmitterShutdown,
+    OverrideTransmitterShutdown,
+
+    InhibitTerminalFlagBit,
+    OverrideInhibitTerminalFlagBit,
+
+    SelectedTransmitterShutdown,
+    OverrideSelectedTransmitterShutdown,
+
+    InitiateSelfTest,
+    ResetRemoteTerminal,
+}
+
+impl ModeCode {
+    pub fn from_data(transmit_receive_bit: u8, mode_code: u8) -> Result<ModeCode> {
+        use ModeCode::*;
+        match (transmit_receive_bit,mode_code) {
+            (1,0b00000) => Ok(DynamicBusControl),
+            (1,0b00001) => Ok(Synchronize),
+            (0,0b10001) => Ok(Synchronize),
+            (1,0b00010) => Ok(TransmitStatusWord),
+            (1,0b10000) => Ok(TransmitVectorWord),
+            (1,0b10010) => Ok(TransmitLastCommandWord),
+            (1,0b10011) => Ok(TransmitBITWord),
+            (1,0b00100) => Ok(TransmitterShutdown),
+            (1,0b00101) => Ok(OverrideTransmitterShutdown),
+            (1,0b00110) => Ok(InhibitTerminalFlagBit),
+            (1,0b00111) => Ok(OverrideInhibitTerminalFlagBit),
+            (0,0b10100) => Ok(SelectedTransmitterShutdown),
+            (0,0b10101) => Ok(OverrideSelectedTransmitterShutdown),
+            (1,0b00011) => Ok(InitiateSelfTest),
+            (1,0b01000) => Ok(ResetRemoteTerminal),
+            (_,_)       => Err(INVALID_CODE),
+        }
+    }
+
+    pub fn into_data(&self, transmit_receive_bit: u8) -> Result<u8> {
+        use ModeCode::*;
+        match (transmit_receive_bit,self) {
+            (1,DynamicBusControl)                   => Ok(0b00000),
+            (1,Synchronize)                         => Ok(0b00001),
+            (0,Synchronize)                         => Ok(0b10001),
+            (1,TransmitStatusWord)                  => Ok(0b00010),
+            (1,TransmitVectorWord)                  => Ok(0b10000),
+            (1,TransmitLastCommandWord)             => Ok(0b10010),
+            (1,TransmitBITWord)                     => Ok(0b10011),
+            (1,TransmitterShutdown)                 => Ok(0b00100),
+            (1,OverrideTransmitterShutdown)         => Ok(0b00101),
+            (1,InhibitTerminalFlagBit)              => Ok(0b00110),
+            (1,OverrideInhibitTerminalFlagBit)      => Ok(0b00111),
+            (0,SelectedTransmitterShutdown)         => Ok(0b10100),
+            (0,OverrideSelectedTransmitterShutdown) => Ok(0b10101),
+            (1,InitiateSelfTest)                    => Ok(0b00011),
+            (1,ResetRemoteTerminal)                 => Ok(0b01000),
+            (_,_)                                   => Err(INVALID_CODE)
+        }
+    }
+}
 
 /// (COMMAND WORD)
 /// Bit 9 is the Transmit/Receive (T/R) bit. This defines the direction of 
@@ -11,17 +95,29 @@ pub enum Direction {
     Receive
 }
 
-/// (COMMAND WORD)
-/// The next five bits (bits 10-14) make up the Subaddress (SA)/Mode
-/// Command bits. Logic 00000B or 11111B within this field is decoded to
-/// indicate that the command is a Mode Code Command. All other logic
-/// combinations of this field are used to direct the data to different functions
-/// within the subsystem. An example might be that 00001B is position and
-/// rate data, 00010B is frequency data, 10010B is display information, and
-/// 10011B is self-test data
-pub enum Subaddress {
-    Command, // 0 or 31
-    Value(u8)
+/// Terminal address (COMMAND WORD)
+///    The five bit Terminal Address (TA) field (bit times 4-8) states to which unique 
+///    remote terminal the command is intended (no two terminals may have the same address).
+///
+///    Note:
+///        An address of 00000B is a valid address, and an address of 11111B is
+///        always reserved as a broadcast address. Additionally, there is no
+///        requirement that the bus controller be assigned an address, therefore
+///        the maximum number of terminals the data bus can support is 31.
+///
+/// Subaddress(COMMAND WORD)
+///     The next five bits (bits 10-14) make up the Subaddress (SA)/Mode
+///     Command bits. Logic 00000B or 11111B within this field is decoded to
+///     indicate that the command is a Mode Code Command. All other logic
+///     combinations of this field are used to direct the data to different functions
+///     within the subsystem. An example might be that 00001B is position and
+///     rate data, 00010B is frequency data, 10010B is display information, and
+///     10011B is self-test data
+#[derive(Debug,PartialEq)]
+pub enum Address {
+    None,
+    Terminal(u8),
+    Subsystem(u8),
 }
 
 /// (COMMAND WORD)
@@ -85,48 +181,6 @@ pub enum ServiceRequest {
 pub enum BroadcastCommand {
     NotReceived, // 0
     Received     // 1
-}
-
-/// (STATUS WORD)
-/// The Busy bit (bit 16) is provided as a feedback to the bus controller as
-/// to when the remote terminal is unable to move data between the remote
-/// terminal electronics and the subsystem in compliance to a command from
-/// the bus controller.
-/// 
-/// In the earlier days of 1553, the busy bit was required because many of the
-/// subsystem interfaces (analogs, synchros, etc.) were much slower compared
-/// to the speed of the multiplex data bus. Some terminals were not able to
-/// move the data fast enough. So instead of loosing data, a terminal was able
-/// to set the busy bit, indicating to the bus controller cannot handle new data
-/// at this time, and for the bus controller to try again later. As new systems
-/// have been developed, the need for the busy bit has been reduced. There
-/// are, however, still systems that need and have a valid use for the busy bit.
-/// Examples of these are radios where the bus controller issues a command to
-/// the radio to tune to a certain frequency. It may take the radio several
-/// seconds to accomplish this, and while it is tuning, it may set the busy bit to
-/// inform the bus controller that it is doing as told. Another example is a tape
-/// or disk drive, which may take from milliseconds to seconds to store or
-/// retrieve a particular piece of data.
-/// 
-/// When a terminal is busy, it does not need to respond to commands in the
-/// “normal” way. For received commands, the terminal collects the data, but
-/// doesn’t have to pass the data to the subsystem. For transmit commands,
-/// the terminal transmits its status word only. Therefore, while a terminal is
-/// busy, the data it supplies to the rest of the system is not available. This can
-/// have an overall effect upon the flow of data within the system and may
-/// increase the data latency within time critical systems (e.g., flight controls).
-/// Some terminals used the busy bit to overcome design problems, setting the
-/// busy bit when needed. Notice 2 to the standard “strongly discourages” the
-/// use of the busy bit. However, there are still valid needs for its use.
-/// Therefore, if used, Notice 2 now requires that the busy bit may be set only
-/// as the result of a particular command received from the bus controller and
-/// not due to an internal periodic or processing function. By following this
-/// requirement, the bus controller, with prior knowledge of the remote
-/// terminal's characteristics, can determine what will cause a terminal to go
-/// busy and minimize the effects on data latency throughout the system.
-pub enum BusyFlag {
-    NotBusy, // 0
-    Busy,    // 1
 }
 
 /// (STATUS WORD)
