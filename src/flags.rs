@@ -120,18 +120,6 @@ pub enum Address {
     Subsystem(u8),
 }
 
-/// (COMMAND WORD)
-/// The next five bit positions (bits 15-19) define the Word Count (WC)
-/// or Mode Code to be performed. If the Subaddress/Mode Code field is
-/// 00000B or 11111B, then this field defines the mode code to be performed.
-/// If not a mode code, then this field defines the number of data words to be
-/// received or transmitted depending on the T/R bit. A word count field of
-/// 00000B is decoded as 32 data words.
-pub enum Mode {
-    WordCount(u8),
-    ModeCode(u8)
-}
-
 /// (STATUS WORD)
 /// The Instrumentation bit (bit 10) is provided to differentiate between a
 /// command word and a status word (remember they both have the same sync
