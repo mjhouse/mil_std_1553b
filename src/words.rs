@@ -48,11 +48,37 @@ pub struct DataWord {
 
 impl Word {
 
-    pub fn parse(first: bool, data: &[u8]) -> Self {
+    pub fn command(data: u16) -> Self {
+        Word::Command(CommandWord::new(data))
+    }
 
-        // check instrumentation bit
+    pub fn status(data: u16) -> Self {
+        Word::Status(StatusWord::new(data))
+    }
 
-        Word::None
+    pub fn data(data: u16) -> Self {
+        Word::Data(DataWord::new(data))
+    }
+
+    pub fn is_command(&self) -> bool {
+        match self {
+            Self::Command(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_status(&self) -> bool {
+        match self {
+            Self::Status(_) => true,
+            _ => false,
+        }
+    }
+
+    pub fn is_data(&self) -> bool {
+        match self {
+            Self::Data(_) => true,
+            _ => false,
+        }
     }
 
 }
