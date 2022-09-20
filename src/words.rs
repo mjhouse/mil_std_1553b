@@ -48,16 +48,16 @@ pub struct DataWord {
 
 impl Word {
 
-    pub fn command(data: u16) -> Self {
-        Word::Command(CommandWord::new(data))
+    pub fn command(data: [u8;2]) -> Self {
+        Word::Command(CommandWord::combine(data))
     }
 
-    pub fn status(data: u16) -> Self {
-        Word::Status(StatusWord::new(data))
+    pub fn status(data: [u8;2]) -> Self {
+        Word::Status(StatusWord::combine(data))
     }
 
-    pub fn data(data: u16) -> Self {
-        Word::Data(DataWord::new(data))
+    pub fn data(data: [u8;2]) -> Self {
+        Word::Data(DataWord::combine(data))
     }
 
     pub fn is_command(&self) -> bool {
@@ -89,6 +89,10 @@ impl CommandWord {
         Self { data }
     }
 
+    pub fn combine(data: [u8;2]) -> Self {
+        Self::new(((data[0] as u16) << 8) + data[1] as u16)
+    }
+
     /// Extract the address field
     pub fn address(&self) -> Address {
         let address = self.get_terminal_address();
@@ -111,7 +115,7 @@ impl CommandWord {
     /// 
     /// If the Subaddress field is None (0b00000 or 0b11111), then this is a mode code
     /// command.
-    pub fn has_mode_code(&self) -> bool {
+    pub fn is_mode_code(&self) -> bool {
         self.subaddress() == Address::None
     }
 
@@ -121,7 +125,7 @@ impl CommandWord {
     /// field should be interpreted as a mode code enum. The ModeCode value is decoded
     /// from the T/R bit (TRANSMIT_RECEIVE field) and the MODE_CODE field values.
     pub fn mode_code(&self) -> Result<ModeCode> {
-        if self.has_mode_code() {
+        if self.is_mode_code() {
             ModeCode::from_data(
                 self.get_transmit_receive(),
                 self.get_mode_code()
@@ -142,6 +146,14 @@ impl CommandWord {
             0 => 32,
             v => v,
         }
+    }
+
+    pub fn is_receive(&self) -> bool {
+        self.get_transmit_receive() == 0
+    }
+
+    pub fn is_transmit(&self) -> bool {
+        self.get_transmit_receive() == 1
     }
 
     /// Get terminal_address field value
@@ -200,6 +212,10 @@ impl StatusWord {
 
     pub fn new(data: u16) -> Self {
         Self { data }
+    }
+
+    pub fn combine(data: [u8;2]) -> Self {
+        Self::new(((data[0] as u16) << 8) + data[1] as u16)
     }
 
     /// Extract the address field
@@ -338,6 +354,10 @@ impl DataWord {
         Self { data }
     }
 
+    pub fn combine(data: [u8;2]) -> Self {
+        Self::new(((data[0] as u16) << 8) + data[1] as u16)
+    }
+
     pub fn data(&self) -> u16 {
         self.data
     }
@@ -371,6 +391,15 @@ mod tests {
             assert_eq!(word.data,$final);
         }
     }
+
+    // #[test]
+    // fn test_combine_bytes() {
+    //     let byte1 = 0b01010101;
+    //     let byte2 = 0b01010101;
+
+    //     let result = combine([byte1,byte2]);
+    //     assert_eq!(result,0b0101010101010101);
+    // }
 
     #[test]
     fn test_status_set_ones_terminal_flag() {

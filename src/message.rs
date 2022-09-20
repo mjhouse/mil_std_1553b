@@ -4,6 +4,9 @@ use crate::flags::*;
 use crate::errors::*;
 use crate::words::*;
 
+const DATA_SYNC: u8 = 0b00000111;
+const SERV_SYNC: u8 = 0b00111000;
+
 /// a message can only contain 32 words
 const MAX_WORDS: usize = 32;
 
@@ -44,17 +47,43 @@ pub enum MessageType {
     Broadcast(BroadcastMessage),
 }
 
+pub struct Packet {
+    initial:   bool,
+    sync:        u8,
+    content: [u8;2],
+    parity:      u8,
+}
+
 pub struct Message {
+    expect: u8,
     count: usize,
-    words: [Word;32]
+    words: [Word;32],
+    closed: bool,
+}
+
+impl Packet {
+
+    pub fn is_data(&self) -> bool {
+        self.sync == DATA_SYNC
+    }
+
+    pub fn is_valid(&self) -> bool {
+        let count = self.content[0].count_ones() +
+                    self.content[1].count_ones() + 
+                    (self.parity & 0b00000001) as u32;
+        (count % 2) != 0
+    }
+
 }
 
 impl Message {
     
     pub fn new() -> Self {
         Self {
+            expect: 0,
             count: 0,
             words: [Word::None;32],
+            closed: false,
         }
     }
 
@@ -71,6 +100,9 @@ impl Message {
             self.words[self.count] = word;
             self.count += 1;  
         }
+        else {
+            // TODO: ERROR
+        }
     }
 
     pub fn clear(&mut self) {
@@ -78,30 +110,84 @@ impl Message {
         self.count = 0;
     }
 
-    pub fn last(&self) -> &Word {
-        &self.words[self.count.saturating_sub(1)]
+    pub fn last(&self) -> Option<&Word> {
+        if !self.is_empty() {
+            Some(&self.words[self.count.saturating_sub(1)])
+        } else {
+            None
+        }
     }
 
-    pub fn parse(data: &[u8]) -> Result<Self> {
-        let mut message = Message::new();
+    pub fn parse(&mut self, packet: Packet) {
 
-        for (i,chunk) in data.chunks(2).enumerate() {
-            // convert two bytes to a single u16
-            let value = ((chunk[0] as u16) << 8) | (chunk[1] as u16);
-
-            if i == 0 {
-                let word = CommandWord::new(value);
-
-            }
-
-            // // provide context about the message to the word parse
-            // let word = Word::command(value);
-
-            // // add the word to the message
-            // message.add(word);
+        if self.closed {
+            // TODO: ERROR
+            return;
         }
 
-        Ok(message)
+        if !packet.is_valid() {
+            // TODO: ERROR
+            return;
+        }
+
+        /*  Information Transfer Formats
+
+            =================================== BC - RT
+
+            RECV COMM | DATA | DATA | ...
+            STAT
+
+            =================================== RT - BC
+
+            TRAN COMM 
+            STAT | DATA | DATA | ...
+
+            =================================== RT - RT
+
+            RECV COMM | TRAN COMM |
+            STAT | DATA | DATA | ...
+
+            =================================== MODE W/O DATA
+
+            MOD COMM
+            STAT
+
+            =================================== MODE W/ DATA (T)
+
+            MOD COMM
+            STAT | DATA |
+
+            =================================== MODE W/ DATA (R)
+
+            MOD COMM | DATA |
+            STAT
+
+        */
+
+        /*  Information Transfer Formats (Broadcast)
+        
+        */
+
+        match (self.last(),packet.sync,self.expect) {
+            (None,SERV_SYNC,_) => {
+                let word = CommandWord::combine(packet.content);
+                if !word.is_mode_code() {
+                    self.expect = word.word_count();
+                }
+                self.add(Word::Command(word));
+            },
+            (Some(Word::Command(w)),SERV_SYNC,_) if w.is_receive() => {
+                self.add(Word::command(packet.content));
+                self.closed = true;
+            },
+            (_,DATA_SYNC,v) if v > 0 => {
+                self.add(Word::command(packet.content));
+                self.closed = true;
+                self.expect = self.expect.saturating_sub(1);
+            },
+            _ => () // TODO: ERROR
+        };
+
     }
 
     pub fn is_valid(&self) -> bool {
