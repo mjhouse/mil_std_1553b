@@ -138,7 +138,7 @@ fn process(align: bool, mut data: &[u8]) -> (u8,u16,u8) {
     }
 
     // take off the first 2 bytes
-    data = data[..2];
+    data = &data[..2];
     
     (sync,word,parity)
 }

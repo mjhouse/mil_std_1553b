@@ -10,6 +10,7 @@ Rust implementation of 1553 message parsing
 
 ## Questions
 
+* How common are embedded systems with actual software in avionics vs LRU's with FPGAs?
 * Are the sync bits and parity bits included in the binary data that must be processed? If so, how is a 20-bit chunk aligned inside a buffer measured in bytes?
 
 ## Notes
