@@ -10,6 +10,12 @@ const SERV_SYNC: u8 = 0b00111000;
 /// a message can only contain 32 words
 const MAX_WORDS: usize = 32;
 
+/// Whether a message should be parsed as a sender or receiver
+pub enum MessageSide {
+    Sending,
+    Receiving,
+}
+
 /// The information transfer formats (DirectedMessage) are based on the command/response
 /// philosophy in that all error free transmissions received by a remote
 /// terminal are followed by the transmission of a status word from the
@@ -18,12 +24,12 @@ const MAX_WORDS: usize = 32;
 ///
 /// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p. 29-30)
 pub enum DirectedMessage {
-    BcToRt,
-    RtToBc,
-    RtToRt,
-    ModeWithoutData,
-    ModeWithDataT,
-    ModeWithDataR,
+    BcToRt(MessageSide),
+    RtToBc(MessageSide),
+    RtToRt(MessageSide),
+    ModeWithoutData(MessageSide),
+    ModeWithDataT(MessageSide),
+    ModeWithDataR(MessageSide),
 }
 
 /// Broadcast messages are transmitted to multiple remote terminals at the
@@ -35,27 +41,27 @@ pub enum DirectedMessage {
 ///
 /// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p. 29-30)
 pub enum BroadcastMessage {
-    BcToRt,
-    RtToRt,
-    ModeWithoutData,
-    ModeWithData,
+    BcToRt(MessageSide),
+    RtToRt(MessageSide),
+    ModeWithoutData(MessageSide),
+    ModeWithDataR(MessageSide),
 }
 
+/// MessageType is used to signal the type of message that should be parsed
+/// next.
 pub enum MessageType {
-    None,
     Directed(DirectedMessage),
     Broadcast(BroadcastMessage),
 }
 
 pub struct Packet {
-    initial:   bool,
     sync:        u8,
     content: [u8;2],
     parity:      u8,
 }
 
 pub struct Message {
-    expect: u8,
+    data_count: u8,
     count: usize,
     words: [Word;32],
     closed: bool,
@@ -80,7 +86,7 @@ impl Message {
     
     pub fn new() -> Self {
         Self {
-            expect: 0,
+            data_count: 0,
             count: 0,
             words: [Word::None;32],
             closed: false,
@@ -97,6 +103,11 @@ impl Message {
 
     pub fn add(&mut self, word: Word) {
         if !self.is_full() {
+
+            if word.is_data() {
+                self.data_count += 1;
+            }
+
             self.words[self.count] = word;
             self.count += 1;  
         }
@@ -118,7 +129,15 @@ impl Message {
         }
     }
 
-    pub fn parse(&mut self, packet: Packet) {
+    pub fn first(&self) -> Option<&Word> {
+        if !self.is_empty() {
+            Some(&self.words[0])
+        } else {
+            None
+        }
+    }
+
+    pub fn parse(&mut self, kind: MessageType, packet: Packet) {
 
         if self.closed {
             // TODO: ERROR
@@ -130,68 +149,134 @@ impl Message {
             return;
         }
 
-        /*  Information Transfer Formats
+        use MessageType::*;
+        use DirectedMessage as D;
+        use BroadcastMessage as B;
 
-            =================================== BC - RT
-
-            RECV COMM | DATA | DATA | ...
-            STAT
-
-            =================================== RT - BC
-
-            TRAN COMM 
-            STAT | DATA | DATA | ...
-
-            =================================== RT - RT
-
-            RECV COMM | TRAN COMM |
-            STAT | DATA | DATA | ...
-
-            =================================== MODE W/O DATA
-
-            MOD COMM
-            STAT
-
-            =================================== MODE W/ DATA (T)
-
-            MOD COMM
-            STAT | DATA |
-
-            =================================== MODE W/ DATA (R)
-
-            MOD COMM | DATA |
-            STAT
-
-        */
-
-        /*  Information Transfer Formats (Broadcast)
-        
-        */
-
-        match (self.last(),packet.sync,self.expect) {
-            (None,SERV_SYNC,_) => {
-                let word = CommandWord::combine(packet.content);
-                if !word.is_mode_code() {
-                    self.expect = word.word_count();
-                }
-                self.add(Word::Command(word));
-            },
-            (Some(Word::Command(w)),SERV_SYNC,_) if w.is_receive() => {
-                self.add(Word::command(packet.content));
-                self.closed = true;
-            },
-            (_,DATA_SYNC,v) if v > 0 => {
-                self.add(Word::command(packet.content));
-                self.closed = true;
-                self.expect = self.expect.saturating_sub(1);
-            },
+        match kind {
+            Directed(D::BcToRt(side)) => 
+                self.parse_bc_to_rt_directed(side,packet),
+            Directed(D::RtToBc(side)) => 
+                self.parse_rt_to_bc_directed(side,packet),
+            Directed(D::RtToRt(side)) => 
+                self.parse_rt_to_rt_directed(side,packet),
+            Directed(D::ModeWithoutData(side)) => 
+                self.parse_mode_without_data_directed(side,packet),
+            Directed(D::ModeWithDataT(side)) => 
+                self.parse_mode_with_data_t_directed(side,packet),
+            Directed(D::ModeWithDataR(side)) => 
+                self.parse_mode_with_data_r_directed(side,packet),
+            Broadcast(B::BcToRt(side)) => 
+                self.parse_bc_to_rt_broadcast(side,packet),
+            Broadcast(B::RtToRt(side)) => 
+                self.parse_rt_to_rt_broadcast(side,packet),
+            Broadcast(B::ModeWithoutData(side)) => 
+                self.parse_mode_without_data_broadcast(side,packet),
+            Broadcast(B::ModeWithDataR(side)) => 
+                self.parse_mode_with_data_r_broadcast(side,packet),
             _ => () // TODO: ERROR
         };
 
     }
 
-    pub fn is_valid(&self) -> bool {
-        false
+    // ==================================================
+    // Information Transfer Formats
+
+    /// SEND: RECV COMM | DATA | DATA | ...
+    /// RESP: STAT
+    fn parse_bc_to_rt_directed(&mut self, side: MessageSide, packet: Packet) {
+        match side {
+            // if this message is being parsed on the "receiving" side, then
+            // we are parsing the SENDING message and then responding with the
+            // RESPONSE.
+            MessageSide::Receiving => {
+                match self.first() {
+                    Some(Word::Command(c)) => {
+
+                        if c.word_count() <= self.data_count {
+                            // TODO: error because too many data words
+                            return;
+                        }
+
+                        if !c.is_receive() {
+                            // TODO: error because doesn't match pattern
+                            return;
+                        }
+
+                        self.add(Word::data(packet.content));
+                    },
+                    Some(_) => {
+                        // TODO: error because first word should be command
+                    },
+                    None => {
+
+                        if self.count > 0 {
+                            // TODO: error because message should be empty
+                            return;
+                        }
+
+                        self.add(Word::command(packet.content));
+                    }
+                }
+            },
+            MessageSide::Sending => {
+                self.add(Word::status(packet.content));
+            }
+        }
+    }
+
+    /// SEND: TRAN COMM 
+    /// RESP: STAT | DATA | DATA | ...
+    fn parse_rt_to_bc_directed(&mut self, side: MessageSide, packet: Packet) {
+
+    }
+
+    /// SEND: RECV COMM | TRAN COMM |
+    /// RESP: STAT | DATA | DATA | ...
+    fn parse_rt_to_rt_directed(&mut self, side: MessageSide, packet: Packet) {
+
+    }
+
+    /// SEND: MOD COMM
+    /// RESP: STAT
+    fn parse_mode_without_data_directed(&mut self, side: MessageSide, packet: Packet) {
+
+    }
+
+    /// SEND: MOD COMM
+    /// RESP: STAT | DATA |
+    fn parse_mode_with_data_t_directed(&mut self, side: MessageSide, packet: Packet) {
+
+    }
+
+    /// SEND: MOD COMM | DATA |
+    /// RESP: STAT
+    fn parse_mode_with_data_r_directed(&mut self, side: MessageSide, packet: Packet) {
+
+    }
+
+    // ==================================================
+    // Information Transfer Formats (Broadcast)
+
+    /// SEND: RECV COMM | DATA | DATA | ...
+    fn parse_bc_to_rt_broadcast(&mut self, side: MessageSide, packet: Packet) {
+
+    }
+
+    /// SEND: RECV COMM | TRAN COMM |
+    /// RESP: STAT | DATA | DATA | ...
+    fn parse_rt_to_rt_broadcast(&mut self, side: MessageSide, packet: Packet) {
+
+    }
+
+    /// SEND: MOD COMM
+    fn parse_mode_without_data_broadcast(&mut self, side: MessageSide, packet: Packet) {
+
+    }
+
+    /// SEND: MOD COMM | DATA |
+    fn parse_mode_with_data_r_broadcast(&mut self, side: MessageSide, packet: Packet) {
+
     }
 
 }
