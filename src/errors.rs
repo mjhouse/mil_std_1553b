@@ -4,6 +4,10 @@ pub type Result<T> = core::result::Result<T,Error>;
 pub const OUT_OF_BOUNDS: Error = Error::Logic(LogicError::OutOfBounds);
 pub const INVALID_CODE: Error = Error::Logic(LogicError::InvalidCode);
 pub const NOT_MODE_CODE: Error = Error::Logic(LogicError::NotModeCode);
+pub const MESSAGE_FULL: Error = Error::Logic(LogicError::MessageFull);
+pub const MESSAGE_BAD: Error = Error::Logic(LogicError::MessageBad);
+pub const RESERVED_USED: Error = Error::Logic(LogicError::ReservedUsed);
+pub const UNKNOWN_MESSAGE_TYPE: Error = Error::Logic(LogicError::UnknownMessageType);
 
 /// Terminal Flag Bit (STATUS WORD)
 ///    The Terminal Flag bit (bit time 19) informs the bus controller of a fault or
@@ -68,6 +72,10 @@ pub enum LogicError {
     OutOfBounds,
     InvalidCode,
     NotModeCode,
+    MessageFull,
+    MessageBad,
+    ReservedUsed,
+    UnknownMessageType,
 }
 
 #[derive(Debug)]

@@ -99,15 +99,15 @@ impl Message {
         self.count == 0
     }
 
-    pub fn add(&mut self, word: Word) {
+    pub fn add(&mut self, word: Word) -> Result<u8> {
 
         if self.is_full() {
-            // TODO: error because too many words
-            return;
+            return Err(MESSAGE_FULL);
         }
 
         self.words[self.count as usize] = word;
         self.count += 1;  
+        Ok(self.count)
     }
 
     pub fn clear(&mut self) {
@@ -132,16 +132,13 @@ impl Message {
         }
     }
 
-    pub fn parse(&mut self, kind: MessageType, packet: Packet) {
-
-        if self.closed {
-            // TODO: ERROR
-            return;
-        }
+    /// parses a single word and adds it to the message,
+    /// returning either an error or the new length of the parsed
+    /// message.
+    pub fn parse(&mut self, kind: MessageType, packet: Packet) -> Result<u8> {
 
         if !packet.is_valid() {
-            // TODO: ERROR
-            return;
+            return Err(RESERVED_USED);
         }
 
         use MessageType::*;
@@ -169,13 +166,10 @@ impl Message {
                 self.parse_mode_without_data_broadcast(side,packet),
             Broadcast(B::ModeWithDataR(side)) => 
                 self.parse_mode_with_data_r_broadcast(side,packet),
-            _ => () // TODO: ERROR
-        };
+            _ => Err(UNKNOWN_MESSAGE_TYPE),
+        }
 
     }
-
-    // ==================================================
-    // Information Transfer Formats
 
     /// Parse BC -> RT Directed
     ///
@@ -188,7 +182,7 @@ impl Message {
     ///     SEND: RECV COMM | DATA | DATA | ...
     ///     RESP: STAT
     ///
-    fn parse_bc_to_rt_directed(&mut self, side: MessageSide, packet: Packet) {
+    fn parse_bc_to_rt_directed(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
         match (side,self.first()) {
             (MessageSide::Receiving,Some(Word::Command(_))) => 
                 self.add(Word::data(packet.content)),
@@ -196,10 +190,8 @@ impl Message {
                 self.add(Word::command(packet.content)),
             (MessageSide::Sending,None) => 
                 self.add(Word::status(packet.content)),
-            (MessageSide::Receiving,_) => 
-                { /* TODO: error because first word should be command */ },
-            (MessageSide::Sending,_) => 
-                { /* TODO: error because message should be empty */ },
+            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because first word should be command */
+            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because message should be empty */
         }
     }
 
@@ -214,7 +206,7 @@ impl Message {
     ///     SEND: TRAN COMM 
     ///     RESP: STAT | DATA | DATA | ...
     ///
-    fn parse_rt_to_bc_directed(&mut self, side: MessageSide, packet: Packet) {
+    fn parse_rt_to_bc_directed(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
         match (side,self.first()) {
             (MessageSide::Receiving,None) => 
                 self.add(Word::command(packet.content)),
@@ -222,10 +214,8 @@ impl Message {
                 self.add(Word::data(packet.content)),
             (MessageSide::Sending,None) => 
                 self.add(Word::status(packet.content)),
-            (MessageSide::Receiving,_) => 
-                { /* TODO: error because there should be only one word */ },
-            (MessageSide::Sending,_) => 
-                { /* TODO: error because word should be status and isn't */ },
+            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because there should be only one word */
+            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because word should be status and isn't */
         }
     }
 
@@ -240,7 +230,7 @@ impl Message {
     ///     SEND: RECV COMM | TRAN COMM |
     ///     RESP: STAT | DATA | DATA | ...
     ///
-    fn parse_rt_to_rt_directed(&mut self, side: MessageSide, packet: Packet) {
+    fn parse_rt_to_rt_directed(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
         match (side,self.first()) {
             (MessageSide::Receiving,None) => 
                 self.add(Word::command(packet.content)),
@@ -250,10 +240,8 @@ impl Message {
                 self.add(Word::status(packet.content)),
             (MessageSide::Sending,Some(Word::Status(_))) => 
                 self.add(Word::data(packet.content)),
-            (MessageSide::Receiving,_) => 
-                { /* TODO: error because words should only be commands */ },
-            (MessageSide::Sending,_) => 
-                { /* TODO: error because word should be status and isn't */ },
+            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because words should only be commands */
+            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because word should be status and isn't */
         }
     }
 
@@ -268,16 +256,14 @@ impl Message {
     ///     SEND: MOD COMM
     ///     RESP: STAT
     ///
-    fn parse_mode_without_data_directed(&mut self, side: MessageSide, packet: Packet) {
+    fn parse_mode_without_data_directed(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
         match (side,self.first()) {
             (MessageSide::Receiving,None) => 
                 self.add(Word::command(packet.content)),
             (MessageSide::Sending,None) => 
                 self.add(Word::status(packet.content)),
-            (MessageSide::Receiving,_) => 
-                { /* TODO: error because word should only be command */ },
-            (MessageSide::Sending,_) => 
-                { /* TODO: error because word should only be status */ },
+            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be command */
+            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be status */
         }
     }
 
@@ -292,7 +278,7 @@ impl Message {
     ///     SEND: MOD COMM
     ///     RESP: STAT | DATA |
     ///
-    fn parse_mode_with_data_t_directed(&mut self, side: MessageSide, packet: Packet) {
+    fn parse_mode_with_data_t_directed(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
         match (side,self.first()) {
             (MessageSide::Receiving,None) => 
                 self.add(Word::command(packet.content)),
@@ -300,10 +286,8 @@ impl Message {
                 self.add(Word::status(packet.content)),
             (MessageSide::Sending,Some(Word::Status(_))) => 
                 self.add(Word::data(packet.content)),
-            (MessageSide::Receiving,_) => 
-                { /* TODO: error because word should only be command */ },
-            (MessageSide::Sending,_) => 
-                { /* TODO: error because word should only be status/data */ },
+            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be command */
+            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be status/data */
         }
     }
 
@@ -318,7 +302,7 @@ impl Message {
     ///     SEND: MOD COMM | DATA |
     ///     RESP: STAT
     ///
-    fn parse_mode_with_data_r_directed(&mut self, side: MessageSide, packet: Packet) {
+    fn parse_mode_with_data_r_directed(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
         match (side,self.first()) {
             (MessageSide::Receiving,None) => 
                 self.add(Word::command(packet.content)),
@@ -326,15 +310,10 @@ impl Message {
                 self.add(Word::data(packet.content)),
             (MessageSide::Sending,None) => 
                 self.add(Word::status(packet.content)),
-            (MessageSide::Receiving,_) => 
-                { /* TODO: error because word should only be command/data */ },
-            (MessageSide::Sending,_) => 
-                { /* TODO: error because word should only be status */ },
+            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be command/data */
+            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be status */
         }
     }
-
-    // ==================================================
-    // Information Transfer Formats (Broadcast)
 
     /// Parse BC to RT Broadcast
     ///
@@ -346,16 +325,14 @@ impl Message {
     /// Pattern:
     ///     SEND: RECV COMM | DATA | DATA | ...
     ///
-    fn parse_bc_to_rt_broadcast(&mut self, side: MessageSide, packet: Packet) {
+    fn parse_bc_to_rt_broadcast(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
         match (side,self.first()) {
             (MessageSide::Receiving,None) => 
                 self.add(Word::command(packet.content)),
             (MessageSide::Receiving,Some(Word::Command(_))) => 
                 self.add(Word::data(packet.content)),
-            (MessageSide::Receiving,_) => 
-                { /* TODO: error because word should only be command/data */ },
-            (MessageSide::Sending,_) => 
-                { /* TODO: error because sending side should never parse */ },
+            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be command/data */
+            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because sending side should never parse */
         }
     }
 
@@ -370,7 +347,7 @@ impl Message {
     ///     SEND: RECV COMM | TRAN COMM |
     ///     RESP: STAT | DATA | DATA | ...
     ///
-    fn parse_rt_to_rt_broadcast(&mut self, side: MessageSide, packet: Packet) {
+    fn parse_rt_to_rt_broadcast(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
         match (side,self.first()) {
             (MessageSide::Receiving,None) => 
                 self.add(Word::command(packet.content)),
@@ -380,10 +357,8 @@ impl Message {
                 self.add(Word::status(packet.content)),
             (MessageSide::Sending,Some(Word::Status(_))) => 
                 self.add(Word::data(packet.content)),
-            (MessageSide::Receiving,_) => 
-                { /* TODO: error because word should only be command/data */ },
-            (MessageSide::Sending,_) => 
-                { /* TODO: error because word should only be status/data */ },
+            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be command/data */
+            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be status/data */
         }
     }
 
@@ -397,14 +372,12 @@ impl Message {
     /// Pattern:
     ///     SEND: MOD COMM
     ///
-    fn parse_mode_without_data_broadcast(&mut self, side: MessageSide, packet: Packet) {
+    fn parse_mode_without_data_broadcast(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
         match (side,self.first()) {
             (MessageSide::Receiving,None) => 
                 self.add(Word::command(packet.content)),
-            (MessageSide::Receiving,_) => 
-                { /* TODO: error because word should only be command */ },
-            (MessageSide::Sending,_) => 
-                { /* TODO: error because sending side should never parse */ },
+            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be command */
+            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because sending side should never parse */
         }
     }
 
@@ -418,16 +391,14 @@ impl Message {
     /// Pattern:
     ///     SEND: MOD COMM | DATA |
     ///
-    fn parse_mode_with_data_r_broadcast(&mut self, side: MessageSide, packet: Packet) {
+    fn parse_mode_with_data_r_broadcast(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
         match (side,self.first()) {
             (MessageSide::Receiving,None) => 
                 self.add(Word::command(packet.content)),
             (MessageSide::Receiving,Some(Word::Command(_))) => 
                 self.add(Word::data(packet.content)),
-            (MessageSide::Receiving,_) => 
-                { /* TODO: error because word should only be command or data */ },
-            (MessageSide::Sending,_) => 
-                { /* TODO: error because sending side should never parse */ },
+            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be command or data */
+            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because sending side should never parse */
         }
     }
 
