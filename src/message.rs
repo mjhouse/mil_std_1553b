@@ -8,7 +8,7 @@ const DATA_SYNC: u8 = 0b00000111;
 const SERV_SYNC: u8 = 0b00111000;
 
 /// a message can only contain 32 words
-const MAX_WORDS: usize = 32;
+const MAX_WORDS: u8 = 32;
 
 /// Whether a message should be parsed as a sender or receiver
 pub enum MessageSide {
@@ -61,8 +61,7 @@ pub struct Packet {
 }
 
 pub struct Message {
-    data_count: u8,
-    count: usize,
+    count: u8,
     words: [Word;32],
     closed: bool,
 }
@@ -86,7 +85,6 @@ impl Message {
     
     pub fn new() -> Self {
         Self {
-            data_count: 0,
             count: 0,
             words: [Word::None;32],
             closed: false,
@@ -102,18 +100,14 @@ impl Message {
     }
 
     pub fn add(&mut self, word: Word) {
-        if !self.is_full() {
 
-            if word.is_data() {
-                self.data_count += 1;
-            }
+        if self.is_full() {
+            // TODO: error because too many words
+            return;
+        }
 
-            self.words[self.count] = word;
-            self.count += 1;  
-        }
-        else {
-            // TODO: ERROR
-        }
+        self.words[self.count as usize] = word;
+        self.count += 1;  
     }
 
     pub fn clear(&mut self) {
@@ -123,7 +117,8 @@ impl Message {
 
     pub fn last(&self) -> Option<&Word> {
         if !self.is_empty() {
-            Some(&self.words[self.count.saturating_sub(1)])
+            let index = self.count.saturating_sub(1);
+            Some(&self.words[index as usize])
         } else {
             None
         }
@@ -182,101 +177,258 @@ impl Message {
     // ==================================================
     // Information Transfer Formats
 
-    /// SEND: RECV COMM | DATA | DATA | ...
-    /// RESP: STAT
+    /// Parse BC -> RT Directed
+    ///
+    /// If this message is being parsed on the "receiving" side, then
+    /// we are parsing the SEND message (and then responding with the
+    /// RESP message). If it's being parsed on the "sending" side, then 
+    /// we're going to be parsing the RESP only.
+    ///
+    /// Pattern:
+    ///     SEND: RECV COMM | DATA | DATA | ...
+    ///     RESP: STAT
+    ///
     fn parse_bc_to_rt_directed(&mut self, side: MessageSide, packet: Packet) {
-        match side {
-            // if this message is being parsed on the "receiving" side, then
-            // we are parsing the SENDING message and then responding with the
-            // RESPONSE.
-            MessageSide::Receiving => {
-                match self.first() {
-                    Some(Word::Command(c)) => {
-
-                        if c.word_count() <= self.data_count {
-                            // TODO: error because too many data words
-                            return;
-                        }
-
-                        if !c.is_receive() {
-                            // TODO: error because doesn't match pattern
-                            return;
-                        }
-
-                        self.add(Word::data(packet.content));
-                    },
-                    Some(_) => {
-                        // TODO: error because first word should be command
-                    },
-                    None => {
-
-                        if self.count > 0 {
-                            // TODO: error because message should be empty
-                            return;
-                        }
-
-                        self.add(Word::command(packet.content));
-                    }
-                }
-            },
-            MessageSide::Sending => {
-                self.add(Word::status(packet.content));
-            }
+        match (side,self.first()) {
+            (MessageSide::Receiving,Some(Word::Command(_))) => 
+                self.add(Word::data(packet.content)),
+            (MessageSide::Receiving,None) => 
+                self.add(Word::command(packet.content)),
+            (MessageSide::Sending,None) => 
+                self.add(Word::status(packet.content)),
+            (MessageSide::Receiving,_) => 
+                { /* TODO: error because first word should be command */ },
+            (MessageSide::Sending,_) => 
+                { /* TODO: error because message should be empty */ },
         }
     }
 
-    /// SEND: TRAN COMM 
-    /// RESP: STAT | DATA | DATA | ...
+    /// Parse RT -> BC Directed
+    ///
+    /// If this message is being parsed on the "receiving" side, then
+    /// we are parsing the SEND message (and then responding with the
+    /// RESP message). If it's being parsed on the "sending" side, then 
+    /// we're going to be parsing the RESP only.
+    ///
+    /// Pattern:
+    ///     SEND: TRAN COMM 
+    ///     RESP: STAT | DATA | DATA | ...
+    ///
     fn parse_rt_to_bc_directed(&mut self, side: MessageSide, packet: Packet) {
-
+        match (side,self.first()) {
+            (MessageSide::Receiving,None) => 
+                self.add(Word::command(packet.content)),
+            (MessageSide::Sending,Some(Word::Status(_))) => 
+                self.add(Word::data(packet.content)),
+            (MessageSide::Sending,None) => 
+                self.add(Word::status(packet.content)),
+            (MessageSide::Receiving,_) => 
+                { /* TODO: error because there should be only one word */ },
+            (MessageSide::Sending,_) => 
+                { /* TODO: error because word should be status and isn't */ },
+        }
     }
 
-    /// SEND: RECV COMM | TRAN COMM |
-    /// RESP: STAT | DATA | DATA | ...
+    /// Parse RT -> RT Directed
+    ///
+    /// If this message is being parsed on the "receiving" side, then
+    /// we are parsing the SEND message (and then responding with the
+    /// RESP message). If it's being parsed on the "sending" side, then 
+    /// we're going to be parsing the RESP only.
+    ///
+    /// Pattern:
+    ///     SEND: RECV COMM | TRAN COMM |
+    ///     RESP: STAT | DATA | DATA | ...
+    ///
     fn parse_rt_to_rt_directed(&mut self, side: MessageSide, packet: Packet) {
-
+        match (side,self.first()) {
+            (MessageSide::Receiving,None) => 
+                self.add(Word::command(packet.content)),
+            (MessageSide::Receiving,Some(Word::Command(_))) => 
+                self.add(Word::command(packet.content)),
+            (MessageSide::Sending,None) => 
+                self.add(Word::status(packet.content)),
+            (MessageSide::Sending,Some(Word::Status(_))) => 
+                self.add(Word::data(packet.content)),
+            (MessageSide::Receiving,_) => 
+                { /* TODO: error because words should only be commands */ },
+            (MessageSide::Sending,_) => 
+                { /* TODO: error because word should be status and isn't */ },
+        }
     }
 
-    /// SEND: MOD COMM
-    /// RESP: STAT
+    /// Parse Without Data Directed
+    ///
+    /// If this message is being parsed on the "receiving" side, then
+    /// we are parsing the SEND message (and then responding with the
+    /// RESP message). If it's being parsed on the "sending" side, then 
+    /// we're going to be parsing the RESP only.
+    ///
+    /// Pattern:
+    ///     SEND: MOD COMM
+    ///     RESP: STAT
+    ///
     fn parse_mode_without_data_directed(&mut self, side: MessageSide, packet: Packet) {
-
+        match (side,self.first()) {
+            (MessageSide::Receiving,None) => 
+                self.add(Word::command(packet.content)),
+            (MessageSide::Sending,None) => 
+                self.add(Word::status(packet.content)),
+            (MessageSide::Receiving,_) => 
+                { /* TODO: error because word should only be command */ },
+            (MessageSide::Sending,_) => 
+                { /* TODO: error because word should only be status */ },
+        }
     }
 
-    /// SEND: MOD COMM
-    /// RESP: STAT | DATA |
+    /// Parse With Data Directed
+    ///
+    /// If this message is being parsed on the "receiving" side, then
+    /// we are parsing the SEND message (and then responding with the
+    /// RESP message). If it's being parsed on the "sending" side, then 
+    /// we're going to be parsing the RESP only.
+    ///
+    /// Pattern:
+    ///     SEND: MOD COMM
+    ///     RESP: STAT | DATA |
+    ///
     fn parse_mode_with_data_t_directed(&mut self, side: MessageSide, packet: Packet) {
-
+        match (side,self.first()) {
+            (MessageSide::Receiving,None) => 
+                self.add(Word::command(packet.content)),
+            (MessageSide::Sending,None) => 
+                self.add(Word::status(packet.content)),
+            (MessageSide::Sending,Some(Word::Status(_))) => 
+                self.add(Word::data(packet.content)),
+            (MessageSide::Receiving,_) => 
+                { /* TODO: error because word should only be command */ },
+            (MessageSide::Sending,_) => 
+                { /* TODO: error because word should only be status/data */ },
+        }
     }
 
-    /// SEND: MOD COMM | DATA |
-    /// RESP: STAT
+    /// Parse With Data R Directed
+    ///
+    /// If this message is being parsed on the "receiving" side, then
+    /// we are parsing the SEND message (and then responding with the
+    /// RESP message). If it's being parsed on the "sending" side, then 
+    /// we're going to be parsing the RESP only.
+    ///
+    /// Pattern:
+    ///     SEND: MOD COMM | DATA |
+    ///     RESP: STAT
+    ///
     fn parse_mode_with_data_r_directed(&mut self, side: MessageSide, packet: Packet) {
-
+        match (side,self.first()) {
+            (MessageSide::Receiving,None) => 
+                self.add(Word::command(packet.content)),
+            (MessageSide::Receiving,Some(Word::Command(_))) => 
+                self.add(Word::data(packet.content)),
+            (MessageSide::Sending,None) => 
+                self.add(Word::status(packet.content)),
+            (MessageSide::Receiving,_) => 
+                { /* TODO: error because word should only be command/data */ },
+            (MessageSide::Sending,_) => 
+                { /* TODO: error because word should only be status */ },
+        }
     }
 
     // ==================================================
     // Information Transfer Formats (Broadcast)
 
-    /// SEND: RECV COMM | DATA | DATA | ...
+    /// Parse BC to RT Broadcast
+    ///
+    /// If this message is being parsed on the "receiving" side, then
+    /// we are parsing the SEND message (and then responding with the
+    /// RESP message). If it's being parsed on the "sending" side, then 
+    /// we're going to be parsing the RESP only.
+    ///
+    /// Pattern:
+    ///     SEND: RECV COMM | DATA | DATA | ...
+    ///
     fn parse_bc_to_rt_broadcast(&mut self, side: MessageSide, packet: Packet) {
-
+        match (side,self.first()) {
+            (MessageSide::Receiving,None) => 
+                self.add(Word::command(packet.content)),
+            (MessageSide::Receiving,Some(Word::Command(_))) => 
+                self.add(Word::data(packet.content)),
+            (MessageSide::Receiving,_) => 
+                { /* TODO: error because word should only be command/data */ },
+            (MessageSide::Sending,_) => 
+                { /* TODO: error because sending side should never parse */ },
+        }
     }
 
-    /// SEND: RECV COMM | TRAN COMM |
-    /// RESP: STAT | DATA | DATA | ...
+    /// Parse RT to RT Broadcast
+    ///
+    /// If this message is being parsed on the "receiving" side, then
+    /// we are parsing the SEND message (and then responding with the
+    /// RESP message). If it's being parsed on the "sending" side, then 
+    /// we're going to be parsing the RESP only.
+    ///
+    /// Pattern:
+    ///     SEND: RECV COMM | TRAN COMM |
+    ///     RESP: STAT | DATA | DATA | ...
+    ///
     fn parse_rt_to_rt_broadcast(&mut self, side: MessageSide, packet: Packet) {
-
+        match (side,self.first()) {
+            (MessageSide::Receiving,None) => 
+                self.add(Word::command(packet.content)),
+            (MessageSide::Receiving,Some(Word::Command(_))) => 
+                self.add(Word::command(packet.content)),
+            (MessageSide::Sending,None) => 
+                self.add(Word::status(packet.content)),
+            (MessageSide::Sending,Some(Word::Status(_))) => 
+                self.add(Word::data(packet.content)),
+            (MessageSide::Receiving,_) => 
+                { /* TODO: error because word should only be command/data */ },
+            (MessageSide::Sending,_) => 
+                { /* TODO: error because word should only be status/data */ },
+        }
     }
 
-    /// SEND: MOD COMM
+    /// Parse Mode Without Data Broadcast
+    ///
+    /// If this message is being parsed on the "receiving" side, then
+    /// we are parsing the SEND message (and then responding with the
+    /// RESP message). If it's being parsed on the "sending" side, then 
+    /// we're going to be parsing the RESP only.
+    ///
+    /// Pattern:
+    ///     SEND: MOD COMM
+    ///
     fn parse_mode_without_data_broadcast(&mut self, side: MessageSide, packet: Packet) {
-
+        match (side,self.first()) {
+            (MessageSide::Receiving,None) => 
+                self.add(Word::command(packet.content)),
+            (MessageSide::Receiving,_) => 
+                { /* TODO: error because word should only be command */ },
+            (MessageSide::Sending,_) => 
+                { /* TODO: error because sending side should never parse */ },
+        }
     }
 
-    /// SEND: MOD COMM | DATA |
+    /// Parse Mode With Data Broadcast
+    ///
+    /// If this message is being parsed on the "receiving" side, then
+    /// we are parsing the SEND message (and then responding with the
+    /// RESP message). If it's being parsed on the "sending" side, then 
+    /// we're going to be parsing the RESP only.
+    ///
+    /// Pattern:
+    ///     SEND: MOD COMM | DATA |
+    ///
     fn parse_mode_with_data_r_broadcast(&mut self, side: MessageSide, packet: Packet) {
-
+        match (side,self.first()) {
+            (MessageSide::Receiving,None) => 
+                self.add(Word::command(packet.content)),
+            (MessageSide::Receiving,Some(Word::Command(_))) => 
+                self.add(Word::data(packet.content)),
+            (MessageSide::Receiving,_) => 
+                { /* TODO: error because word should only be command or data */ },
+            (MessageSide::Sending,_) => 
+                { /* TODO: error because sending side should never parse */ },
+        }
     }
 
 }
