@@ -143,6 +143,19 @@ impl Message {
             .count() as u8
     }
 
+    fn has_data(&self) -> bool {
+        self.data_count() > 0
+    }
+
+    fn has_space(&self) -> bool {
+        if let Some(Word::Command(c)) = self.first() {
+            (self.data_count() - c.word_count()) > 0
+        }
+        else {
+            false
+        }
+    }
+
     /// parses a single word and adds it to the message,
     /// returning either an error or the new length of the parsed
     /// message.
@@ -195,14 +208,8 @@ impl Message {
     ///
     fn parse_bc_to_rt_directed(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
         match (side,self.first()) {
-            (MessageSide::Receiving,Some(Word::Command(c))) => {
-
-                if self.data_count().saturating_add(1) > c.word_count() {
-                    return Err(MESSAGE_BAD);
-                }
-
-                self.add(Word::data(packet.content))
-            },
+            (MessageSide::Receiving,Some(Word::Command(c))) if self.has_space() =>
+                self.add(Word::data(packet.content)),
             (MessageSide::Receiving,None) => 
                 self.add(Word::receive_command(packet.content)?),
             (MessageSide::Sending,None) => 
@@ -301,13 +308,8 @@ impl Message {
                 self.add(Word::mode_code_command(packet.content)?),
             (MessageSide::Sending,None) => 
                 self.add(Word::status(packet.content)),
-            (MessageSide::Sending,Some(Word::Status(_))) => {
-                if self.data_count() > 0 {
-                    return Err(MESSAGE_BAD);
-                }
-
-                self.add(Word::data(packet.content))
-            },
+            (MessageSide::Sending,Some(Word::Status(_))) if !self.has_data() => 
+                self.add(Word::data(packet.content)),
             (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be command */
             (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be status/data */
         }
@@ -328,13 +330,8 @@ impl Message {
         match (side,self.first()) {
             (MessageSide::Receiving,None) =>
                 self.add(Word::mode_code_command(packet.content)?),
-            (MessageSide::Receiving,Some(Word::Command(_))) => {
-                if self.data_count() > 0 {
-                    return Err(MESSAGE_BAD);
-                }
-
-                self.add(Word::data(packet.content))
-            },
+            (MessageSide::Receiving,Some(Word::Command(_))) if !self.has_data() => 
+                self.add(Word::data(packet.content)),
             (MessageSide::Sending,None) => 
                 self.add(Word::status(packet.content)),
             (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be command/data */
@@ -356,15 +353,8 @@ impl Message {
         match (side,self.first()) {
             (MessageSide::Receiving,None) => 
                 self.add(Word::receive_command(packet.content)?),
-            (MessageSide::Receiving,Some(Word::Command(c))) => {
-
-                if self.data_count().saturating_add(1) > c.word_count() {
-                    return Err(MESSAGE_BAD);
-                }
-
-                self.add(Word::data(packet.content))
-
-            },
+            (MessageSide::Receiving,Some(Word::Command(c))) if self.has_space() =>
+                self.add(Word::data(packet.content)),
             (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be command/data */
             (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because sending side should never parse */
         }
@@ -429,13 +419,8 @@ impl Message {
         match (side,self.first()) {
             (MessageSide::Receiving,None) => 
                 self.add(Word::mode_code_command(packet.content)?),
-            (MessageSide::Receiving,Some(Word::Command(_))) => {
-                if self.data_count() > 0 {
-                    return Err(MESSAGE_BAD);
-                }
-
-                self.add(Word::data(packet.content))
-            },
+            (MessageSide::Receiving,Some(Word::Command(_))) if !self.has_data() =>
+                self.add(Word::data(packet.content)),
             (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be command or data */
             (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because sending side should never parse */
         }
