@@ -60,6 +60,27 @@ impl Word {
         Word::Data(DataWord::combine(data))
     }
 
+    pub fn mode_code_command(data: [u8;2]) -> Result<Self> {
+        Some(CommandWord::combine(data))
+            .filter(|c| c.is_mode_code())
+            .map(|c| Word::Command(c))
+            .ok_or(MESSAGE_BAD)
+    }
+
+    pub fn transmit_command(data: [u8;2]) -> Result<Self> {
+        Some(CommandWord::combine(data))
+            .filter(|c| c.is_transmit())
+            .map(|c| Word::Command(c))
+            .ok_or(MESSAGE_BAD)
+    }
+
+    pub fn receive_command(data: [u8;2]) -> Result<Self> {
+        Some(CommandWord::combine(data))
+            .filter(|c| c.is_receive())
+            .map(|c| Word::Command(c))
+            .ok_or(MESSAGE_BAD)
+    }
+
     pub fn is_command(&self) -> bool {
         match self {
             Self::Command(_) => true,
