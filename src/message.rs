@@ -59,28 +59,62 @@ pub enum MessageType {
 }
 
 pub struct Packet {
-    sync:        u8,
-    content: [u8;2],
-    parity:      u8,
+    pub sync:        u8,
+    pub content: [u8;2],
+    pub parity:      u8,
 }
 
 pub struct Message {
     side: MessageType,
+    limit: u8,
     count: u8,
-    words: [Word;32],
+    words: [Word;MAX_WORDS as usize],
+}
+
+macro_rules! make_count {
+    ( $c:expr ) => {{
+        $c[0].count_ones() + 
+        $c[1].count_ones()
+    }}
+}
+
+macro_rules! make_parity {
+    ( $c:expr ) => {{
+        match make_count!($c) % 2 {
+            0 => 1,
+            _ => 0,
+        }
+    }}
 }
 
 impl Packet {
+
+    pub fn data(content: [u8;2]) -> Self {
+        Self {
+            sync:    DATA_SYNC, 
+            content: content, 
+            parity:  make_parity!(content),
+        }
+    }
+
+    pub fn service(content: [u8;2]) -> Self {
+        Self {
+            sync:    SERV_SYNC, 
+            content: content, 
+            parity:  make_parity!(content),
+        }
+    }
 
     pub fn is_data(&self) -> bool {
         self.sync == DATA_SYNC
     }
 
+    pub fn is_service(&self) -> bool {
+        self.sync == SERV_SYNC
+    }
+
     pub fn is_valid(&self) -> bool {
-        let count = self.content[0].count_ones() +
-                    self.content[1].count_ones() + 
-                    (self.parity & 0b00000001) as u32;
-        (count % 2) != 0
+        make_parity!(self.content) == self.parity
     }
 
 }
@@ -90,13 +124,14 @@ impl Message {
     pub fn new(side: MessageType) -> Self {
         Self {
             side: side,
+            limit: MAX_WORDS,
             count: 0,
-            words: [Word::None;32],
+            words: [Word::None;MAX_WORDS as usize],
         }
     }
 
     pub fn is_full(&self) -> bool {
-        self.count >= MAX_WORDS
+        self.count >= self.limit
     }
 
     pub fn is_empty(&self) -> bool {
@@ -428,39 +463,6 @@ impl Message {
 
 }
 
-/// Given data with unspecified length, removes the first
-/// 20 bits and converts them to a (sync,data,parity) triplet.
-fn process(align: bool, mut data: &[u8]) -> (u8,u16,u8) {
-    let mut sync = 0;
-    let mut word = 0;
-    let mut parity = 0;
-
-    // aligned:
-    //      | 11111111 | 11111111 | 11110000 |
-    // unaligned: 
-    //      | 00001111 | 11111111 | 11111111 |
-
-    if align {
-        parity |= (data[2] & 0b00010000) >> 4;
-        sync |= (data[0] & 0b11100000) >> 5;
-        word |= (data[0] as u16 & 0b0000000000011111) << 11;
-        word |= (data[1] as u16 & 0b0000000011111111) << 3;
-        word |= (data[2] as u16 & 0b0000000011100000) >> 5;
-    }
-    else {
-        parity |= data[2] & 0b00000001;
-        sync |= (data[0] & 0b00001110) >> 1;
-        word |= (data[0] as u16 & 0b0000000000000001) << 15;
-        word |= (data[1] as u16 & 0b0000000011111111) << 7;
-        word |= (data[2] as u16 & 0b0000000011111110) >> 1;
-    }
-
-    // take off the first 2 bytes
-    data = &data[..2];
-    
-    (sync,word,parity)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -472,145 +474,127 @@ mod tests {
         }
     }
 
-
     #[test]
-    fn test_process_aligned_word_pattern() {
-        let (_,word,_) = process(true, &[
-            0b00010101,
-            0b01010101,
-            0b01000000,
-        ]);
-        assert_eq!(word,0b1010101010101010);
+    fn test_new_data_packet() {
+        let packet = Packet::data([0b00000000,0b00000000]);
+        assert!(packet.is_data());
     }
 
     #[test]
-    fn test_process_unaligned_word_pattern() {
-        let (_,word,_) = process(false, &[
-            0b00000001,
-            0b01010101,
-            0b01010100,
-        ]);
-        assert_eq!(word,0b1010101010101010);
+    fn test_new_service_packet() {
+        let packet = Packet::service([0b00000000,0b00000000]);
+        assert!(packet.is_service());
     }
 
     #[test]
-    fn test_process_aligned_word_ones() {
-        let (_,word,_) = process(true, &[
-            0b00011111,
-            0b11111111,
-            0b11100000,
-        ]);
-        assert_eq!(word,0b1111111111111111);
+    fn test_packet_parity_even_both() {
+        let packet = Packet::data([0b01000000,0b00100000]);
+        assert_eq!(packet.parity,1);
+        assert!(packet.is_valid());
     }
 
     #[test]
-    fn test_process_unaligned_word_ones() {
-        let (_,word,_) = process(false, &[
-            0b00000001,
-            0b11111111,
-            0b11111110,
-        ]);
-        assert_eq!(word,0b1111111111111111);
+    fn test_packet_parity_even_first() {
+        let packet = Packet::data([0b01100000,0b00000000]);
+        assert_eq!(packet.parity,1);
+        assert!(packet.is_valid());
     }
 
     #[test]
-    fn test_process_aligned_word_zeros() {
-        let (_,word,_) = process(true, &[
-            0b11100000,
-            0b00000000,
-            0b00011111,
-        ]);
-        assert_eq!(word,0);
+    fn test_packet_parity_even_second() {
+        let packet = Packet::data([0b00000000,0b00110000]);
+        assert_eq!(packet.parity,1);
+        assert!(packet.is_valid());
     }
 
     #[test]
-    fn test_process_unaligned_word_zeros() {
-        let (_,word,_) = process(false, &[
-            0b11111110,
-            0b00000000,
-            0b00000001,
-        ]);
-        assert_eq!(word,0);
+    fn test_packet_parity_odd_both() {
+        let packet = Packet::data([0b00110000,0b00001000]);
+        assert_eq!(packet.parity,0);
+        assert!(packet.is_valid());
     }
 
     #[test]
-    fn test_process_aligned_sync_zeros() {
-        let (sync,_,_) = process(true, &[
-            0b00011111,
-            0b11111111,
-            0b11111111,
-        ]);
-        assert_eq!(sync,0);
+    fn test_packet_parity_odd_first() {
+        let packet = Packet::data([0b00111000,0b00000000]);
+        assert_eq!(packet.parity,0);
+        assert!(packet.is_valid());
     }
 
     #[test]
-    fn test_process_unaligned_sync_zeros() {
-        let (sync,_,_) = process(false, &[
-            0b11110001,
-            0b11111111,
-            0b11111111,
-        ]);
-        assert_eq!(sync,0);
+    fn test_packet_parity_odd_second() {
+        let packet = Packet::data([0b00000000,0b00111000]);
+        assert_eq!(packet.parity,0);
+        assert!(packet.is_valid());
     }
 
     #[test]
-    fn test_process_aligned_sync_ones() {
-        let (sync,_,_) = process(true, &[
-            0b11100000,
-            0b00000000,
-            0b00000000,
-        ]);
-        assert_eq!(sync,7);
+    fn test_packet_bad_parity_odd() {
+        let mut packet = Packet::data([0b00000000,0b00111000]);
+        packet.parity = 1;
+        assert_eq!(packet.parity,1);
+        assert!(!packet.is_valid());
     }
 
     #[test]
-    fn test_process_unaligned_sync_ones() {
-        let (sync,_,_) = process(false, &[
-            0b00001110,
-            0b00000000,
-            0b00000000,
-        ]);
-        assert_eq!(sync,7);
+    fn test_packet_bad_parity_even() {
+        let mut packet = Packet::data([0b00000000,0b00110000]);
+        packet.parity = 0;
+        assert_eq!(packet.parity,0);
+        assert!(!packet.is_valid());
     }
 
     #[test]
-    fn test_process_aligned_parity_bit_one() {
-        let (_,_,parity) = process(true, &[
-            0b00000000,
-            0b00000000,
-            0b00010000,
-        ]);
-        assert_eq!(parity,1);
+    fn test_parse_bc_to_rt_directed() {
+        // let mut message = Message::new(
+        //     MessageType::Directed(
+        //         DirectedMessage::BcToRt(
+        //             MessageSide::Sending)));
     }
 
     #[test]
-    fn test_process_unaligned_parity_bit_one() {
-        let (_,_,parity) = process(false, &[
-            0b00000000,
-            0b00000000,
-            0b00000001,
-        ]);
-        assert_eq!(parity,1);
+    fn test_parse_rt_to_bc_directed() {
+
     }
 
     #[test]
-    fn test_process_aligned_parity_bit_zero() {
-        let (_,_,parity) = process(true, &[
-            0b11111111,
-            0b11111111,
-            0b11101111,
-        ]);
-        assert_eq!(parity,0);
+    fn test_parse_rt_to_rt_directed() {
+
     }
 
     #[test]
-    fn test_process_unaligned_parity_bit_zero() {
-        let (_,_,parity) = process(false, &[
-            0b11111111,
-            0b11111111,
-            0b11111110,
-        ]);
-        assert_eq!(parity,0);
+    fn test_parse_mode_without_data_directed() {
+
+    }
+
+    #[test]
+    fn test_parse_mode_with_data_t_directed() {
+
+    }
+
+    #[test]
+    fn test_parse_mode_with_data_r_directed() {
+
+    }
+
+    #[test]
+    fn test_parse_bc_to_rt_broadcast() {
+
+    }
+
+    #[test]
+    fn test_parse_rt_to_rt_broadcast() {
+
+    }
+
+    #[test]
+    fn test_parse_mode_without_data_broadcast() {
+
+    }
+
+    #[test]
+    fn test_parse_mode_with_data_r_broadcast() {
+
     }
 
 }
