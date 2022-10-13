@@ -111,7 +111,8 @@ impl CommandWord {
     }
 
     pub fn combine(data: [u8;2]) -> Self {
-        Self::new(((data[0] as u16) << 8) + data[1] as u16)
+        let content = ((data[0] as u16) << 8) | data[1] as u16;
+        Self::new(((data[0] as u16) << 8) | data[1] as u16)
     }
 
     /// Extract the address field

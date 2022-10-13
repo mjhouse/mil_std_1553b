@@ -58,10 +58,11 @@ pub enum MessageType {
     Broadcast(BroadcastMessage),
 }
 
+#[derive(Clone,Copy)]
 pub struct Packet {
-    pub sync:        u8,
+    pub sync: u8,
     pub content: [u8;2],
-    pub parity:      u8,
+    pub parity: u8,
 }
 
 pub struct Message {
@@ -89,20 +90,16 @@ macro_rules! make_parity {
 
 impl Packet {
 
-    pub fn data(content: [u8;2]) -> Self {
-        Self {
-            sync:    DATA_SYNC, 
-            content: content, 
-            parity:  make_parity!(content),
-        }
+    pub fn new(sync: u8, content: [u8;2], parity: u8) -> Self {
+        Self { sync, content, parity }
     }
 
-    pub fn service(content: [u8;2]) -> Self {
-        Self {
-            sync:    SERV_SYNC, 
-            content: content, 
-            parity:  make_parity!(content),
-        }
+    pub fn data(data: [u8;2]) -> Self {
+        Self::new(DATA_SYNC,data,make_parity!(data))
+    }
+
+    pub fn service(data: [u8;2]) -> Self {
+        Self::new(SERV_SYNC,data,make_parity!(data))
     }
 
     pub fn is_data(&self) -> bool {
@@ -184,7 +181,7 @@ impl Message {
 
     fn has_space(&self) -> bool {
         if let Some(Word::Command(c)) = self.first() {
-            (self.data_count() - c.word_count()) > 0
+            self.data_count() < c.word_count()
         }
         else {
             false
@@ -546,10 +543,47 @@ mod tests {
 
     #[test]
     fn test_parse_bc_to_rt_directed() {
-        // let mut message = Message::new(
-        //     MessageType::Directed(
-        //         DirectedMessage::BcToRt(
-        //             MessageSide::Sending)));
+        let mut message = Message::new(
+            MessageType::Directed(
+                DirectedMessage::BcToRt(
+                    MessageSide::Receiving)));
+
+        // receive command with word count of 2 
+        let packets = vec![
+            Packet::service([0b00000000, 0b00000010]),
+            Packet::data([0b00000000,0b00000000]),
+            Packet::data([0b00000000,0b00000000]),
+        ];
+
+        let mut count = 0;
+        let mut result;
+
+        // parse the command
+        result = message.parse(packets[0]);
+        assert!(result.is_ok());
+
+        count = result.unwrap();
+        assert_eq!(count,1);
+
+        // parse first data word
+        result = message.parse(packets[1]);
+        assert!(result.is_ok());
+
+        count = result.unwrap();
+        assert_eq!(count,2);
+        assert_eq!(message.data_count(),1);
+
+        // parse second data word
+        result = message.parse(packets[2]);
+        assert!(result.is_ok());
+
+        count = result.unwrap();
+        assert_eq!(count,3);
+        assert_eq!(message.data_count(),2);
+
+        // parse too many data words
+        result = message.parse(packets[2]);
+        assert!(result.is_err());
     }
 
     #[test]
