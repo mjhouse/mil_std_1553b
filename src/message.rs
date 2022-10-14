@@ -542,7 +542,7 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_bc_to_rt_directed() {
+    fn test_parse_bc_to_rt_directed_receiving() {
         let mut message = Message::new(
             MessageType::Directed(
                 DirectedMessage::BcToRt(
@@ -587,47 +587,244 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_rt_to_bc_directed() {
+    fn test_parse_bc_to_rt_directed_sending() {
+        let mut message = Message::new(
+            MessageType::Directed(
+                DirectedMessage::BcToRt(
+                    MessageSide::Sending)));
+
+        // receive command with word count of 2 
+        let packets = vec![
+            Packet::service([0b00000000, 0b00000000]),
+            Packet::data([0b00000000,0b00000000])
+        ];
+
+        let mut count = 0;
+        let mut result;
+
+        // parse the command
+        result = message.parse(packets[0]);
+        assert!(result.is_ok());
+
+        count = result.unwrap();
+        assert_eq!(count,1);
+
+        // parse unexpected data word
+        result = message.parse(packets[1]);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_rt_to_bc_directed_receiving() {
+        let mut message = Message::new(
+            MessageType::Directed(
+                DirectedMessage::RtToBc(
+                    MessageSide::Receiving)));
+
+        // receive command with word count of 2 
+        let packets = vec![
+            Packet::service([0b00000100, 0b00000010]),
+            Packet::data([0b00000000,0b00000000])
+        ];
+
+        let mut count = 0;
+        let mut result;
+
+        // parse the command
+        result = message.parse(packets[0]);
+        assert!(result.is_ok());
+
+        count = result.unwrap();
+        assert_eq!(count,1);
+
+        // parse unexpected data word
+        result = message.parse(packets[1]);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_rt_to_rt_directed_sending() {
+        let mut message = Message::new(
+            MessageType::Directed(
+                DirectedMessage::RtToRt(
+                    MessageSide::Sending)));
+
+        // receive command with word count of 2 
+        let packets = vec![
+            Packet::service([0b00000000, 0b00000000]),
+            Packet::data([0b00000000,0b00000000]),
+            Packet::data([0b00000000,0b00000000]),
+        ];
+
+        let mut count = 0;
+        let mut result;
+
+        // parse the command
+        result = message.parse(packets[0]);
+        assert!(result.is_ok());
+
+        count = result.unwrap();
+        assert_eq!(count,1);
+
+        // parse first data word
+        result = message.parse(packets[1]);
+        assert!(result.is_ok());
+
+        count = result.unwrap();
+        assert_eq!(count,2);
+        assert_eq!(message.data_count(),1);
+
+        // parse second data word
+        result = message.parse(packets[2]);
+        assert!(result.is_ok());
+
+        count = result.unwrap();
+        assert_eq!(count,3);
+        assert_eq!(message.data_count(),2);
+    }
+
+    #[test]
+    fn test_parse_rt_to_rt_directed_receiving() {
+        let mut message = Message::new(
+            MessageType::Directed(
+                DirectedMessage::RtToRt(
+                    MessageSide::Receiving)));
+
+        // receive command with word count of 2 
+        let packets = vec![
+            Packet::service([0b00000000, 0b00000010]),
+            Packet::service([0b00000100, 0b00000010]),
+        ];
+
+        let mut count = 0;
+        let mut result;
+
+        // parse the receive command
+        result = message.parse(packets[0]);
+        assert!(result.is_ok());
+
+        count = result.unwrap();
+        assert_eq!(count,1);
+
+        // parse the transmit command
+        result = message.parse(packets[1]);
+        assert!(result.is_ok());
+
+        count = result.unwrap();
+        assert_eq!(count,2);
+    }
+
+    #[test]
+    fn test_parse_mode_without_data_directed_receiving() {
+        let mut message = Message::new(
+            MessageType::Directed(
+                DirectedMessage::ModeWithoutData(
+                    MessageSide::Receiving)));
+
+        let packets = vec![
+            Packet::service([0b00000000, 0b00011111]), // mode code command
+            Packet::data([0b00000000, 0b00000000]), // data word
+        ];
+
+        let mut count = 0;
+        let mut result;
+
+        // parse the receive command
+        result = message.parse(packets[0]);
+        assert!(result.is_ok());
+
+        count = result.unwrap();
+        assert_eq!(count,1);
+
+        // parse too many words
+        result = message.parse(packets[1]);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_mode_without_data_directed_sending() {
+        let mut message = Message::new(
+            MessageType::Directed(
+                DirectedMessage::ModeWithoutData(
+                    MessageSide::Sending)));
+
+        let packets = vec![
+            Packet::service([0b00000000, 0b00000000]), // status word
+            Packet::data([0b00000000, 0b00000000]), // data word
+        ];
+
+        let mut count = 0;
+        let mut result;
+
+        // parse the status word
+        result = message.parse(packets[0]);
+        assert!(result.is_ok());
+
+        count = result.unwrap();
+        assert_eq!(count,1);
+
+        // parse too many words
+        result = message.parse(packets[1]);
+        assert!(result.is_err());
+    }
+    
+    #[test]
+    fn test_parse_mode_with_data_t_directed_receiving() {
 
     }
 
     #[test]
-    fn test_parse_rt_to_rt_directed() {
+    fn test_parse_mode_with_data_t_directed_sending() {
 
     }
 
     #[test]
-    fn test_parse_mode_without_data_directed() {
+    fn test_parse_mode_with_data_r_directed_receiving() {
 
     }
 
     #[test]
-    fn test_parse_mode_with_data_t_directed() {
+    fn test_parse_mode_with_data_r_directed_sending() {
 
     }
 
     #[test]
-    fn test_parse_mode_with_data_r_directed() {
+    fn test_parse_bc_to_rt_broadcast_receiving() {
 
     }
 
     #[test]
-    fn test_parse_bc_to_rt_broadcast() {
+    fn test_parse_bc_to_rt_broadcast_sending() {
 
     }
 
     #[test]
-    fn test_parse_rt_to_rt_broadcast() {
+    fn test_parse_rt_to_rt_broadcast_receiving() {
 
     }
 
     #[test]
-    fn test_parse_mode_without_data_broadcast() {
+    fn test_parse_rt_to_rt_broadcast_sending() {
 
     }
 
     #[test]
-    fn test_parse_mode_with_data_r_broadcast() {
+    fn test_parse_mode_without_data_broadcast_receiving() {
+
+    }
+
+    #[test]
+    fn test_parse_mode_without_data_broadcast_sending() {
+
+    }
+
+    #[test]
+    fn test_parse_mode_with_data_r_broadcast_receiving() {
+
+    }
+
+    #[test]
+    fn test_parse_mode_with_data_r_broadcast_sending() {
 
     }
 
