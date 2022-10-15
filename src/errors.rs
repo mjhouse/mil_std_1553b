@@ -58,7 +58,7 @@ pub const UNKNOWN_MESSAGE_TYPE: Error = Error::Logic(LogicError::UnknownMessageT
 ///    detected an Illegal Command, the ME bit is set and the status word is
 ///    transmitted. A logic “1” indicates an error. All remote terminals must
 ///    implement the ME bit in the status word
-#[derive(Debug)]
+#[derive(Debug,PartialEq)]
 pub enum SystemError {
     None,
     Terminal,  // Terminal Flag bit
@@ -66,7 +66,7 @@ pub enum SystemError {
     Message,   // MessageError bit
 }
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq)]
 pub enum LogicError {
     None,
     OutOfBounds,
@@ -78,7 +78,7 @@ pub enum LogicError {
     UnknownMessageType,
 }
 
-#[derive(Debug)]
+#[derive(Debug,PartialEq)]
 pub enum Error {
     System(SystemError),
     Logic(LogicError),

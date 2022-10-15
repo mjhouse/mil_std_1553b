@@ -555,31 +555,19 @@ mod tests {
             Packet::data([0b00000000,0b00000000]),
         ];
 
-        let mut count = 0;
         let mut result;
 
         // parse the command
         result = message.parse(packets[0]);
-        assert!(result.is_ok());
-
-        count = result.unwrap();
-        assert_eq!(count,1);
+        assert_eq!(result,Ok(1));
 
         // parse first data word
         result = message.parse(packets[1]);
-        assert!(result.is_ok());
-
-        count = result.unwrap();
-        assert_eq!(count,2);
-        assert_eq!(message.data_count(),1);
+        assert_eq!(result,Ok(2));
 
         // parse second data word
         result = message.parse(packets[2]);
-        assert!(result.is_ok());
-
-        count = result.unwrap();
-        assert_eq!(count,3);
-        assert_eq!(message.data_count(),2);
+        assert_eq!(result,Ok(3));
 
         // parse too many data words
         result = message.parse(packets[2]);
@@ -599,15 +587,11 @@ mod tests {
             Packet::data([0b00000000,0b00000000])
         ];
 
-        let mut count = 0;
         let mut result;
 
         // parse the command
         result = message.parse(packets[0]);
-        assert!(result.is_ok());
-
-        count = result.unwrap();
-        assert_eq!(count,1);
+        assert_eq!(result,Ok(1));
 
         // parse unexpected data word
         result = message.parse(packets[1]);
@@ -627,15 +611,11 @@ mod tests {
             Packet::data([0b00000000,0b00000000])
         ];
 
-        let mut count = 0;
         let mut result;
 
         // parse the command
         result = message.parse(packets[0]);
-        assert!(result.is_ok());
-
-        count = result.unwrap();
-        assert_eq!(count,1);
+        assert_eq!(result,Ok(1));
 
         // parse unexpected data word
         result = message.parse(packets[1]);
@@ -656,31 +636,19 @@ mod tests {
             Packet::data([0b00000000,0b00000000]),
         ];
 
-        let mut count = 0;
         let mut result;
 
         // parse the command
         result = message.parse(packets[0]);
-        assert!(result.is_ok());
-
-        count = result.unwrap();
-        assert_eq!(count,1);
+        assert_eq!(result,Ok(1));
 
         // parse first data word
         result = message.parse(packets[1]);
-        assert!(result.is_ok());
-
-        count = result.unwrap();
-        assert_eq!(count,2);
-        assert_eq!(message.data_count(),1);
+        assert_eq!(result,Ok(2));
 
         // parse second data word
         result = message.parse(packets[2]);
-        assert!(result.is_ok());
-
-        count = result.unwrap();
-        assert_eq!(count,3);
-        assert_eq!(message.data_count(),2);
+        assert_eq!(result,Ok(3));
     }
 
     #[test]
@@ -696,22 +664,15 @@ mod tests {
             Packet::service([0b00000100, 0b00000010]),
         ];
 
-        let mut count = 0;
         let mut result;
 
         // parse the receive command
         result = message.parse(packets[0]);
-        assert!(result.is_ok());
-
-        count = result.unwrap();
-        assert_eq!(count,1);
+        assert_eq!(result,Ok(1));
 
         // parse the transmit command
         result = message.parse(packets[1]);
-        assert!(result.is_ok());
-
-        count = result.unwrap();
-        assert_eq!(count,2);
+        assert_eq!(result,Ok(2));
     }
 
     #[test]
@@ -726,15 +687,11 @@ mod tests {
             Packet::data([0b00000000, 0b00000000]), // data word
         ];
 
-        let mut count = 0;
         let mut result;
 
         // parse the receive command
         result = message.parse(packets[0]);
-        assert!(result.is_ok());
-
-        count = result.unwrap();
-        assert_eq!(count,1);
+        assert_eq!(result,Ok(1));
 
         // parse too many words
         result = message.parse(packets[1]);
@@ -753,15 +710,11 @@ mod tests {
             Packet::data([0b00000000, 0b00000000]), // data word
         ];
 
-        let mut count = 0;
         let mut result;
 
         // parse the status word
         result = message.parse(packets[0]);
-        assert!(result.is_ok());
-
-        count = result.unwrap();
-        assert_eq!(count,1);
+        assert_eq!(result,Ok(1));
 
         // parse too many words
         result = message.parse(packets[1]);
@@ -770,62 +723,298 @@ mod tests {
     
     #[test]
     fn test_parse_mode_with_data_t_directed_receiving() {
+        let mut message = Message::new(
+            MessageType::Directed(
+                DirectedMessage::ModeWithDataT(
+                    MessageSide::Receiving)));
 
+        let packets = vec![
+            Packet::service([0b00000000, 0b00000000]), // mode code word
+            Packet::data([0b00000000, 0b00000000]), // data word
+        ];
+
+        let mut result;
+
+        // parse the command word
+        result = message.parse(packets[0]);
+        assert_eq!(result,Ok(1));
+
+        // parse too many words
+        result = message.parse(packets[1]);
+        assert!(result.is_err());
     }
 
     #[test]
     fn test_parse_mode_with_data_t_directed_sending() {
+        let mut message = Message::new(
+            MessageType::Directed(
+                DirectedMessage::ModeWithDataT(
+                    MessageSide::Sending)));
 
+        let packets = vec![
+            Packet::service([0b00000000, 0b00000000]), // status word
+            Packet::data([0b00000000, 0b00000000]), // data word
+            Packet::data([0b00000000, 0b00000000]), // data word
+        ];
+
+        let mut result;
+
+        // parse the command word
+        result = message.parse(packets[0]);
+        assert_eq!(result,Ok(1));
+
+        // parse one data word
+        result = message.parse(packets[1]);
+        assert_eq!(result,Ok(2));
+
+        // parse too many data words
+        result = message.parse(packets[2]);
+        assert!(result.is_err());
     }
 
     #[test]
     fn test_parse_mode_with_data_r_directed_receiving() {
+        let mut message = Message::new(
+            MessageType::Directed(
+                DirectedMessage::ModeWithDataR(
+                    MessageSide::Receiving)));
 
+        let packets = vec![
+            Packet::service([0b00000000, 0b00000000]), // service word
+            Packet::data([0b00000000, 0b00000000]), // data word
+            Packet::data([0b00000000, 0b00000000]), // data word
+        ];
+
+        let mut result;
+
+        // parse the command word
+        result = message.parse(packets[0]);
+        assert_eq!(result,Ok(1));
+
+        // parse one data word
+        result = message.parse(packets[1]);
+        assert_eq!(result,Ok(2));
+
+        // parse too many data words
+        result = message.parse(packets[2]);
+        assert!(result.is_err());
     }
 
     #[test]
     fn test_parse_mode_with_data_r_directed_sending() {
+        let mut message = Message::new(
+            MessageType::Directed(
+                DirectedMessage::ModeWithDataR(
+                    MessageSide::Sending)));
 
+        let packets = vec![
+            Packet::service([0b00000000, 0b00000000]), // service word
+            Packet::data([0b00000000, 0b00000000]), // data word
+        ];
+
+        let mut result;
+
+        // parse the command word
+        result = message.parse(packets[0]);
+        assert_eq!(result,Ok(1));
+
+        // parse too many data words
+        result = message.parse(packets[1]);
+        assert!(result.is_err());
     }
 
     #[test]
     fn test_parse_bc_to_rt_broadcast_receiving() {
+        let mut message = Message::new(
+            MessageType::Broadcast(
+                BroadcastMessage::BcToRt(
+                    MessageSide::Receiving)));
 
+        let packets = vec![
+            Packet::service([0b00000000, 0b00000000]), // service word
+            Packet::data([0b00000000, 0b00000000]),    // data word
+            Packet::data([0b00000000, 0b00000000]),    // data word
+        ];
+
+        let mut result;
+
+        // parse the command word
+        result = message.parse(packets[0]);
+        assert_eq!(result,Ok(1));
+
+        // parse first data word
+        result = message.parse(packets[1]);
+        assert_eq!(result,Ok(2));
+
+        // parse second data word
+        result = message.parse(packets[2]);
+        assert_eq!(result,Ok(3));
     }
 
     #[test]
     fn test_parse_bc_to_rt_broadcast_sending() {
+        let mut message = Message::new(
+            MessageType::Broadcast(
+                BroadcastMessage::BcToRt(
+                    MessageSide::Sending)));
 
+        let packets = vec![
+            Packet::service([0b00000000, 0b00000000]), // service word
+        ];
+
+        let mut result;
+
+        // parse the command word
+        result = message.parse(packets[0]);
+        assert!(result.is_err());
     }
 
     #[test]
     fn test_parse_rt_to_rt_broadcast_receiving() {
+        let mut message = Message::new(
+            MessageType::Broadcast(
+                BroadcastMessage::RtToRt(
+                    MessageSide::Receiving)));
 
+        let packets = vec![
+            Packet::service([0b00000000, 0b00000000]), // receive command
+            Packet::service([0b00000100, 0b00000000]), // transmit command
+            Packet::data([0b00000000, 0b00000000]),    // data word
+        ];
+
+        let mut result;
+
+        // parse first command word
+        result = message.parse(packets[0]);
+        assert_eq!(result,Ok(1));
+
+        // parse second command word
+        result = message.parse(packets[1]);
+        assert_eq!(result,Ok(2));
+
+        // parse data word
+        result = message.parse(packets[2]);
+        assert!(result.is_err());
     }
 
     #[test]
     fn test_parse_rt_to_rt_broadcast_sending() {
+        let mut message = Message::new(
+            MessageType::Broadcast(
+                BroadcastMessage::RtToRt(
+                    MessageSide::Sending)));
 
+        let packets = vec![
+            Packet::service([0b00000000, 0b00000000]), // status word
+            Packet::data([0b00000000, 0b00000000]),    // data word
+            Packet::data([0b00000000, 0b00000000]),    // data word
+        ];
+
+        let mut result;
+
+        // parse status word
+        result = message.parse(packets[0]);
+        assert_eq!(result,Ok(1));
+
+        // parse data word
+        result = message.parse(packets[1]);
+        assert_eq!(result,Ok(2));
+
+        // parse data word
+        result = message.parse(packets[2]);
+        assert_eq!(result,Ok(3));
     }
 
     #[test]
     fn test_parse_mode_without_data_broadcast_receiving() {
+        let mut message = Message::new(
+            MessageType::Broadcast(
+                BroadcastMessage::ModeWithoutData(
+                    MessageSide::Receiving)));
 
+        let packets = vec![
+            Packet::service([0b00000000, 0b00000000]), // mode code command
+            Packet::data([0b00000000, 0b00000000]), // data word
+        ];
+
+        let mut result;
+
+        // parse command word
+        result = message.parse(packets[0]);
+        assert_eq!(result,Ok(1));
+
+        // parse data word
+        result = message.parse(packets[1]);
+        assert!(result.is_err());
     }
 
     #[test]
     fn test_parse_mode_without_data_broadcast_sending() {
+        let mut message = Message::new(
+            MessageType::Broadcast(
+                BroadcastMessage::ModeWithoutData(
+                    MessageSide::Sending)));
 
+        let packets = vec![
+            Packet::service([0b00000000, 0b00000000]), // status word
+            Packet::data([0b00000000, 0b00000000]), // data word
+        ];
+
+        let mut result;
+
+        // parse status word
+        result = message.parse(packets[0]);
+        assert!(result.is_err());
+
+        // parse data word
+        result = message.parse(packets[1]);
+        assert!(result.is_err());
     }
 
     #[test]
     fn test_parse_mode_with_data_r_broadcast_receiving() {
+        let mut message = Message::new(
+            MessageType::Broadcast(
+                BroadcastMessage::ModeWithDataR(
+                    MessageSide::Receiving)));
 
+        let packets = vec![
+            Packet::service([0b00000000, 0b00000000]), // mode code command
+            Packet::data([0b00000000, 0b00000000]), // data word
+        ];
+
+        let mut result;
+
+        // parse command word
+        result = message.parse(packets[0]);
+        assert_eq!(result,Ok(1));
+
+        // parse data word
+        result = message.parse(packets[1]);
+        assert_eq!(result,Ok(2));
     }
 
     #[test]
     fn test_parse_mode_with_data_r_broadcast_sending() {
+        let mut message = Message::new(
+            MessageType::Broadcast(
+                BroadcastMessage::ModeWithDataR(
+                    MessageSide::Sending)));
 
+        let packets = vec![
+            Packet::service([0b00000000, 0b00000000]), // mode code command
+            Packet::data([0b00000000, 0b00000000]), // data word
+        ];
+
+        let mut result;
+
+        // parse command word
+        result = message.parse(packets[0]);
+        assert!(result.is_err());
+
+        // parse data word
+        result = message.parse(packets[1]);
+        assert!(result.is_err());
     }
 
 }
