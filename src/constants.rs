@@ -23,6 +23,12 @@ impl Field {
     }
 }
 
+/// The leading sync pattern for a data word
+pub const DATA_SYNC: u8 = 0b00000111;
+
+/// The leading sync pattern for a non-data word
+pub const SERV_SYNC: u8 = 0b00111000;
+
 /// Constant for a "full" (all-ones) data value
 pub const FULL_WORD: u16                            = 0b1111111111111111;
 
