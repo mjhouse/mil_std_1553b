@@ -1,19 +1,6 @@
-use crate::constants::*;
+use crate::fields::*;
 use crate::flags::*;
 use crate::errors::*;
-
-macro_rules! set {
-    ( $target:expr, $field:ident, $value:expr ) => {
-        $target &= !$field.mask;
-        $target |= ((($value as u16) << $field.offset) & $field.mask);
-    }
-}
-
-macro_rules! get {
-    ( $target:expr, $field:ident ) => {
-        (($target & $field.mask) >> $field.offset) as u8
-    }
-}
 
 #[derive(Clone,Copy,Debug,PartialEq)]
 pub enum Word {
@@ -21,6 +8,12 @@ pub enum Word {
     Command(CommandWord),
     Status(StatusWord),
     Data(DataWord)
+}
+
+impl Default for Word {
+    fn default() -> Self {
+        Self::None
+    }
 }
 
 /// The Command Word (CW) specifies the function that a remote terminal is
@@ -64,21 +57,21 @@ impl Word {
         Some(CommandWord::combine(data))
             .filter(|c| c.is_mode_code())
             .map(|c| Word::Command(c))
-            .ok_or(MESSAGE_BAD)
+            .ok_or(Error::MessageBad)
     }
 
     pub fn transmit_command(data: [u8;2]) -> Result<Self> {
         Some(CommandWord::combine(data))
             .filter(|c| c.is_transmit())
             .map(|c| Word::Command(c))
-            .ok_or(MESSAGE_BAD)
+            .ok_or(Error::MessageBad)
     }
 
     pub fn receive_command(data: [u8;2]) -> Result<Self> {
         Some(CommandWord::combine(data))
             .filter(|c| c.is_receive())
             .map(|c| Word::Command(c))
-            .ok_or(MESSAGE_BAD)
+            .ok_or(Error::MessageBad)
     }
 
     pub fn is_command(&self) -> bool {
@@ -102,6 +95,14 @@ impl Word {
         }
     }
 
+
+    /// Returns `true` if the word is [`None`].
+    ///
+    /// [`None`]: Word::None
+    #[must_use]
+    pub fn is_none(&self) -> bool {
+        matches!(self, Self::None)
+    }
 }
 
 impl CommandWord {
@@ -148,12 +149,11 @@ impl CommandWord {
     /// from the T/R bit (TRANSMIT_RECEIVE field) and the MODE_CODE field values.
     pub fn mode_code(&self) -> Result<ModeCode> {
         if self.is_mode_code() {
-            ModeCode::from_data(
-                self.get_transmit_receive(),
-                self.get_mode_code()
-            )
+            self.get_mode_code()
+                .try_into()
+                .map_err(|_| Error::InvalidCode)
         } else {
-            Err(NOT_MODE_CODE)
+            Err(Error::NotModeCode)
         }
     }
 
@@ -180,52 +180,52 @@ impl CommandWord {
 
     /// Get terminal_address field value
     pub fn get_terminal_address(&self) -> u8 {
-        get!(self.data,COMMAND_TERMINAL_ADDRESS_FIELD)
+        COMMAND_TERMINAL_ADDRESS_FIELD.get(self.data)
     }
 
     /// Set terminal_address field value
     pub fn set_terminal_address(&mut self, value: u8) {
-        set!(self.data,COMMAND_TERMINAL_ADDRESS_FIELD,value);
+        self.data = COMMAND_TERMINAL_ADDRESS_FIELD.set(self.data,value);
     }
 
     /// Get transmit_receive field value
     pub fn get_transmit_receive(&self) -> u8 {
-        get!(self.data,COMMAND_TRANSMIT_RECEIVE_FIELD)
+        COMMAND_TRANSMIT_RECEIVE_FIELD.get(self.data)
     }
 
     /// Set transmit_receive field value
     pub fn set_transmit_receive(&mut self, value: u8) {
-        set!(self.data,COMMAND_TRANSMIT_RECEIVE_FIELD,value);
+        self.data = COMMAND_TRANSMIT_RECEIVE_FIELD.set(self.data,value);
     }
 
     /// Get subaddress field value
     pub fn get_subaddress(&self) -> u8 {
-        get!(self.data,COMMAND_SUBADDRESS_FIELD)
+        COMMAND_SUBADDRESS_FIELD.get(self.data)
     }
 
     /// Set subaddress field value
     pub fn set_subaddress(&mut self, value: u8) {
-        set!(self.data,COMMAND_SUBADDRESS_FIELD,value);
+        self.data = COMMAND_SUBADDRESS_FIELD.set(self.data,value);
     }
 
     /// Get mode_code field value
     pub fn get_mode_code(&self) -> u8 {
-        get!(self.data,COMMAND_MODE_CODE_FIELD)
+        COMMAND_MODE_CODE_FIELD.get(self.data)
     }
 
     /// Set mode_code field value
     pub fn set_mode_code(&mut self, value: u8) {
-        set!(self.data,COMMAND_MODE_CODE_FIELD,value);
+        self.data = COMMAND_MODE_CODE_FIELD.set(self.data,value);
     }
 
     /// Get word_count field value
     pub fn get_word_count(&self) -> u8 {
-        get!(self.data,COMMAND_WORD_COUNT_FIELD)
+        COMMAND_WORD_COUNT_FIELD.get(self.data)
     }
 
     /// Set word_count field value
     pub fn set_word_count(&mut self, value: u8) {
-        set!(self.data,COMMAND_WORD_COUNT_FIELD,value);
+        self.data = COMMAND_WORD_COUNT_FIELD.set(self.data,value);
     }
 
 }
@@ -270,102 +270,102 @@ impl StatusWord {
 
     /// Get terminal_address field value
     pub fn get_terminal_address(&self) -> u8 {
-        get!(self.data,STATUS_TERMINAL_ADDRESS_FIELD)
+        STATUS_TERMINAL_ADDRESS_FIELD.get(self.data)
     }
 
     /// Set terminal_address field value
     pub fn set_terminal_address(&mut self, value: u8) {
-        set!(self.data,STATUS_TERMINAL_ADDRESS_FIELD,value);
+        self.data = STATUS_TERMINAL_ADDRESS_FIELD.set(self.data,value);
     }
 
     /// Get message_error field value
     pub fn get_message_error(&self) -> u8 {
-        get!(self.data,STATUS_MESSAGE_ERROR_FIELD)
+        STATUS_MESSAGE_ERROR_FIELD.get(self.data)
     }
 
     /// Set message_error field value
     pub fn set_message_error(&mut self, value: u8) {
-        set!(self.data,STATUS_MESSAGE_ERROR_FIELD,value);
+        self.data = STATUS_MESSAGE_ERROR_FIELD.set(self.data,value);
     }
 
     /// Get instrumentation field value
     pub fn get_instrumentation(&self) -> u8 {
-        get!(self.data,STATUS_INSTRUMENTATION_FIELD)
+        STATUS_INSTRUMENTATION_FIELD.get(self.data)
     }
 
     /// Set instrumentation field value
     pub fn set_instrumentation(&mut self, value: u8) {
-        set!(self.data,STATUS_INSTRUMENTATION_FIELD,value);
+        self.data = STATUS_INSTRUMENTATION_FIELD.set(self.data,value);
     }
 
     /// Get service_request field value
     pub fn get_service_request(&self) -> u8 {
-        get!(self.data,STATUS_SERVICE_REQUEST_FIELD)
+        STATUS_SERVICE_REQUEST_FIELD.get(self.data)
     }
 
     /// Set service_request field value
     pub fn set_service_request(&mut self, value: u8) {
-        set!(self.data,STATUS_SERVICE_REQUEST_FIELD,value);
+        self.data = STATUS_SERVICE_REQUEST_FIELD.set(self.data,value);
     }
 
     /// Get reserved field value
     pub fn get_reserved(&self) -> u8 {
-        get!(self.data,STATUS_RESERVED_BITS_FIELD)
+        STATUS_RESERVED_BITS_FIELD.get(self.data)
     }
 
     /// Set reserved field value
     pub fn set_reserved(&mut self, value: u8) {
-        set!(self.data,STATUS_RESERVED_BITS_FIELD,value);
+        self.data = STATUS_RESERVED_BITS_FIELD.set(self.data,value);
     }
 
     /// Get broadcast_command_received field value
     pub fn get_broadcast_command_received(&self) -> u8 {
-        get!(self.data,STATUS_BROADCAST_RECEIVED_FIELD)
+        STATUS_BROADCAST_RECEIVED_FIELD.get(self.data)
     }
 
     /// Set broadcast_command_received field value
     pub fn set_broadcast_command_received(&mut self, value: u8) {
-        set!(self.data,STATUS_BROADCAST_RECEIVED_FIELD,value);
+        self.data = STATUS_BROADCAST_RECEIVED_FIELD.set(self.data,value);
     }
 
     /// Get busy field value
     pub fn get_busy(&self) -> u8 {
-        get!(self.data,STATUS_TERMINAL_BUSY_FIELD)
+        STATUS_TERMINAL_BUSY_FIELD.get(self.data)
     }
 
     /// Set busy field value
     pub fn set_busy(&mut self, value: u8) {
-        set!(self.data,STATUS_TERMINAL_BUSY_FIELD,value);
+        self.data = STATUS_TERMINAL_BUSY_FIELD.set(self.data,value);
     }
 
     /// Get subsystem_flag field value
     pub fn get_subsystem_flag(&self) -> u8 {
-        get!(self.data,STATUS_SUBSYSTEM_FLAG_FIELD)
+        STATUS_SUBSYSTEM_FLAG_FIELD.get(self.data)
     }
 
     /// Set subsystem_flag field value
     pub fn set_subsystem_flag(&mut self, value: u8) {
-        set!(self.data,STATUS_SUBSYSTEM_FLAG_FIELD,value);
+        self.data = STATUS_SUBSYSTEM_FLAG_FIELD.set(self.data,value);
     }
 
     /// Get dynamic_bus_acceptance field value
     pub fn get_dynamic_bus_acceptance(&self) -> u8 {
-        get!(self.data,STATUS_BUS_CONTROL_ACCEPT_FIELD)
+        STATUS_BUS_CONTROL_ACCEPT_FIELD.get(self.data)
     }
 
     /// Set dynamic_bus_acceptance field value
     pub fn set_dynamic_bus_acceptance(&mut self, value: u8) {
-        set!(self.data,STATUS_BUS_CONTROL_ACCEPT_FIELD,value);
+        self.data = STATUS_BUS_CONTROL_ACCEPT_FIELD.set(self.data,value);
     }
 
     /// Get terminal_flag field value
     pub fn get_terminal_flag(&self) -> u8 {
-        get!(self.data,STATUS_TERMINAL_FLAG_FIELD)
+        STATUS_TERMINAL_FLAG_FIELD.get(self.data)
     }
 
     /// Set terminal_flag field value
     pub fn set_terminal_flag(&mut self, value: u8) {
-        set!(self.data,STATUS_TERMINAL_FLAG_FIELD,value);
+        self.data = STATUS_TERMINAL_FLAG_FIELD.set(self.data,value);
     }
 
 }
@@ -389,6 +389,7 @@ impl DataWord {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::packets::*;
     
     // only useable with no_std commented out
     macro_rules! debug_bytes {

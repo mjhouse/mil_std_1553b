@@ -1,189 +1,428 @@
-use crate::errors::*;
+use num_enum::{IntoPrimitive,TryFromPrimitive, FromPrimitive};
 
-// Mode Codes are defined by the standard to provide the bus controller with
-// data bus management and error handling/recovery capability. The mode
-// codes are divided into two groups: those with, and those without, a data
-// word.
-// 
-// The data word that is associated with the mode codes—and only one word
-// per mode code is allowed—contains information pertinent to the control of
-// the bus and does not generally contain information required by the
-// subsystem (the exception may be the Synchronize with Data Word Mode
-// Code). The mode codes are defined by bit times 15-19 of the command
-// word. The most significant bit (bit 15) can be used to differentiate between
-// the two-mode code groups. When a data word is associated with the mode
-// code, the T/R bit determines if the data word is transmitted or received by
-// the remote terminal. The mode codes are listed in Table 5.
+/// A flag used by the bus controller to manage remote terminals on the bus.
+/// 
+/// Mode Codes are flags defined by the 1553 standard to provide the Bus 
+/// Controller (BC) with bus management and error handling/recovery capability.
+/// They are divided into two groups- those with and those without an associated
+/// data word. 
+/// 
+/// The data word (of which there can only be one) contains information pertinent
+/// to the control of the bus and which is not generally required by the subsystem.
+/// 
+/// Mode Codes are defined by bit times 15-19 (index 11-15) of the command word, 
+/// the most significant bit of which (bit 15/index 11) of which can be used to
+/// differentiate between the two mode-code groups. When a data word is associated
+/// with the mode code, the T/R bit determines if the data word is transmitted or
+/// received by the remote terminal.
+/// 
+/// Mode Codes are listed on page 40, in table 5, of the MIL-STD-1553 Tutorial[^tutorial].
+/// 
+/// [^tutorial]: <http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf>
+#[derive(Debug,Clone,PartialEq,Eq,IntoPrimitive,TryFromPrimitive)]
 #[repr(u8)]
 pub enum ModeCode {
-    DynamicBusControl,
-    Synchronize,
-    TransmitStatusWord,
-    TransmitVectorWord,
 
-    TransmitLastCommandWord,
-    TransmitBITWord,
+    /// Dynamic Bus Control Mode Code is used to pass control of the data
+    /// bus between terminals, thus supplying a “round robin” type of control.
+    DynamicBusControl                   = 0b00000,
 
-    TransmitterShutdown,
-    OverrideTransmitterShutdown,
+    /// Synchronize Mode Code is transmitted to an RT as a request that 
+    /// some predefined synchronization event occur. 
+    Synchronize                         = 0b00001,
+    
+    /// Transmit Status Word Mode Code requests that the RT transmit the 
+    /// status word associated with the previous message.
+    TransmitStatusWord                  = 0b00010,
 
-    InhibitTerminalFlagBit,
-    OverrideInhibitTerminalFlagBit,
+    /// Initiate Self Test Mode Code is used to take the receiving RT offline 
+    /// in order to perform internal testing.
+    InitiateSelfTest                    = 0b00011,
 
-    SelectedTransmitterShutdown,
-    OverrideSelectedTransmitterShutdown,
+    /// Transmitter Shutdown Mode Code is used by the BC to kill an RT
+    /// which is continuously transmitting on the bus.
+    TransmitterShutdown                 = 0b00100,
 
-    InitiateSelfTest,
-    ResetRemoteTerminal,
+    /// Override Transmitter Shutdown Mode Code is used by the BC to restart
+    /// an RT previously shutdown with the Transmitter Shutdown Mode Code.
+    OverrideTransmitterShutdown         = 0b00101,
+
+    /// Inhibit Terminal Flag Bit Mode Code is used by the BC to request an RT
+    /// set the Terminal Flag Bit in messages to 0, regardless of the true state.
+    InhibitTerminalFlagBit              = 0b00110,
+
+    /// Override Inhibit Terminal Flag Bit is used by the BC to request an RT set
+    /// the Terminal Flag Bit in messages based on the true state of the RT.
+    OverrideInhibitTerminalFlagBit      = 0b00111,
+    
+    /// Reset Remote Terminal Mode Code is used by the BC to request an RT set
+    /// itself back to it's original state, as if it has just powered on.
+    ResetRemoteTerminal                 = 0b01000,
+
+    /// Transmit Vector Word Mode Code is used by the BC to request an RT transmit
+    /// its current needs as a data word. Data word parsing is platform specific.
+    TransmitVectorWord                  = 0b10000,
+
+    /// Synchronize With Data Word Mode Code is the same as Synchronize, but with
+    /// additional information included in a data word.
+    SynchronizeWithDataWord             = 0b10001,
+
+    /// Transmit Last Command Word Mode Code is used by the BC to request that an RT
+    /// transmit it's last received command word.
+    TransmitLastCommandWord             = 0b10010,
+
+    /// Transmit Built-In-Test (BIT) Word Mode Code is used by the BC to request 
+    /// details of the BIT status of the RT.
+    TransmitBITWord                     = 0b10011,
+
+    /// Selected Transmitter Shutdown Mode Code is the same as TransmitterShutdown, 
+    /// but includes a specific bus (transmitter) in the data word.
+    SelectedTransmitterShutdown         = 0b10100,
+
+    /// Override Selected Transmitter Shutdown Mode Code is the same as 
+    /// OverrideTransmitterShutdown but includes a specific bus (transmitter) in the data word.
+    OverrideSelectedTransmitterShutdown = 0b10101,
 }
 
 impl ModeCode {
-    pub fn from_data(transmit_receive_bit: u8, mode_code: u8) -> Result<ModeCode> {
-        use ModeCode::*;
-        match (transmit_receive_bit,mode_code) {
-            (1,0b00000) => Ok(DynamicBusControl),
-            (1,0b00001) => Ok(Synchronize),
-            (0,0b10001) => Ok(Synchronize),
-            (1,0b00010) => Ok(TransmitStatusWord),
-            (1,0b10000) => Ok(TransmitVectorWord),
-            (1,0b10010) => Ok(TransmitLastCommandWord),
-            (1,0b10011) => Ok(TransmitBITWord),
-            (1,0b00100) => Ok(TransmitterShutdown),
-            (1,0b00101) => Ok(OverrideTransmitterShutdown),
-            (1,0b00110) => Ok(InhibitTerminalFlagBit),
-            (1,0b00111) => Ok(OverrideInhibitTerminalFlagBit),
-            (0,0b10100) => Ok(SelectedTransmitterShutdown),
-            (0,0b10101) => Ok(OverrideSelectedTransmitterShutdown),
-            (1,0b00011) => Ok(InitiateSelfTest),
-            (1,0b01000) => Ok(ResetRemoteTerminal),
-            (_,_)       => Err(INVALID_CODE),
+
+    /// Check if mode code is associated with transmit messages
+    /// 
+    /// If the TR bit is cleared, but this function returns true,
+    /// then the message is illegal.
+    pub const fn is_transmit(&self) -> bool {
+        match self {
+            Self::DynamicBusControl => true,
+            Self::SynchronizeWithDataWord => true,
+            Self::TransmitStatusWord => true,
+            Self::InitiateSelfTest => true,
+            Self::TransmitterShutdown => true,
+            Self::OverrideTransmitterShutdown => true,
+            Self::InhibitTerminalFlagBit => true,
+            Self::OverrideInhibitTerminalFlagBit => true,
+            Self::ResetRemoteTerminal => true,
+            Self::TransmitVectorWord => true,
+            Self::TransmitLastCommandWord => true,
+            Self::TransmitBITWord => true,
+            _ => false
         }
     }
 
-    pub fn into_data(&self, transmit_receive_bit: u8) -> Result<u8> {
-        use ModeCode::*;
-        match (transmit_receive_bit,self) {
-            (1,DynamicBusControl)                   => Ok(0b00000),
-            (1,Synchronize)                         => Ok(0b00001),
-            (0,Synchronize)                         => Ok(0b10001),
-            (1,TransmitStatusWord)                  => Ok(0b00010),
-            (1,TransmitVectorWord)                  => Ok(0b10000),
-            (1,TransmitLastCommandWord)             => Ok(0b10010),
-            (1,TransmitBITWord)                     => Ok(0b10011),
-            (1,TransmitterShutdown)                 => Ok(0b00100),
-            (1,OverrideTransmitterShutdown)         => Ok(0b00101),
-            (1,InhibitTerminalFlagBit)              => Ok(0b00110),
-            (1,OverrideInhibitTerminalFlagBit)      => Ok(0b00111),
-            (0,SelectedTransmitterShutdown)         => Ok(0b10100),
-            (0,OverrideSelectedTransmitterShutdown) => Ok(0b10101),
-            (1,InitiateSelfTest)                    => Ok(0b00011),
-            (1,ResetRemoteTerminal)                 => Ok(0b01000),
-            (_,_)                                   => Err(INVALID_CODE)
+    /// Check if mode code is associated with receive messages
+    /// 
+    /// If the TR bit is set, but this function returns true,
+    /// then the message is illegal.
+    pub const fn is_receive(&self) -> bool {
+        match self {
+            Self::Synchronize => true,
+            Self::SelectedTransmitterShutdown => true,
+            Self::OverrideSelectedTransmitterShutdown => true,
+            _ => false
         }
     }
+
+    /// Check if data is associated with the mode code
+    /// 
+    /// This property is true if the MSB of the mode 
+    /// code value is 1. TransmitBITWord, for example,
+    /// has an actual value of 0b00010011, but the field
+    /// in the word is five bits wide, making the value
+    /// 0b10011. The MSB in this case is 1. 
+    /// 
+    /// For clarity, the enum variants are explicitly 
+    /// listed here rather than converted to a u8 and 
+    /// masked to get the bool value. 
+    pub const fn has_data(&self) -> bool {
+        match self {
+            Self::TransmitVectorWord => true,
+            Self::Synchronize => true,
+            Self::TransmitLastCommandWord => true,
+            Self::TransmitBITWord => true,
+            Self::SelectedTransmitterShutdown => true,
+            Self::OverrideSelectedTransmitterShutdown => true,
+            _ => false
+        }
+    }
+
+    /// Check if mode code can be broadcast to all terminals
+    /// 
+    /// Some mode codes can be sent to all receiving terminals
+    /// (RTs) while for other codes, this would be nonsensical.
+    /// Even if a mode code *can* be sent to all RTs, it may
+    /// have disasterous consequences if done while in flight.
+    pub const fn is_broadcast(&self) -> bool {
+        match self {
+            Self::SynchronizeWithDataWord => true,
+            Self::InitiateSelfTest => true,
+            Self::TransmitterShutdown => true,
+            Self::OverrideTransmitterShutdown => true,
+            Self::InhibitTerminalFlagBit => true,
+            Self::OverrideInhibitTerminalFlagBit => true,
+            Self::ResetRemoteTerminal => true,
+            Self::Synchronize => true,
+            Self::SelectedTransmitterShutdown => true,
+            Self::OverrideSelectedTransmitterShutdown => true,
+            _ => false
+        }
+    }
+
 }
 
-/// (COMMAND WORD)
-/// Bit 9 is the Transmit/Receive (T/R) bit. This defines the direction of 
-/// information flow and is always from the point of view of the remote 
-/// terminal. A transmit command (logic 1) indicates that the remote terminal 
-/// is to transmit data, while a receive command (logic 0) indicates that 
-/// the remote terminal is going to receive data. The only exceptions to 
-/// this rule are associated with mode commands.
+/// The direction of message transmission from the point of view of the remote terminal.
+/// 
+/// This flag is available in bit 9 (index 5). A transmit bit (logic 1)
+/// indicates that the remote terminal is to transmit data, while a receive 
+/// command (logic 0) indicates that the remote terminal is going to receive 
+/// data. The only exceptions to this rule are associated with mode commands.
+#[derive(Debug,Clone,PartialEq,Eq,IntoPrimitive,TryFromPrimitive)]
+#[repr(u8)]
 pub enum Direction {
-    Transmit,
-    Receive
+
+    /// The remote terminal is receiving data
+    Receive  = 0,
+
+    /// The remote terminal is to transmit data
+    Transmit = 1,
 }
 
-/// Terminal address (COMMAND WORD)
-///    The five bit Terminal Address (TA) field (bit times 4-8) states to which unique 
-///    remote terminal the command is intended (no two terminals may have the same address).
-///
-///    Note:
-///        An address of 00000B is a valid address, and an address of 11111B is
-///        always reserved as a broadcast address. Additionally, there is no
-///        requirement that the bus controller be assigned an address, therefore
-///        the maximum number of terminals the data bus can support is 31.
-///
-/// Subaddress(COMMAND WORD)
-///     The next five bits (bits 10-14) make up the Subaddress (SA)/Mode
-///     Command bits. Logic 00000B or 11111B within this field is decoded to
-///     indicate that the command is a Mode Code Command. All other logic
-///     combinations of this field are used to direct the data to different functions
-///     within the subsystem. An example might be that 00001B is position and
-///     rate data, 00010B is frequency data, 10010B is display information, and
-///     10011B is self-test data
-#[derive(Debug,PartialEq)]
+impl Direction {
+
+    /// Check if this enum is the transmit variant
+    pub const fn is_transmit(&self) -> bool {
+        match self {
+            Self::Transmit => true,
+            _ => false
+        }
+    }
+
+    /// Check if this enum is the receive variant
+    pub const fn is_receive(&self) -> bool {
+        match self {
+            Self::Receive => true,
+            _ => false
+        }
+    }
+
+}
+
+/// The address of a remote terminal or subsystem within a remote terminal.
+/// 
+/// This 5-bit address is found in the Terminal Address (TA) field located at bit times 4-8 
+/// (index 0-4) or in the Subaddress (SA) field located at bit times 10-14 (index 6-10). 
+/// If the SA value is 0b00000 or 0b11111, then the field is decoded as a Mode Code command,
+/// and a value of 0b11111 is reserved in the TA field as a broadcast address.
+#[derive(Debug,Clone,PartialEq,Eq)]
+#[repr(u8)]
 pub enum Address {
+    /// The address doesn't have a valid value
     None,
+
+    /// The address references a remote terminal
     Terminal(u8),
+
+    /// The address references a subsystem
     Subsystem(u8),
 }
 
-/// (STATUS WORD)
-/// The Instrumentation bit (bit 10) is provided to differentiate between a
-/// command word and a status word (remember they both have the same sync
-/// pattern). The instrumentation bit in the status word is always set to logic
-/// “0”. If used, the corresponding bit in the command word is set to a logic
-/// “1”. This bit in the command word is the most significant bit of the
-/// Subaddress field, and therefore, would limit the subaddresses used to
-/// 10000 - 11110, hence reducing the number of subaddresses available from
-/// 30 to 15. The instrumentation bit is also the reason why there are two
-/// mode code identifiers (00000B and 11111B), the latter required when the
-/// instrumentation bit is used.
+impl Address {
+
+    /// Check if this enum contains an address
+    pub const fn is_none(&self) -> bool {
+        match self {
+            Self::None => true,
+            _ => false
+        }
+    }
+
+    /// Check if this enum contains a Terminal address
+    pub const fn is_terminal(&self) -> bool {
+        match self {
+            Self::Terminal(_) => true,
+            _ => false
+        }
+    }
+
+    /// Check if this enum contains a Subsystem address
+    pub const fn is_subsystem(&self) -> bool {
+        match self {
+            Self::Subsystem(_) => true,
+            _ => false
+        }
+    }
+
+    /// Check if this address is a reserved mode code value
+    pub const fn is_mode_code(&self) -> bool {
+        match self {
+            Self::Subsystem(0b0000_0000) => true,
+            Self::Subsystem(0b0001_1111) => true,
+            _ => false
+        }
+    }
+
+    /// Check if this address is a reserved broadcast value
+    pub const fn is_broadcast(&self) -> bool {
+        match self {
+            Self::Terminal(0b0001_1111) => true,
+            _ => false
+        }
+    }
+
+}
+
+/// Used to differentiate between a command and status word.
 /// 
-/// Earlier monitoring systems required the use of the instrumentation bit to
-/// differentiate between command and status words. However, the price paid
-/// (loss of subaddresses) was too high for modern applications. Most
-/// monitors today are capable of following the protocol and message formats
-/// to determine which word is which.
+/// The instrumentation bit in the status word is always set to a logic 0, 
+/// and if used, the same bit in a command word is set to logic 1. This bit
+/// is the MSB of the Subaddress field, and if used will limit the subaddresses
+/// used to 10000-11110, reducinged the number available from 30 to 15. It is
+/// also the reason there are two mode code identifiers (see [Address](crate::flags::Address)).
+/// 
+/// **Most systems no longer use this flag, as the cost in reduced subaddress
+/// range is too high**.
+#[derive(Debug,Clone,PartialEq,Eq,IntoPrimitive,FromPrimitive)]
+#[repr(u8)]
 pub enum Instrumentation {
-    Status,  // 0
-    Command, // 1
+
+    /// The containing word is a status word
+    #[default]
+    Status  = 0,
+
+    /// The containing word is a command word
+    Command = 1,
 }
 
-/// (STATUS WORD)
-/// The Service Request bit (bit time 11) is provided so that the remote
-/// terminal can inform the bus controller that it needs to be serviced. This bit
-/// is set to a logic “1” by the subsystem to indicate that servicing is needed.
-/// This bit is typically used when the bus controller is “polling” terminals to
-/// determine if they require processing.
+impl Instrumentation {
+
+    /// Check if this enum is the Status variant
+    pub const fn is_status(&self) -> bool {
+        match self {
+            Self::Status => true,
+            _ => false
+        }
+    }
+
+    /// Check if this enum is the Command variant
+    pub const fn is_command(&self) -> bool {
+        match self {
+            Self::Command => true,
+            _ => false
+        }
+    }
+
+}
+
+/// Used by a remote terminal to tell the bus controller that it needs to be serviced.
 /// 
-/// The bus controller, on receiving this bit set to a logic “1”, takes a predeter-
-/// mined action such as issuing a series of messages or requests further data
-/// from the remote terminal. The later approach can be accomplished by
-/// requesting the terminal to transmit data from a defined Subaddress or by
-/// using the Transit Vector Word Mode Code.
+/// This flag is located at bit time 11 (index 7) and is typically used when 
+/// the bus controller is polling terminals to determine if they require 
+/// processing. The bus controller, on receiving this flag, takes a predetermined
+/// action such as issuing a series of messages or requests for further data
+/// to the remote terminal.
+#[derive(Debug,Clone,PartialEq,Eq,IntoPrimitive,FromPrimitive)]
+#[repr(u8)]
 pub enum ServiceRequest {
-    NoService, // 0
-    Service    // 1
+
+    /// This terminal does not require servicing
+    #[default]
+    NoService = 0,
+
+    /// This terminal requires servicing
+    Service   = 1
 }
 
-/// (STATUS WORD)
-/// The Broadcast Command Received bit (bit 15) indicates that the
-/// remote terminal received a valid broadcast command. On receiving a valid
-/// broadcast command, the remote terminal sets this bit to logic “1” and
-/// suppresses the transmission of its status words. The bus controller may
-/// issue a Transmit Status Word or Transmit Last Command Word Mode
-/// Code to determine if the terminal received the message properly.
-pub enum BroadcastCommand {
-    NotReceived, // 0
-    Received     // 1
+impl ServiceRequest {
+
+    /// Check if enum is the NoService variant
+    pub const fn is_noservice(&self) -> bool {
+        match self {
+            Self::NoService => true,
+            _ => false
+        }
+    }
+
+    /// Check if the enum is the Service variant
+    pub const fn is_service(&self) -> bool {
+        match self {
+            Self::Service => true,
+            _ => false
+        }
+    }
+
 }
 
-/// (STATUS WORD)
-/// The Dynamic Bus Control Acceptance bit (bit time 18) informs the bus
-/// controller that the remote terminal has received the Dynamic Bus Control
-/// Mode Code and has accepted control of the bus. For the remote terminal,
-/// the setting of this bit is controlled by the subsystem and is based on passing
-/// some level of built-in-test (i.e., a processor passing its power-up and
-/// continuous background tests).
+/// Indicates that the remote terminal has received a valid broadcast command.
 /// 
-/// The remote terminal, on transmitting its status word, becomes the bus
-/// controller. The bus controller, on receiving the status word from the
-/// remote terminal with this bit set, ceases to function as the bus controller
-/// and may become a remote terminal or bus monitor.
+/// On receiving such a command, the remote terminal sets this flag and
+/// suppresses transmission of its status words. The bus controller may then
+/// issue a Transmit Status word or Transmit Last Command mode code to 
+/// determine if the terminal received the message properly.
+#[derive(Debug,Clone,PartialEq,Eq,IntoPrimitive,FromPrimitive)]
+#[repr(u8)]
+pub enum BroadcastCommand {
+
+    /// This terminal has not received a broadcast command
+    #[default]
+    NotReceived = 0,
+
+    /// This termina received a broadcast command
+    Received    = 1
+}
+
+impl BroadcastCommand {
+
+    /// Check if enum is the NotReceived variant
+    pub const fn is_notreceived(&self) -> bool {
+        match self {
+            Self::NotReceived => true,
+            _ => false
+        }
+    }
+
+    /// Check if the enum is the Received variant
+    pub const fn is_received(&self) -> bool {
+        match self {
+            Self::Received => true,
+            _ => false
+        }
+    }
+
+}
+
+/// Informs the bus controller that the terminal has accepted bus control.
+/// 
+/// This flag is set by remote terminals that have received the Dynamic Bus
+/// Control Mode Code and have accepted control of the bus. The remote terminal,
+/// on transmitting its status word, becomes the bus controller, and the bus
+/// controller, on receiving the status word with this flag, ceases to
+/// control the bus.
+#[derive(Debug,Clone,PartialEq,Eq,IntoPrimitive,FromPrimitive)]
+#[repr(u8)]
 pub enum BusControl {
-    NotAccepted, // 0
-    Accepted,    // 1
+
+    /// This terminal has refused control of the bus
+    #[default]
+    NotAccepted = 0,
+
+    /// This terminal has accepted control of the bus
+    Accepted    = 1
+}
+
+impl BusControl {
+
+    /// Check if the enum is the NotAccepted variant
+    pub const fn is_notaccepted(&self) -> bool {
+        match self {
+            Self::NotAccepted => true,
+            _ => false
+        }
+    }
+
+    /// Check if the enum is the Accepted variant
+    pub const fn is_accepted(&self) -> bool {
+        match self {
+            Self::Accepted => true,
+            _ => false
+        }
+    }
+
 }

@@ -1,5 +1,5 @@
 
-use crate::constants::*;
+use crate::fields::*;
 use crate::flags::*;
 use crate::errors::*;
 use crate::words::*;
@@ -85,7 +85,7 @@ impl Message {
     fn add(&mut self, word: Word) -> Result<u8> {
 
         if self.is_full() {
-            return Err(MESSAGE_FULL);
+            return Err(Error::MessageFull);
         }
 
         self.words[self.count as usize] = word;
@@ -141,7 +141,7 @@ impl Message {
     pub fn parse(&mut self, packet: Packet) -> Result<u8> {
 
         if !packet.is_valid() {
-            return Err(RESERVED_USED);
+            return Err(Error::ReservedUsed);
         }
 
         use MessageType::*;
@@ -169,7 +169,7 @@ impl Message {
                 self.parse_mode_without_data_broadcast(side,packet),
             Broadcast(B::ModeWithDataR(side)) => 
                 self.parse_mode_with_data_r_broadcast(side,packet),
-            _ => Err(UNKNOWN_MESSAGE_TYPE),
+            _ => Err(Error::UnknownMessage),
         }
 
     }
@@ -193,8 +193,8 @@ impl Message {
                 self.add(Word::receive_command(packet.content)?),
             (MessageSide::Sending,None) => 
                 self.add(Word::status(packet.content)),
-            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because first word should be command */
-            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because message should be empty */
+            (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because first word should be command */
+            (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because message should be empty */
         }
     }
 
@@ -217,8 +217,8 @@ impl Message {
                 self.add(Word::data(packet.content)),
             (MessageSide::Sending,None) => 
                 self.add(Word::status(packet.content)),
-            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because there should be only one word */
-            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because word should be status and isn't */
+            (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because there should be only one word */
+            (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because word should be status and isn't */
         }
     }
 
@@ -243,8 +243,8 @@ impl Message {
                 self.add(Word::status(packet.content)),
             (MessageSide::Sending,Some(Word::Status(_))) => 
                 self.add(Word::data(packet.content)),
-            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because words should only be commands */
-            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because word should be status and isn't */
+            (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because words should only be commands */
+            (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because word should be status and isn't */
         }
     }
 
@@ -265,8 +265,8 @@ impl Message {
                 self.add(Word::mode_code_command(packet.content)?),
             (MessageSide::Sending,None) => 
                 self.add(Word::status(packet.content)),
-            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be command */
-            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be status */
+            (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because word should only be command */
+            (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because word should only be status */
         }
     }
 
@@ -289,8 +289,8 @@ impl Message {
                 self.add(Word::status(packet.content)),
             (MessageSide::Sending,Some(Word::Status(_))) if !self.has_data() => 
                 self.add(Word::data(packet.content)),
-            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be command */
-            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be status/data */
+            (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because word should only be command */
+            (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because word should only be status/data */
         }
     }
 
@@ -313,8 +313,8 @@ impl Message {
                 self.add(Word::data(packet.content)),
             (MessageSide::Sending,None) => 
                 self.add(Word::status(packet.content)),
-            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be command/data */
-            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be status */
+            (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because word should only be command/data */
+            (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because word should only be status */
         }
     }
 
@@ -334,8 +334,8 @@ impl Message {
                 self.add(Word::receive_command(packet.content)?),
             (MessageSide::Receiving,Some(Word::Command(c))) if self.has_space() =>
                 self.add(Word::data(packet.content)),
-            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be command/data */
-            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because sending side should never parse */
+            (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because word should only be command/data */
+            (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because sending side should never parse */
         }
     }
 
@@ -360,8 +360,8 @@ impl Message {
                 self.add(Word::status(packet.content)),
             (MessageSide::Sending,Some(Word::Status(_))) => 
                 self.add(Word::data(packet.content)),
-            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be command/data */
-            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be status/data */
+            (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because word should only be command/data */
+            (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because word should only be status/data */
         }
     }
 
@@ -379,8 +379,8 @@ impl Message {
         match (side,self.first()) {
             (MessageSide::Receiving,None) => 
                 self.add(Word::mode_code_command(packet.content)?),
-            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be command */
-            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because sending side should never parse */
+            (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because word should only be command */
+            (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because sending side should never parse */
         }
     }
 
@@ -400,8 +400,8 @@ impl Message {
                 self.add(Word::mode_code_command(packet.content)?),
             (MessageSide::Receiving,Some(Word::Command(_))) if !self.has_data() =>
                 self.add(Word::data(packet.content)),
-            (MessageSide::Receiving,_) => Err(MESSAGE_BAD), /* TODO: error because word should only be command or data */
-            (MessageSide::Sending,_) => Err(MESSAGE_BAD), /* TODO: error because sending side should never parse */
+            (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because word should only be command or data */
+            (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because sending side should never parse */
         }
     }
 
@@ -426,7 +426,7 @@ mod tests {
                     MessageSide::Receiving)));
 
         // receive command with word count of 2 
-        let packets = vec![
+        let packets = &[
             Packet::service([0b00000000, 0b00000010]),
             Packet::data([0b00000000,0b00000000]),
             Packet::data([0b00000000,0b00000000]),
@@ -459,7 +459,7 @@ mod tests {
                     MessageSide::Sending)));
 
         // receive command with word count of 2 
-        let packets = vec![
+        let packets = &[
             Packet::service([0b00000000, 0b00000000]),
             Packet::data([0b00000000,0b00000000])
         ];
@@ -483,7 +483,7 @@ mod tests {
                     MessageSide::Receiving)));
 
         // receive command with word count of 2 
-        let packets = vec![
+        let packets = &[
             Packet::service([0b00000100, 0b00000010]),
             Packet::data([0b00000000,0b00000000])
         ];
@@ -507,7 +507,7 @@ mod tests {
                     MessageSide::Sending)));
 
         // receive command with word count of 2 
-        let packets = vec![
+        let packets = &[
             Packet::service([0b00000000, 0b00000000]),
             Packet::data([0b00000000,0b00000000]),
             Packet::data([0b00000000,0b00000000]),
@@ -536,7 +536,7 @@ mod tests {
                     MessageSide::Receiving)));
 
         // receive command with word count of 2 
-        let packets = vec![
+        let packets = &[
             Packet::service([0b00000000, 0b00000010]),
             Packet::service([0b00000100, 0b00000010]),
         ];
@@ -559,7 +559,7 @@ mod tests {
                 DirectedMessage::ModeWithoutData(
                     MessageSide::Receiving)));
 
-        let packets = vec![
+        let packets = &[
             Packet::service([0b00000000, 0b00011111]), // mode code command
             Packet::data([0b00000000, 0b00000000]), // data word
         ];
@@ -582,7 +582,7 @@ mod tests {
                 DirectedMessage::ModeWithoutData(
                     MessageSide::Sending)));
 
-        let packets = vec![
+        let packets = &[
             Packet::service([0b00000000, 0b00000000]), // status word
             Packet::data([0b00000000, 0b00000000]), // data word
         ];
@@ -605,7 +605,7 @@ mod tests {
                 DirectedMessage::ModeWithDataT(
                     MessageSide::Receiving)));
 
-        let packets = vec![
+        let packets = &[
             Packet::service([0b00000000, 0b00000000]), // mode code word
             Packet::data([0b00000000, 0b00000000]), // data word
         ];
@@ -628,7 +628,7 @@ mod tests {
                 DirectedMessage::ModeWithDataT(
                     MessageSide::Sending)));
 
-        let packets = vec![
+        let packets = &[
             Packet::service([0b00000000, 0b00000000]), // status word
             Packet::data([0b00000000, 0b00000000]), // data word
             Packet::data([0b00000000, 0b00000000]), // data word
@@ -656,7 +656,7 @@ mod tests {
                 DirectedMessage::ModeWithDataR(
                     MessageSide::Receiving)));
 
-        let packets = vec![
+        let packets = &[
             Packet::service([0b00000000, 0b00000000]), // service word
             Packet::data([0b00000000, 0b00000000]), // data word
             Packet::data([0b00000000, 0b00000000]), // data word
@@ -684,7 +684,7 @@ mod tests {
                 DirectedMessage::ModeWithDataR(
                     MessageSide::Sending)));
 
-        let packets = vec![
+        let packets = &[
             Packet::service([0b00000000, 0b00000000]), // service word
             Packet::data([0b00000000, 0b00000000]), // data word
         ];
@@ -707,7 +707,7 @@ mod tests {
                 BroadcastMessage::BcToRt(
                     MessageSide::Receiving)));
 
-        let packets = vec![
+        let packets = &[
             Packet::service([0b00000000, 0b00000000]), // service word
             Packet::data([0b00000000, 0b00000000]),    // data word
             Packet::data([0b00000000, 0b00000000]),    // data word
@@ -735,14 +735,12 @@ mod tests {
                 BroadcastMessage::BcToRt(
                     MessageSide::Sending)));
 
-        let packets = vec![
+        let packets = &[
             Packet::service([0b00000000, 0b00000000]), // service word
         ];
 
-        let mut result;
-
         // parse the command word
-        result = message.parse(packets[0]);
+        let result = message.parse(packets[0]);
         assert!(result.is_err());
     }
 
@@ -753,7 +751,7 @@ mod tests {
                 BroadcastMessage::RtToRt(
                     MessageSide::Receiving)));
 
-        let packets = vec![
+        let packets = &[
             Packet::service([0b00000000, 0b00000000]), // receive command
             Packet::service([0b00000100, 0b00000000]), // transmit command
             Packet::data([0b00000000, 0b00000000]),    // data word
@@ -781,7 +779,7 @@ mod tests {
                 BroadcastMessage::RtToRt(
                     MessageSide::Sending)));
 
-        let packets = vec![
+        let packets = &[
             Packet::service([0b00000000, 0b00000000]), // status word
             Packet::data([0b00000000, 0b00000000]),    // data word
             Packet::data([0b00000000, 0b00000000]),    // data word
@@ -809,7 +807,7 @@ mod tests {
                 BroadcastMessage::ModeWithoutData(
                     MessageSide::Receiving)));
 
-        let packets = vec![
+        let packets = &[
             Packet::service([0b00000000, 0b00000000]), // mode code command
             Packet::data([0b00000000, 0b00000000]), // data word
         ];
@@ -832,7 +830,7 @@ mod tests {
                 BroadcastMessage::ModeWithoutData(
                     MessageSide::Sending)));
 
-        let packets = vec![
+        let packets = &[
             Packet::service([0b00000000, 0b00000000]), // status word
             Packet::data([0b00000000, 0b00000000]), // data word
         ];
@@ -855,7 +853,7 @@ mod tests {
                 BroadcastMessage::ModeWithDataR(
                     MessageSide::Receiving)));
 
-        let packets = vec![
+        let packets = &[
             Packet::service([0b00000000, 0b00000000]), // mode code command
             Packet::data([0b00000000, 0b00000000]), // data word
         ];
@@ -878,7 +876,7 @@ mod tests {
                 BroadcastMessage::ModeWithDataR(
                     MessageSide::Sending)));
 
-        let packets = vec![
+        let packets = &[
             Packet::service([0b00000000, 0b00000000]), // mode code command
             Packet::data([0b00000000, 0b00000000]), // data word
         ];
