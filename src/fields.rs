@@ -16,10 +16,7 @@ impl Field {
     
     /// Create a new field given a mask
     pub const fn new(mask: u16) -> Self {
-        Self {
-            mask:   mask, 
-            offset: mask.trailing_zeros()
-        }
+        Self { mask, offset: mask.trailing_zeros() }
     }
 
     /// Read the value of the field from a data word
@@ -34,6 +31,9 @@ impl Field {
     }
 
 }
+
+/// Mask for an empty field
+pub const WORD_EMPTY: u16                           = 0b0000000000000000;
 
 /// Mask for parsing the terminal address of a command word.
 pub const COMMAND_TERMINAL_ADDRESS: u16             = 0b1111100000000000;

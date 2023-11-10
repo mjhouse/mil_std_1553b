@@ -9,14 +9,32 @@ pub type Result<T> = core::result::Result<T,Error>;
 #[derive(Debug,Clone,PartialEq,Eq)]
 #[repr(u8)]
 pub enum Error {
+
+    /// An index was out of bounds for the index structure
     OutOfBounds,
+
+    /// An unexpected or invalid ModeCode was found
     InvalidCode,
+
+    /// This word is not a ModeCode command word
     NotModeCode,
+
+    /// Cannot add additional words to the current message
     MessageFull,
+
+    /// The message is malformed 
     MessageBad,
+
+    /// The reserved bits of a word were used
     ReservedUsed,
+
+    /// The requested resource was not found
     NotFound,
+
+    /// The message has an unrecognizeable configuration
     UnknownMessage,
+
+    /// An error from a terminal elsewhere in the system (see [SystemError]) 
     SystemError(SystemError)
 }
 
@@ -27,10 +45,19 @@ pub enum Error {
 #[derive(Debug,Clone,PartialEq,Eq)]
 #[repr(u8)]
 pub enum SystemError {
+
+    /// No error
     None,
+
+    /// A terminal error (see [TerminalError] for more information)
     Terminal(TerminalError),
+
+    /// A subsystem error (see [SubsystemError] for more information)
     Subsystem(SubsystemError),
+
+    /// A message error (see [MessageError] for more information)
     Message(MessageError),
+
 }
 
 /// This flag is to inform the bus controller of faults in a remote terminal
@@ -47,7 +74,30 @@ pub enum TerminalError {
     Error = 1,
 }
 
+impl TerminalError {
+
+    /// Check if error enum is None variant
+    pub const fn is_none(&self) -> bool {
+        match self {
+            Self::None => true,
+            _ => false
+        }
+    }
+
+    /// Check if error enum is Error variant
+    pub const fn is_error(&self) -> bool {
+        match self {
+            Self::Error => true,
+            _ => false
+        }
+    }
+
+}
+
 /// This flag provides health data regarding subsystems of a remote terminal.
+/// 
+/// The Subsystem Flag bit located at bit time 17 (index 13) is used to provide 
+/// “health” data regarding the subsystems to which the remote terminal is connected.
 /// 
 /// Multiple subsystems may logically OR their bits together to form a composite
 /// health indicator. This indicator only informs the bus controller that a fault
@@ -58,6 +108,26 @@ pub enum SubsystemError {
     #[default]
     None  = 0,
     Error = 1,
+}
+
+impl SubsystemError {
+
+    /// Check if error enum is None variant
+    pub const fn is_none(&self) -> bool {
+        match self {
+            Self::None => true,
+            _ => false
+        }
+    }
+
+    /// Check if error enum is Error variant
+    pub const fn is_error(&self) -> bool {
+        match self {
+            Self::Error => true,
+            _ => false
+        }
+    }
+
 }
 
 /// This flag is set when a receiving terminal detects an error in a message.
@@ -74,4 +144,24 @@ pub enum MessageError {
     #[default]
     None  = 0,
     Error = 1,
+}
+
+impl MessageError {
+
+    /// Check if error enum is None variant
+    pub const fn is_none(&self) -> bool {
+        match self {
+            Self::None => true,
+            _ => false
+        }
+    }
+
+    /// Check if error enum is Error variant
+    pub const fn is_error(&self) -> bool {
+        match self {
+            Self::Error => true,
+            _ => false
+        }
+    }
+
 }

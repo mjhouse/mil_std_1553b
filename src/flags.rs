@@ -1,4 +1,12 @@
-use num_enum::{IntoPrimitive,TryFromPrimitive, FromPrimitive};
+use num_enum::{IntoPrimitive,FromPrimitive};
+
+macro_rules! fit {
+    ( $v: expr, $p: expr ) => { ($v & $p) > 0 };
+}
+
+macro_rules! eqs {
+    ( $v: expr, $p: expr ) => { $v == $p };
+}
 
 /// A flag used by the bus controller to manage remote terminals on the bus.
 /// 
@@ -19,7 +27,7 @@ use num_enum::{IntoPrimitive,TryFromPrimitive, FromPrimitive};
 /// Mode Codes are listed on page 40, in table 5, of the MIL-STD-1553 Tutorial[^tutorial].
 /// 
 /// [^tutorial]: <http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf>
-#[derive(Debug,Clone,PartialEq,Eq,IntoPrimitive,TryFromPrimitive)]
+#[derive(Debug,Clone,PartialEq,Eq,IntoPrimitive,FromPrimitive)]
 #[repr(u8)]
 pub enum ModeCode {
 
@@ -82,9 +90,19 @@ pub enum ModeCode {
     /// Override Selected Transmitter Shutdown Mode Code is the same as 
     /// OverrideTransmitterShutdown but includes a specific bus (transmitter) in the data word.
     OverrideSelectedTransmitterShutdown = 0b10101,
+
+    /// Unknown Mode Code is a catch-all for parsed mode codes that we don't
+    /// recognize. This doesn't mean they are invalid, but they may be system-specific.
+    #[num_enum(catch_all)]
+    UnknownModeCode(u8)
 }
 
 impl ModeCode {
+
+    /// Get the actual u8 value of the mode code
+    pub fn value(&self) -> u8 {
+        self.clone().into()
+    }
 
     /// Check if mode code is associated with transmit messages
     /// 
@@ -166,6 +184,13 @@ impl ModeCode {
         }
     }
 
+    /// Check if the mode code is unrecognized
+    pub const fn is_unknown(&self) -> bool {
+        match self {
+            Self::UnknownModeCode(_) => true,
+            _ => false
+        }
+    }
 }
 
 /// The direction of message transmission from the point of view of the remote terminal.
@@ -174,11 +199,14 @@ impl ModeCode {
 /// indicates that the remote terminal is to transmit data, while a receive 
 /// command (logic 0) indicates that the remote terminal is going to receive 
 /// data. The only exceptions to this rule are associated with mode commands.
-#[derive(Debug,Clone,PartialEq,Eq,IntoPrimitive,TryFromPrimitive)]
+/// 
+/// This flag is called T/R or Transmit/Receive in the documentation.
+#[derive(Debug,Clone,PartialEq,Eq,IntoPrimitive,FromPrimitive)]
 #[repr(u8)]
 pub enum Direction {
 
     /// The remote terminal is receiving data
+    #[default]
     Receive  = 0,
 
     /// The remote terminal is to transmit data
@@ -205,56 +233,48 @@ impl Direction {
 
 }
 
-/// The address of a remote terminal or subsystem within a remote terminal.
+/// The address of a remote terminal
 /// 
 /// This 5-bit address is found in the Terminal Address (TA) field located at bit times 4-8 
-/// (index 0-4) or in the Subaddress (SA) field located at bit times 10-14 (index 6-10). 
-/// If the SA value is 0b00000 or 0b11111, then the field is decoded as a Mode Code command,
-/// and a value of 0b11111 is reserved in the TA field as a broadcast address.
-#[derive(Debug,Clone,PartialEq,Eq)]
+/// (index 0-4). A value of 0b11111 is reserved in the TA field as a broadcast address.
+#[derive(Debug,Clone,Copy,PartialEq,Eq)]
 #[repr(u8)]
 pub enum Address {
+
+    /// The address references a terminal
+    Value(u8),
+
     /// The address doesn't have a valid value
-    None,
+    Unknown(u8),
 
-    /// The address references a remote terminal
-    Terminal(u8),
-
-    /// The address references a subsystem
-    Subsystem(u8),
+    /// The address is a reserved broadcast value
+    Broadcast(u8),
 }
 
 impl Address {
 
-    /// Check if this enum contains an address
-    pub const fn is_none(&self) -> bool {
-        match self {
-            Self::None => true,
-            _ => false
+    /// Create a new address from a u8 value
+    pub const fn new(value: u8) -> Self {
+        match value {
+            k if eqs!(k,0b0001_1111) => Address::Broadcast(k),
+            k if fit!(k,0b0001_1111) => Address::Value(k),
+            k => Address::Unknown(k)
         }
     }
 
-    /// Check if this enum contains a Terminal address
-    pub const fn is_terminal(&self) -> bool {
+    /// Get the actual u8 value of the address
+    pub const fn value(&self) -> u8 {
         match self {
-            Self::Terminal(_) => true,
-            _ => false
+            Self::Value(k) => *k,
+            Self::Unknown(k) => *k,
+            Self::Broadcast(k) => *k,
         }
     }
 
-    /// Check if this enum contains a Subsystem address
-    pub const fn is_subsystem(&self) -> bool {
+    /// Check if this enum contains an invalid/unknown address
+    pub const fn is_unknown(&self) -> bool {
         match self {
-            Self::Subsystem(_) => true,
-            _ => false
-        }
-    }
-
-    /// Check if this address is a reserved mode code value
-    pub const fn is_mode_code(&self) -> bool {
-        match self {
-            Self::Subsystem(0b0000_0000) => true,
-            Self::Subsystem(0b0001_1111) => true,
+            Self::Unknown(_) => true,
             _ => false
         }
     }
@@ -262,7 +282,65 @@ impl Address {
     /// Check if this address is a reserved broadcast value
     pub const fn is_broadcast(&self) -> bool {
         match self {
-            Self::Terminal(0b0001_1111) => true,
+            Self::Broadcast(_) => true,
+            _ => false
+        }
+    }
+
+}
+
+/// The address of a subsystem within a remote terminal.
+/// 
+/// This 5-bit address is found in the Subaddress (SA) field located at bit times 
+/// 10-14 (index 6-10). If the SA value is 0b00000 or 0b11111, then the field is 
+/// decoded as a Mode Code command.
+#[derive(Debug,Clone,Copy,PartialEq,Eq)]
+#[repr(u8)]
+pub enum SubAddress {
+
+    /// The address references a subsystem
+    Value(u8),
+
+    /// The address doesn't have a valid value
+    Unknown(u8),
+
+    /// The address is a reserved mode code flag
+    ModeCode(u8),
+}
+
+impl SubAddress {
+
+    /// Create a new address from a u8 value
+    pub const fn new(value: u8) -> Self {
+        match value {
+            k if eqs!(k,0b0000_0000) => SubAddress::ModeCode(k),
+            k if eqs!(k,0b0001_1111) => SubAddress::ModeCode(k),
+            k if fit!(k,0b0001_1111) => SubAddress::Value(k),
+            k => SubAddress::Unknown(k)
+        }
+    }
+
+    /// Get the actual u8 value of the address
+    pub const fn value(&self) -> u8 {
+        match self {
+            Self::Value(k) => *k,
+            Self::Unknown(k) => *k,
+            Self::ModeCode(k) => *k,
+        }
+    }
+
+    /// Check if this enum contains an invalid/unkown address
+    pub const fn is_unknown(&self) -> bool {
+        match self {
+            Self::Unknown(_) => true,
+            _ => false
+        }
+    }
+
+    /// Check if this address is a reserved mode code value
+    pub const fn is_mode_code(&self) -> bool {
+        match self {
+            Self::ModeCode(_) => true,
             _ => false
         }
     }
@@ -350,6 +428,42 @@ impl ServiceRequest {
 
 }
 
+/// Reserved bits that should always be zero
+/// 
+/// Bit times 12-14 (index 8-10) are reserved for future growth of the standard 
+/// and must be set to a logic “0”. The bus controller should declare a message 
+/// in error if the remote terminal responds with any of these bits set in its 
+/// status word.
+#[derive(Debug,Clone,PartialEq,Eq)]
+#[repr(u8)]
+pub enum Reserved {
+    /// The reserved bits are empty
+    None = 0b000,
+
+    /// The reserved bits are not empty
+    Value(u8),
+}
+
+impl Reserved {
+
+    /// Check if this enum is the None variant
+    pub const fn is_none(&self) -> bool {
+        match self {
+            Self::None => true,
+            _ => false
+        }
+    }
+
+    /// Check if this enum is the Value variant
+    pub const fn is_value(&self) -> bool {
+        match self {
+            Self::Value(_) => true,
+            _ => false
+        }
+    }
+
+}
+
 /// Indicates that the remote terminal has received a valid broadcast command.
 /// 
 /// On receiving such a command, the remote terminal sets this flag and
@@ -388,6 +502,44 @@ impl BroadcastCommand {
 
 }
 
+/// Indicates that the remote terminal is busy
+/// 
+/// The Busy bit, located at bit time 16 (index 12) is provided as 
+/// feedback to the bus controller when the remote terminal is unable to move 
+/// data between the remote terminal electronics and the subsystem in compliance 
+/// to a command from the bus controller.
+#[derive(Debug,Clone,PartialEq,Eq,IntoPrimitive,FromPrimitive)]
+#[repr(u8)]
+pub enum TerminalBusy {
+
+    /// This terminal is not busy
+    #[default]
+    NotBusy = 0,
+
+    /// This terminal is busy
+    Busy    = 1
+}
+
+impl TerminalBusy {
+
+    /// Check if enum is the NotBusy variant
+    pub const fn is_notbusy(&self) -> bool {
+        match self {
+            Self::NotBusy => true,
+            _ => false
+        }
+    }
+
+    /// Check if the enum is the Busy variant
+    pub const fn is_busy(&self) -> bool {
+        match self {
+            Self::Busy => true,
+            _ => false
+        }
+    }
+
+}
+
 /// Informs the bus controller that the terminal has accepted bus control.
 /// 
 /// This flag is set by remote terminals that have received the Dynamic Bus
@@ -397,7 +549,7 @@ impl BroadcastCommand {
 /// control the bus.
 #[derive(Debug,Clone,PartialEq,Eq,IntoPrimitive,FromPrimitive)]
 #[repr(u8)]
-pub enum BusControl {
+pub enum BusControlAccept {
 
     /// This terminal has refused control of the bus
     #[default]
@@ -407,7 +559,7 @@ pub enum BusControl {
     Accepted    = 1
 }
 
-impl BusControl {
+impl BusControlAccept {
 
     /// Check if the enum is the NotAccepted variant
     pub const fn is_notaccepted(&self) -> bool {
@@ -425,4 +577,46 @@ impl BusControl {
         }
     }
 
+}
+
+impl From<u8> for Address {
+    fn from(v: u8) -> Address {
+        Address::new(v)
+    }
+}
+
+impl From<u8> for SubAddress {
+    fn from(v: u8) -> SubAddress {
+        SubAddress::new(v)
+    }
+}
+
+impl From<SubAddress> for u8 {
+    fn from(v: SubAddress) -> u8 {
+        v.value()
+    }
+}
+
+impl From<Address> for u8 {
+    fn from(v: Address) -> u8 {
+        v.value()
+    }
+}
+
+impl From<u8> for Reserved {
+    fn from(v: u8) -> Reserved {
+        match v {
+            0 => Reserved::None,
+            k => Reserved::Value(k)
+        }
+    }
+}
+
+impl From<Reserved> for u8 {
+    fn from(v: Reserved) -> u8 {
+        match v {
+            Reserved::None => 0,
+            Reserved::Value(k) => k
+        }
+    }
 }

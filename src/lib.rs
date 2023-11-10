@@ -19,6 +19,7 @@ pub mod errors;
 pub mod fields;
 pub mod flags;
 pub mod word;
+pub mod message;
 
 // mod message;
 // mod parse;
