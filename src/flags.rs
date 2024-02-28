@@ -203,7 +203,7 @@ impl ModeCode {
 /// This flag is called T/R or Transmit/Receive in the documentation.
 #[derive(Debug,Clone,PartialEq,Eq,IntoPrimitive,FromPrimitive)]
 #[repr(u8)]
-pub enum Direction {
+pub enum TransmitReceive {
 
     /// The remote terminal is receiving data
     #[default]
@@ -213,7 +213,7 @@ pub enum Direction {
     Transmit = 1,
 }
 
-impl Direction {
+impl TransmitReceive {
 
     /// Check if this enum is the transmit variant
     pub const fn is_transmit(&self) -> bool {

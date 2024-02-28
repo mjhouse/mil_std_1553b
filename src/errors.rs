@@ -19,11 +19,20 @@ pub enum Error {
     /// This word is not a ModeCode command word
     NotModeCode,
 
-    /// Cannot add additional words to the current message
-    MessageFull,
+    /// A WordType::None was given while building a message
+    WordIsInvalid,
 
-    /// The message is malformed 
-    MessageBad,
+    /// Message cannot begin with data words
+    FirstWordIsData,
+
+    /// Message cannot accept new words because it is full
+    MessageIsFull,
+
+    /// Message cannot accept status word with index > 0
+    StatusWordNotFirst,
+
+    /// Message cannot accept command word with index > 0
+    CommandWordNotFirst,
 
     /// The reserved bits of a word were used
     ReservedUsed,

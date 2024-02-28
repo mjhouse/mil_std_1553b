@@ -139,4 +139,12 @@ impl Type {
         }
     }
 
+    /// Get the number of associated data words
+    pub fn data(&self) -> usize {
+        match self {
+            Self::Command(c) => c.count(),
+            _ => 0
+        }
+    }
+
 }

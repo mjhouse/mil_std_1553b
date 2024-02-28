@@ -1,93 +1,101 @@
 
-use crate::fields::*;
 use crate::flags::*;
 use crate::errors::*;
-use crate::word::*;
 use super::enums::*;
 
+use crate::message::array::Array;
 use crate::word::Type as Word;
 
 pub struct Message {
-    side: MessageType,
-    limit: u8,
-    count: u8,
-    words: [Word;MAX_WORDS as usize],
+    sender: Address,
+    receiver: Address,
+    words: Array<Word,MAX_WORDS>,
 }
 
 impl Message {
     
-    pub fn new(side: MessageType) -> Self {
+    pub fn new(sender: Address, receiver: Address) -> Self {
         Self {
-            side,
-            limit: MAX_WORDS,
-            count: 0,
-            words: [Word::None;MAX_WORDS as usize],
+            sender, 
+            receiver,
+            words: Array::new(Word::None),
         }
     }
 
     pub fn is_full(&self) -> bool {
-        self.count >= self.limit
+        self.words.is_full()
     }
 
     pub fn is_empty(&self) -> bool {
-        self.count == 0
+        self.words.is_empty()
     }
 
-    fn add(&mut self, word: Word) -> Result<u8> {
-
-        if self.is_full() {
-            return Err(Error::MessageFull);
-        }
-
-        self.words[self.count as usize] = word;
-        self.count += 1;  
-        Ok(self.count)
+    pub fn count_data(&self) -> usize {
+        self.first()
+            .map(|v| v.data())
+            .unwrap_or(0)
     }
 
-    fn clear(&mut self) {
-        self.words = [Word::None;32];
-        self.count = 0;
+    pub fn has_data(&self) -> bool {
+        self.count_data() > 0
     }
 
-    fn last(&self) -> Option<&Word> {
-        if !self.is_empty() {
-            let index = self.count.saturating_sub(1);
-            Some(&self.words[index as usize])
-        } else {
-            None
-        }
-    }
-
-    fn first(&self) -> Option<&Word> {
-        if !self.is_empty() {
-            Some(&self.words[0])
-        } else {
-            None
-        }
-    }
-
-    fn data_count(&self) -> u8 {
-        self.words
-            .iter()
-            .filter(|w| w.is_data())
-            .count() as u8
-    }
-
-    fn has_data(&self) -> bool {
-        self.data_count() > 0
-    }
-
-    fn has_space(&self) -> bool {
-        if let Some(Word::Command(c)) = self.first() {
-            match c.word_count() {
-                Some(v) => self.data_count() < v,
-                None => false,
+    pub fn add(&mut self, word: Word) -> Result<usize> {
+        match word {
+            Word::None => Err(Error::WordIsInvalid),
+            _ if self.words.space() == 0 => Err(Error::MessageIsFull),
+            Word::Data(_) if self.is_empty() =>  Err(Error::FirstWordIsData),
+            Word::Status(_) if !self.is_empty() =>  Err(Error::StatusWordNotFirst),
+            Word::Command(_) if !self.is_empty() =>  Err(Error::CommandWordNotFirst),
+            Word::Command(w) => {
+                self.words.resize(w.count() + 1);
+                self.words.push(word);
+                Ok(self.words.len())
+            },
+            Word::Status(_) => {
+                self.words.resize(1);
+                self.words.push(word);
+                Ok(self.words.len())
+            },
+            Word::Data(_) => {
+                self.words.push(word);
+                Ok(self.words.len())
             }
         }
-        else {
-            false
-        }
     }
+
+    pub fn clear(&mut self) {
+        self.words.clear();
+    }
+
+    pub fn last(&self) -> Option<&Word> {
+        self.words.last()
+    }
+
+    pub fn first(&self) -> Option<&Word> {
+        self.words.first()
+    }
+
+    pub fn count(&self) -> usize {
+        self.words.count(|w| w.is_data())
+    }
+
+
+
+
+
+
+    // fn has_space(&self) -> bool {
+    //     if let Some(Word::Command(c)) = self.first() {
+    //         match c.word_count() {
+    //             Some(v) => self.data_count() < v as usize,
+    //             None => false,
+    //         }
+    //     }
+    //     else {
+    //         false
+    //     }
+    // }
 
     // /// parses a single word and adds it to the message,
     // /// returning either an error or the new length of the parsed

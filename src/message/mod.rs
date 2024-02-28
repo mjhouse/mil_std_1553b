@@ -1,4 +1,5 @@
 
+mod array;
 mod enums;
 mod message;
 

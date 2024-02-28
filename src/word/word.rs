@@ -83,15 +83,15 @@ impl CommandWord {
     /// 
     /// See [Direction](crate::flags::Direction) for more information
     /// about this field.
-    pub fn transmit_receive(&self) -> Direction {
-        Direction::from(COMMAND_TRANSMIT_RECEIVE_FIELD.get(self.data()))
+    pub fn transmit_receive(&self) -> TransmitReceive {
+        TransmitReceive::from(COMMAND_TRANSMIT_RECEIVE_FIELD.get(self.data()))
     }
 
     /// Set the direction of transmission
     /// 
     /// See [CommandWord::transmit_receive] for more information
     /// about this field.
-    pub fn set_transmit_receive(&mut self, value: Direction) {
+    pub fn set_transmit_receive(&mut self, value: TransmitReceive) {
         self.data = COMMAND_TRANSMIT_RECEIVE_FIELD.set(self.data(),value.into());
     }
 
@@ -167,6 +167,12 @@ impl CommandWord {
     /// for more information.
     pub fn is_receive(&self) -> bool {
         self.transmit_receive().is_receive()
+    }
+
+    /// Get the word count or 0 if word is a mode code command
+    pub fn count(&self) -> usize {
+        self.word_count()
+            .unwrap_or(0) as usize
     }
 
 }
@@ -449,7 +455,7 @@ mod tests {
     #[test]
     fn test_command_set_transmit_receive() {
         let mut word = CommandWord::new(WORD_EMPTY);
-        word.set_transmit_receive(Direction::Transmit);
+        word.set_transmit_receive(TransmitReceive::Transmit);
         assert!(word.transmit_receive().is_transmit());
     }
 
@@ -511,7 +517,7 @@ mod tests {
         let mut word = CommandWord::new(WORD_EMPTY);
         assert!(!word.is_transmit());
 
-        word.set_transmit_receive(Direction::Transmit);
+        word.set_transmit_receive(TransmitReceive::Transmit);
         assert!(word.is_transmit());
     }
 
@@ -520,7 +526,7 @@ mod tests {
         let mut word = CommandWord::new(WORD_EMPTY);
         assert!(word.is_receive());
 
-        word.set_transmit_receive(Direction::Transmit);
+        word.set_transmit_receive(TransmitReceive::Transmit);
         assert!(!word.is_receive());
     }
 

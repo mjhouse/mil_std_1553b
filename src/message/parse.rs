@@ -1,3 +1,4 @@
+
 /// Given data with unspecified length, removes the first
 /// 20 bits and converts them to a (sync,data,parity) triplet.
 fn process(align: bool, mut data: &[u8]) -> (u8,u16,u8) {

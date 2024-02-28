@@ -1,6 +1,6 @@
 
 /// a message can only contain 32 words
-pub const MAX_WORDS: u8 = 32;
+pub const MAX_WORDS: usize = 33;
 
 /// Whether a message should be parsed as a sender or receiver
 #[derive(Clone)]
