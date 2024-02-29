@@ -1,22 +1,21 @@
-
-#[derive(Debug,Clone,Copy,PartialEq,Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Array<T, const S: usize>
-where 
-    T: Clone + Copy
+where
+    T: Clone + Copy,
 {
     initial: T,
     count: usize,
     limit: usize,
-    data: [T;S]
+    data: [T; S],
 }
 
-impl<T,const S: usize> Array<T,S> 
-where 
-    T: Clone + Copy
+impl<T, const S: usize> Array<T, S>
+where
+    T: Clone + Copy,
 {
     /// Create a new array instance
-    /// 
-    /// The default value for the array elements is 
+    ///
+    /// The default value for the array elements is
     /// given as a param, and the maximum size of the
     /// array is given by the const generic `S`.
     pub fn new(v: T) -> Self {
@@ -24,35 +23,35 @@ where
             initial: v,
             count: 0,
             limit: S,
-            data: [v;S]
+            data: [v; S],
         }
     }
 
-    /// Get the current maximum size 
-    /// 
-    /// This value will be equal to or less 
+    /// Get the current maximum size
+    ///
+    /// This value will be equal to or less
     /// than `S`.
     pub fn size(&self) -> usize {
         self.limit
     }
 
     /// Get the number of elements in the array
-    /// 
-    /// This value will be equal to or less 
+    ///
+    /// This value will be equal to or less
     /// than [Array::size].
     pub fn len(&self) -> usize {
         self.count
     }
 
     /// Get the number of remaining positions in the array
-    /// 
+    ///
     /// This value will be equal to the size - len.
     pub fn space(&self) -> usize {
         self.size() - self.len()
     }
 
     /// Get an element from the array by index
-    /// 
+    ///
     /// If the given index is larger than the number
     /// of elements stored, this method returns None.
     pub fn get(&self, index: usize) -> Option<&T> {
@@ -64,7 +63,7 @@ where
     }
 
     /// Append an element to the array
-    /// 
+    ///
     /// If the array is full, this method does
     /// nothing. See [Array::is_full] for details.
     pub fn push(&mut self, value: T) {
@@ -74,19 +73,22 @@ where
         }
     }
 
-    /// Count the number of elements that satisfy a predicate
-    pub fn count<P>(&self, predicate: P) -> usize 
-    where
-        P: FnMut(&&T) -> bool
+    /// Iterate over elements in the array
+    pub fn iter(&self) -> std::slice::Iter<T> 
     {
-        self.data
-            .iter()
-            .filter(predicate)
-            .count()
+        self.data.iter()
+    }
+
+    /// Count the number of elements that satisfy a predicate
+    pub fn count<P>(&self, predicate: P) -> usize
+    where
+        P: FnMut(&&T) -> bool,
+    {
+        self.data.iter().filter(predicate).count()
     }
 
     /// Change the maximum size of the array
-    /// 
+    ///
     /// The given value must be greater than 0 and
     /// less than or equal to the *initial* maximum size
     /// given by the const generic `S`.
@@ -106,24 +108,24 @@ where
     }
 
     /// Get the first element of the array
-    /// 
-    /// If the array has no elements, this method will 
-    /// return None. 
+    ///
+    /// If the array has no elements, this method will
+    /// return None.
     pub fn first(&self) -> Option<&T> {
         self.get(0)
     }
 
     /// Get the last element of the array
-    /// 
-    /// If the array has no elements, this method will 
-    /// return None. 
+    ///
+    /// If the array has no elements, this method will
+    /// return None.
     pub fn last(&self) -> Option<&T> {
         self.get(self.count.saturating_sub(1))
     }
 
     /// Remove all elements from the array
     pub fn clear(&mut self) {
-        self.data = [self.initial;S];
+        self.data = [self.initial; S];
         self.count = 0;
     }
 
@@ -144,13 +146,13 @@ mod tests {
 
     #[test]
     fn test_array_new_len() {
-        let array: Array<u8,10> = Array::new(0);
-        assert_eq!(array.len(),0);
+        let array: Array<u8, 10> = Array::new(0);
+        assert_eq!(array.len(), 0);
     }
 
     #[test]
     fn test_array_resized_smaller() {
-        let mut array: Array<u8,10> = Array::new(0);
+        let mut array: Array<u8, 10> = Array::new(0);
 
         array.push(1);
         array.push(2);
@@ -160,18 +162,18 @@ mod tests {
 
         array.resize(2);
 
-        assert_eq!(array.len(),2);  // the current length
-        assert_eq!(array.size(),2); // the maximum length
-        assert_eq!(array.first(),Some(&1));
-        assert_eq!(array.last(),Some(&2));
+        assert_eq!(array.len(), 2); // the current length
+        assert_eq!(array.size(), 2); // the maximum length
+        assert_eq!(array.first(), Some(&1));
+        assert_eq!(array.last(), Some(&2));
 
         // verify extra elements were reinitialized
-        assert_eq!(array.data[2],0);
+        assert_eq!(array.data[2], 0);
     }
 
     #[test]
     fn test_array_resized_larger() {
-        let mut array: Array<u8,10> = Array::new(0);
+        let mut array: Array<u8, 10> = Array::new(0);
         array.resize(2);
 
         array.push(1);
@@ -179,15 +181,15 @@ mod tests {
 
         array.resize(4);
 
-        assert_eq!(array.len(),2);  // the current length
-        assert_eq!(array.size(),4); // the maximum length
-        assert_eq!(array.first(),Some(&1));
-        assert_eq!(array.last(),Some(&2));
+        assert_eq!(array.len(), 2); // the current length
+        assert_eq!(array.size(), 4); // the maximum length
+        assert_eq!(array.first(), Some(&1));
+        assert_eq!(array.last(), Some(&2));
     }
 
     #[test]
     fn test_array_fill_len() {
-        let mut array: Array<u8,10> = Array::new(0);
+        let mut array: Array<u8, 10> = Array::new(0);
 
         array.push(1);
         array.push(2);
@@ -195,61 +197,61 @@ mod tests {
         array.push(4);
         array.push(5);
 
-        assert_eq!(array.len(),5);
+        assert_eq!(array.len(), 5);
     }
 
     #[test]
     fn test_array_overflow_len() {
-        let mut array: Array<u8,2> = Array::new(0);
+        let mut array: Array<u8, 2> = Array::new(0);
 
         array.push(1);
         array.push(2);
         array.push(3);
 
-        assert_eq!(array.len(),2);
+        assert_eq!(array.len(), 2);
     }
 
     #[test]
     fn test_array_get_values() {
-        let mut array: Array<u8,2> = Array::new(0);
+        let mut array: Array<u8, 2> = Array::new(0);
 
         array.push(1);
         array.push(2);
 
-        assert_eq!(array.get(0),Some(&1));
-        assert_eq!(array.get(1),Some(&2));
-        assert_eq!(array.get(2),None);
+        assert_eq!(array.get(0), Some(&1));
+        assert_eq!(array.get(1), Some(&2));
+        assert_eq!(array.get(2), None);
     }
 
     #[test]
     fn test_array_get_first_and_last() {
-        let mut array: Array<u8,3> = Array::new(0);
+        let mut array: Array<u8, 3> = Array::new(0);
 
         array.push(1);
         array.push(2);
         array.push(3);
 
-        assert_eq!(array.first(),Some(&1));
-        assert_eq!(array.last(),Some(&3));
+        assert_eq!(array.first(), Some(&1));
+        assert_eq!(array.last(), Some(&3));
     }
 
     #[test]
     fn test_array_clear() {
-        let mut array: Array<u8,3> = Array::new(0);
+        let mut array: Array<u8, 3> = Array::new(0);
 
         array.push(1);
         array.push(2);
         array.push(3);
 
-        assert_eq!(array.len(),3);
+        assert_eq!(array.len(), 3);
 
         array.clear();
-        assert_eq!(array.len(),0);
+        assert_eq!(array.len(), 0);
     }
 
     #[test]
     fn test_array_is_empty() {
-        let mut array: Array<u8,3> = Array::new(0);
+        let mut array: Array<u8, 3> = Array::new(0);
         assert!(array.is_empty());
 
         array.push(1);
@@ -261,7 +263,7 @@ mod tests {
 
     #[test]
     fn test_array_is_full() {
-        let mut array: Array<u8,2> = Array::new(0);
+        let mut array: Array<u8, 2> = Array::new(0);
         assert!(!array.is_full());
 
         array.push(1);
@@ -272,5 +274,4 @@ mod tests {
         array.clear();
         assert!(!array.is_full());
     }
-
 }

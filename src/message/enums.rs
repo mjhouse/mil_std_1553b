@@ -1,4 +1,3 @@
-
 /// a message can only contain 32 words
 pub const MAX_WORDS: usize = 33;
 
@@ -15,17 +14,6 @@ pub enum MessageSide {
 /// terminal to the bus controller. This handshaking principle validates the
 /// receipt of the message by the remote terminal.
 ///
-/// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p. 29-30)
-#[derive(Clone)]
-pub enum DirectedMessage {
-    BcToRt(MessageSide),
-    RtToBc(MessageSide),
-    RtToRt(MessageSide),
-    ModeWithoutData(MessageSide),
-    ModeWithDataT(MessageSide),
-    ModeWithDataR(MessageSide),
-}
-
 /// Broadcast messages are transmitted to multiple remote terminals at the
 /// same time. The terminals suppress the transmission of their status words
 /// (not doing so would have multiple boxes trying to talk at the same time and
@@ -35,10 +23,12 @@ pub enum DirectedMessage {
 ///
 /// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p. 29-30)
 #[derive(Clone)]
-pub enum BroadcastMessage {
+pub enum MessageDirection {
     BcToRt(MessageSide),
+    RtToBc(MessageSide),
     RtToRt(MessageSide),
     ModeWithoutData(MessageSide),
+    ModeWithDataT(MessageSide),
     ModeWithDataR(MessageSide),
 }
 
@@ -46,6 +36,6 @@ pub enum BroadcastMessage {
 /// next.
 #[derive(Clone)]
 pub enum MessageType {
-    Directed(DirectedMessage),
-    Broadcast(BroadcastMessage),
+    Directed(MessageDirection),
+    Broadcast(MessageDirection),
 }

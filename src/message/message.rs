@@ -1,850 +1,275 @@
-
-use crate::flags::*;
-use crate::errors::*;
 use super::enums::*;
-
-use crate::message::array::Array;
+use crate::errors::*;
+use crate::word::{CommandWord, DataWord, StatusWord};
+use crate::message::Array;
 use crate::word::Type as Word;
 
+/// A message sent between two terminals on the bus
+///
+/// The Message object does very minimal message validation
+/// for the message structure: 
+///
+/// * Command or status words are always the first word.
+/// * Data words are limited based on the command word count.
+/// * Messages can't exceed max message size.
+///
+/// It does not validate larger messaging formats that 
+/// require context about previous messages or terminal type.
 pub struct Message {
-    sender: Address,
-    receiver: Address,
-    words: Array<Word,MAX_WORDS>,
+    words: Array<Word, MAX_WORDS>,
 }
 
 impl Message {
-    
-    pub fn new(sender: Address, receiver: Address) -> Self {
-        Self {
-            sender, 
-            receiver,
-            words: Array::new(Word::None),
-        }
+    pub fn new() -> Self {
+        Self { words: Array::new(Word::None) }
     }
 
+    /// Check if the message is full
     pub fn is_full(&self) -> bool {
         self.words.is_full()
     }
 
+    /// Check if the message is empty
     pub fn is_empty(&self) -> bool {
         self.words.is_empty()
     }
 
-    pub fn count_data(&self) -> usize {
-        self.first()
-            .map(|v| v.data())
-            .unwrap_or(0)
-    }
-
-    pub fn has_data(&self) -> bool {
-        self.count_data() > 0
-    }
-
-    pub fn add(&mut self, word: Word) -> Result<usize> {
-        match word {
-            Word::None => Err(Error::WordIsInvalid),
-            _ if self.words.space() == 0 => Err(Error::MessageIsFull),
-            Word::Data(_) if self.is_empty() =>  Err(Error::FirstWordIsData),
-            Word::Status(_) if !self.is_empty() =>  Err(Error::StatusWordNotFirst),
-            Word::Command(_) if !self.is_empty() =>  Err(Error::CommandWordNotFirst),
-            Word::Command(w) => {
-                self.words.resize(w.count() + 1);
-                self.words.push(word);
-                Ok(self.words.len())
-            },
-            Word::Status(_) => {
-                self.words.resize(1);
-                self.words.push(word);
-                Ok(self.words.len())
-            },
-            Word::Data(_) => {
-                self.words.push(word);
-                Ok(self.words.len())
-            }
-        }
-    }
-
+    /// Clear all words from the message
     pub fn clear(&mut self) {
         self.words.clear();
     }
 
+    /// Get the last word in the message
     pub fn last(&self) -> Option<&Word> {
         self.words.last()
     }
 
+    /// Get the first word in the message
     pub fn first(&self) -> Option<&Word> {
         self.words.first()
     }
 
-    pub fn count(&self) -> usize {
+    /// Get the number of words
+    pub fn word_count(&self) -> usize {
+        self.words.count(|w| w.is_some())
+    }
+
+    /// Get the number of data words
+    pub fn data_count(&self) -> usize {
         self.words.count(|w| w.is_data())
     }
 
+    /// Get the expected number of data words
+    pub fn data_expected(&self) -> usize {
+        self.first().map(Word::data).unwrap_or(0)
+    }
 
+    /// Check if message has data words
+    pub fn has_data(&self) -> bool {
+        self.data_count() > 0
+    }
 
+    /// Check if message can contain more data words
+    pub fn has_space(&self) -> bool {
+        self.data_count() < self.data_expected()
+    }
 
+    /// Check if message starts with a command word
+    pub fn has_command(&self) -> bool {
+        self.first().map(Word::is_command).unwrap_or(false)
+    }
 
+    /// Check if message starts with a status word
+    pub fn has_status(&self) -> bool {
+        self.first().map(Word::is_status).unwrap_or(false)
+    }
 
-    // fn has_space(&self) -> bool {
-    //     if let Some(Word::Command(c)) = self.first() {
-    //         match c.word_count() {
-    //             Some(v) => self.data_count() < v as usize,
-    //             None => false,
-    //         }
-    //     }
-    //     else {
-    //         false
-    //     }
-    // }
+    /// Add a generic word to the message, returning size on success
+    pub fn add(&mut self, word: Word) -> Result<usize> {
+        match word {
+            Word::Data(v) => self.add_data(v),
+            Word::Status(v) => self.add_status(v),
+            Word::Command(v) => self.add_command(v),
+            _ => Err(Error::WordIsInvalid)
+        }
+    }
 
-    // /// parses a single word and adds it to the message,
-    // /// returning either an error or the new length of the parsed
-    // /// message.
-    // pub fn parse(&mut self, packet: Packet) -> Result<u8> {
+    /// Add a data word, returning the size of the message on success
+    pub fn add_data(&mut self, word: DataWord) -> Result<usize> {
+        if self.is_full() {
+            Err(Error::MessageIsFull)
+        } else if self.is_empty() {
+            Err(Error::FirstWordIsData)
+        } else {
+            self.words.push(Word::Data(word));
+            Ok(self.words.len())
+        }
+    }
 
-    //     if !packet.is_valid() {
-    //         return Err(Error::ReservedUsed);
-    //     }
+    /// Add a status word, returning the size of the message on success
+    pub fn add_status(&mut self, word: StatusWord) -> Result<usize> {
+        if !self.is_empty() {
+            Err(Error::StatusWordNotFirst)
+        } 
+        else if !word.is_valid() {
+            Err(Error::InvalidStatusWord)
+        }
+        else {
+            self.words.push(Word::Status(word));
+            Ok(self.words.len())
+        }
+    }
 
-    //     use MessageType::*;
-    //     use DirectedMessage as D;
-    //     use BroadcastMessage as B;
+    /// Add a command word, returning the size of the message on success
+    pub fn add_command(&mut self, word: CommandWord) -> Result<usize> {
+        if !self.is_empty() {
+            Err(Error::CommandWordNotFirst)
+        } else {
+            self.words.resize(word.count() + 1);
+            self.words.push(Word::Command(word));
+            Ok(self.words.len())
+        }
+    }
 
-    //     match self.side.clone() {
-    //         Directed(D::BcToRt(side)) => 
-    //             self.parse_bc_to_rt_directed(side,packet),
-    //         Directed(D::RtToBc(side)) => 
-    //             self.parse_rt_to_bc_directed(side,packet),
-    //         Directed(D::RtToRt(side)) => 
-    //             self.parse_rt_to_rt_directed(side,packet),
-    //         Directed(D::ModeWithoutData(side)) => 
-    //             self.parse_mode_without_data_directed(side,packet),
-    //         Directed(D::ModeWithDataT(side)) => 
-    //             self.parse_mode_with_data_t_directed(side,packet),
-    //         Directed(D::ModeWithDataR(side)) => 
-    //             self.parse_mode_with_data_r_directed(side,packet),
-    //         Broadcast(B::BcToRt(side)) => 
-    //             self.parse_bc_to_rt_broadcast(side,packet),
-    //         Broadcast(B::RtToRt(side)) => 
-    //             self.parse_rt_to_rt_broadcast(side,packet),
-    //         Broadcast(B::ModeWithoutData(side)) => 
-    //             self.parse_mode_without_data_broadcast(side,packet),
-    //         Broadcast(B::ModeWithDataR(side)) => 
-    //             self.parse_mode_with_data_r_broadcast(side,packet),
-    //         _ => Err(Error::UnknownMessage),
-    //     }
-
-    // }
-
-    // /// Parse BC -> RT Directed
-    // ///
-    // /// If this message is being parsed on the "receiving" side, then
-    // /// we are parsing the SEND message (and then responding with the
-    // /// RESP message). If it's being parsed on the "sending" side, then 
-    // /// we're going to be parsing the RESP only.
-    // ///
-    // /// Pattern:
-    // ///     SEND: RECV COMM | DATA | DATA | ...
-    // ///     RESP: STAT
-    // ///
-    // fn parse_bc_to_rt_directed(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
-    //     match (side,self.first()) {
-    //         (MessageSide::Receiving,Some(Word::Command(c))) if self.has_space() =>
-    //             self.add(Word::data(packet.content)),
-    //         (MessageSide::Receiving,None) => 
-    //             self.add(Word::receive_command(packet.content)?),
-    //         (MessageSide::Sending,None) => 
-    //             self.add(Word::status(packet.content)),
-    //         (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because first word should be command */
-    //         (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because message should be empty */
-    //     }
-    // }
-
-    // /// Parse RT -> BC Directed
-    // ///
-    // /// If this message is being parsed on the "receiving" side, then
-    // /// we are parsing the SEND message (and then responding with the
-    // /// RESP message). If it's being parsed on the "sending" side, then 
-    // /// we're going to be parsing the RESP only.
-    // ///
-    // /// Pattern:
-    // ///     SEND: TRAN COMM 
-    // ///     RESP: STAT | DATA | DATA | ...
-    // ///
-    // fn parse_rt_to_bc_directed(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
-    //     match (side,self.first()) {
-    //         (MessageSide::Receiving,None) =>
-    //             self.add(Word::transmit_command(packet.content)?),
-    //         (MessageSide::Sending,Some(Word::Status(_))) => 
-    //             self.add(Word::data(packet.content)),
-    //         (MessageSide::Sending,None) => 
-    //             self.add(Word::status(packet.content)),
-    //         (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because there should be only one word */
-    //         (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because word should be status and isn't */
-    //     }
-    // }
-
-    // /// Parse RT -> RT Directed
-    // ///
-    // /// If this message is being parsed on the "receiving" side, then
-    // /// we are parsing the SEND message (and then responding with the
-    // /// RESP message). If it's being parsed on the "sending" side, then 
-    // /// we're going to be parsing the RESP only.
-    // ///
-    // /// Pattern:
-    // ///     SEND: RECV COMM | TRAN COMM |
-    // ///     RESP: STAT | DATA | DATA | ...
-    // ///
-    // fn parse_rt_to_rt_directed(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
-    //     match (side,self.first()) {
-    //         (MessageSide::Receiving,None) =>
-    //             self.add(Word::receive_command(packet.content)?),
-    //         (MessageSide::Receiving,Some(Word::Command(_))) =>
-    //             self.add(Word::transmit_command(packet.content)?),
-    //         (MessageSide::Sending,None) => 
-    //             self.add(Word::status(packet.content)),
-    //         (MessageSide::Sending,Some(Word::Status(_))) => 
-    //             self.add(Word::data(packet.content)),
-    //         (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because words should only be commands */
-    //         (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because word should be status and isn't */
-    //     }
-    // }
-
-    // /// Parse Without Data Directed
-    // ///
-    // /// If this message is being parsed on the "receiving" side, then
-    // /// we are parsing the SEND message (and then responding with the
-    // /// RESP message). If it's being parsed on the "sending" side, then 
-    // /// we're going to be parsing the RESP only.
-    // ///
-    // /// Pattern:
-    // ///     SEND: MOD COMM
-    // ///     RESP: STAT
-    // ///
-    // fn parse_mode_without_data_directed(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
-    //     match (side,self.first()) {
-    //         (MessageSide::Receiving,None) =>
-    //             self.add(Word::mode_code_command(packet.content)?),
-    //         (MessageSide::Sending,None) => 
-    //             self.add(Word::status(packet.content)),
-    //         (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because word should only be command */
-    //         (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because word should only be status */
-    //     }
-    // }
-
-    // /// Parse With Data Directed
-    // ///
-    // /// If this message is being parsed on the "receiving" side, then
-    // /// we are parsing the SEND message (and then responding with the
-    // /// RESP message). If it's being parsed on the "sending" side, then 
-    // /// we're going to be parsing the RESP only.
-    // ///
-    // /// Pattern:
-    // ///     SEND: MOD COMM
-    // ///     RESP: STAT | DATA |
-    // ///
-    // fn parse_mode_with_data_t_directed(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
-    //     match (side,self.first()) {
-    //         (MessageSide::Receiving,None) =>
-    //             self.add(Word::mode_code_command(packet.content)?),
-    //         (MessageSide::Sending,None) => 
-    //             self.add(Word::status(packet.content)),
-    //         (MessageSide::Sending,Some(Word::Status(_))) if !self.has_data() => 
-    //             self.add(Word::data(packet.content)),
-    //         (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because word should only be command */
-    //         (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because word should only be status/data */
-    //     }
-    // }
-
-    // /// Parse With Data R Directed
-    // ///
-    // /// If this message is being parsed on the "receiving" side, then
-    // /// we are parsing the SEND message (and then responding with the
-    // /// RESP message). If it's being parsed on the "sending" side, then 
-    // /// we're going to be parsing the RESP only.
-    // ///
-    // /// Pattern:
-    // ///     SEND: MOD COMM | DATA |
-    // ///     RESP: STAT
-    // ///
-    // fn parse_mode_with_data_r_directed(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
-    //     match (side,self.first()) {
-    //         (MessageSide::Receiving,None) =>
-    //             self.add(Word::mode_code_command(packet.content)?),
-    //         (MessageSide::Receiving,Some(Word::Command(_))) if !self.has_data() => 
-    //             self.add(Word::data(packet.content)),
-    //         (MessageSide::Sending,None) => 
-    //             self.add(Word::status(packet.content)),
-    //         (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because word should only be command/data */
-    //         (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because word should only be status */
-    //     }
-    // }
-
-    // /// Parse BC to RT Broadcast
-    // ///
-    // /// If this message is being parsed on the "receiving" side, then
-    // /// we are parsing the SEND message (and then responding with the
-    // /// RESP message). If it's being parsed on the "sending" side, then 
-    // /// we're going to be parsing the RESP only.
-    // ///
-    // /// Pattern:
-    // ///     SEND: RECV COMM | DATA | DATA | ...
-    // ///
-    // fn parse_bc_to_rt_broadcast(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
-    //     match (side,self.first()) {
-    //         (MessageSide::Receiving,None) => 
-    //             self.add(Word::receive_command(packet.content)?),
-    //         (MessageSide::Receiving,Some(Word::Command(c))) if self.has_space() =>
-    //             self.add(Word::data(packet.content)),
-    //         (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because word should only be command/data */
-    //         (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because sending side should never parse */
-    //     }
-    // }
-
-    // /// Parse RT to RT Broadcast
-    // ///
-    // /// If this message is being parsed on the "receiving" side, then
-    // /// we are parsing the SEND message (and then responding with the
-    // /// RESP message). If it's being parsed on the "sending" side, then 
-    // /// we're going to be parsing the RESP only.
-    // ///
-    // /// Pattern:
-    // ///     SEND: RECV COMM | TRAN COMM |
-    // ///     RESP: STAT | DATA | DATA | ...
-    // ///
-    // fn parse_rt_to_rt_broadcast(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
-    //     match (side,self.first()) {
-    //         (MessageSide::Receiving,None) =>
-    //             self.add(Word::receive_command(packet.content)?),
-    //         (MessageSide::Receiving,Some(Word::Command(_))) => 
-    //             self.add(Word::transmit_command(packet.content)?),
-    //         (MessageSide::Sending,None) => 
-    //             self.add(Word::status(packet.content)),
-    //         (MessageSide::Sending,Some(Word::Status(_))) => 
-    //             self.add(Word::data(packet.content)),
-    //         (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because word should only be command/data */
-    //         (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because word should only be status/data */
-    //     }
-    // }
-
-    // /// Parse Mode Without Data Broadcast
-    // ///
-    // /// If this message is being parsed on the "receiving" side, then
-    // /// we are parsing the SEND message (and then responding with the
-    // /// RESP message). If it's being parsed on the "sending" side, then 
-    // /// we're going to be parsing the RESP only.
-    // ///
-    // /// Pattern:
-    // ///     SEND: MOD COMM
-    // ///
-    // fn parse_mode_without_data_broadcast(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
-    //     match (side,self.first()) {
-    //         (MessageSide::Receiving,None) => 
-    //             self.add(Word::mode_code_command(packet.content)?),
-    //         (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because word should only be command */
-    //         (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because sending side should never parse */
-    //     }
-    // }
-
-    // /// Parse Mode With Data Broadcast
-    // ///
-    // /// If this message is being parsed on the "receiving" side, then
-    // /// we are parsing the SEND message (and then responding with the
-    // /// RESP message). If it's being parsed on the "sending" side, then 
-    // /// we're going to be parsing the RESP only.
-    // ///
-    // /// Pattern:
-    // ///     SEND: MOD COMM | DATA |
-    // ///
-    // fn parse_mode_with_data_r_broadcast(&mut self, side: MessageSide, packet: Packet) -> Result<u8> {
-    //     match (side,self.first()) {
-    //         (MessageSide::Receiving,None) => 
-    //             self.add(Word::mode_code_command(packet.content)?),
-    //         (MessageSide::Receiving,Some(Word::Command(_))) if !self.has_data() =>
-    //             self.add(Word::data(packet.content)),
-    //         (MessageSide::Receiving,_) => Err(Error::MessageBad), /* TODO: error because word should only be command or data */
-    //         (MessageSide::Sending,_) => Err(Error::MessageBad), /* TODO: error because sending side should never parse */
-    //     }
-    // }
+    /// Convert data words to text
+    pub fn as_text(&self) -> String {
+        let mut text = String::new();
+        for word in self.words.iter() {
+            if let Word::Data(w) = word {
+                text += &w.as_text();
+            }
+        }
+        text
+    }
 
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-
-//     #[test]
-//     fn test_parse_bc_to_rt_directed_receiving() {
-//         let mut message = Message::new(
-//             MessageType::Directed(
-//                 DirectedMessage::BcToRt(
-//                     MessageSide::Receiving)));
-
-//         // receive command with word count of 2 
-//         let packets = &[
-//             Packet::service([0b00000000, 0b00000010]),
-//             Packet::data([0b00000000,0b00000000]),
-//             Packet::data([0b00000000,0b00000000]),
-//         ];
-
-//         let mut result;
-
-//         // parse the command
-//         result = message.parse(packets[0]);
-//         assert_eq!(result,Ok(1));
-
-//         // parse first data word
-//         result = message.parse(packets[1]);
-//         assert_eq!(result,Ok(2));
-
-//         // parse second data word
-//         result = message.parse(packets[2]);
-//         assert_eq!(result,Ok(3));
-
-//         // parse too many data words
-//         result = message.parse(packets[2]);
-//         assert!(result.is_err());
-//     }
-
-//     #[test]
-//     fn test_parse_bc_to_rt_directed_sending() {
-//         let mut message = Message::new(
-//             MessageType::Directed(
-//                 DirectedMessage::BcToRt(
-//                     MessageSide::Sending)));
-
-//         // receive command with word count of 2 
-//         let packets = &[
-//             Packet::service([0b00000000, 0b00000000]),
-//             Packet::data([0b00000000,0b00000000])
-//         ];
-
-//         let mut result;
-
-//         // parse the command
-//         result = message.parse(packets[0]);
-//         assert_eq!(result,Ok(1));
-
-//         // parse unexpected data word
-//         result = message.parse(packets[1]);
-//         assert!(result.is_err());
-//     }
-
-//     #[test]
-//     fn test_parse_rt_to_bc_directed_receiving() {
-//         let mut message = Message::new(
-//             MessageType::Directed(
-//                 DirectedMessage::RtToBc(
-//                     MessageSide::Receiving)));
-
-//         // receive command with word count of 2 
-//         let packets = &[
-//             Packet::service([0b00000100, 0b00000010]),
-//             Packet::data([0b00000000,0b00000000])
-//         ];
-
-//         let mut result;
-
-//         // parse the command
-//         result = message.parse(packets[0]);
-//         assert_eq!(result,Ok(1));
-
-//         // parse unexpected data word
-//         result = message.parse(packets[1]);
-//         assert!(result.is_err());
-//     }
-
-//     #[test]
-//     fn test_parse_rt_to_rt_directed_sending() {
-//         let mut message = Message::new(
-//             MessageType::Directed(
-//                 DirectedMessage::RtToRt(
-//                     MessageSide::Sending)));
-
-//         // receive command with word count of 2 
-//         let packets = &[
-//             Packet::service([0b00000000, 0b00000000]),
-//             Packet::data([0b00000000,0b00000000]),
-//             Packet::data([0b00000000,0b00000000]),
-//         ];
-
-//         let mut result;
-
-//         // parse the command
-//         result = message.parse(packets[0]);
-//         assert_eq!(result,Ok(1));
-
-//         // parse first data word
-//         result = message.parse(packets[1]);
-//         assert_eq!(result,Ok(2));
-
-//         // parse second data word
-//         result = message.parse(packets[2]);
-//         assert_eq!(result,Ok(3));
-//     }
-
-//     #[test]
-//     fn test_parse_rt_to_rt_directed_receiving() {
-//         let mut message = Message::new(
-//             MessageType::Directed(
-//                 DirectedMessage::RtToRt(
-//                     MessageSide::Receiving)));
-
-//         // receive command with word count of 2 
-//         let packets = &[
-//             Packet::service([0b00000000, 0b00000010]),
-//             Packet::service([0b00000100, 0b00000010]),
-//         ];
-
-//         let mut result;
-
-//         // parse the receive command
-//         result = message.parse(packets[0]);
-//         assert_eq!(result,Ok(1));
-
-//         // parse the transmit command
-//         result = message.parse(packets[1]);
-//         assert_eq!(result,Ok(2));
-//     }
-
-//     #[test]
-//     fn test_parse_mode_without_data_directed_receiving() {
-//         let mut message = Message::new(
-//             MessageType::Directed(
-//                 DirectedMessage::ModeWithoutData(
-//                     MessageSide::Receiving)));
-
-//         let packets = &[
-//             Packet::service([0b00000000, 0b00011111]), // mode code command
-//             Packet::data([0b00000000, 0b00000000]), // data word
-//         ];
-
-//         let mut result;
-
-//         // parse the receive command
-//         result = message.parse(packets[0]);
-//         assert_eq!(result,Ok(1));
-
-//         // parse too many words
-//         result = message.parse(packets[1]);
-//         assert!(result.is_err());
-//     }
-
-//     #[test]
-//     fn test_parse_mode_without_data_directed_sending() {
-//         let mut message = Message::new(
-//             MessageType::Directed(
-//                 DirectedMessage::ModeWithoutData(
-//                     MessageSide::Sending)));
-
-//         let packets = &[
-//             Packet::service([0b00000000, 0b00000000]), // status word
-//             Packet::data([0b00000000, 0b00000000]), // data word
-//         ];
-
-//         let mut result;
-
-//         // parse the status word
-//         result = message.parse(packets[0]);
-//         assert_eq!(result,Ok(1));
-
-//         // parse too many words
-//         result = message.parse(packets[1]);
-//         assert!(result.is_err());
-//     }
-    
-//     #[test]
-//     fn test_parse_mode_with_data_t_directed_receiving() {
-//         let mut message = Message::new(
-//             MessageType::Directed(
-//                 DirectedMessage::ModeWithDataT(
-//                     MessageSide::Receiving)));
-
-//         let packets = &[
-//             Packet::service([0b00000000, 0b00000000]), // mode code word
-//             Packet::data([0b00000000, 0b00000000]), // data word
-//         ];
-
-//         let mut result;
-
-//         // parse the command word
-//         result = message.parse(packets[0]);
-//         assert_eq!(result,Ok(1));
-
-//         // parse too many words
-//         result = message.parse(packets[1]);
-//         assert!(result.is_err());
-//     }
-
-//     #[test]
-//     fn test_parse_mode_with_data_t_directed_sending() {
-//         let mut message = Message::new(
-//             MessageType::Directed(
-//                 DirectedMessage::ModeWithDataT(
-//                     MessageSide::Sending)));
-
-//         let packets = &[
-//             Packet::service([0b00000000, 0b00000000]), // status word
-//             Packet::data([0b00000000, 0b00000000]), // data word
-//             Packet::data([0b00000000, 0b00000000]), // data word
-//         ];
-
-//         let mut result;
-
-//         // parse the command word
-//         result = message.parse(packets[0]);
-//         assert_eq!(result,Ok(1));
-
-//         // parse one data word
-//         result = message.parse(packets[1]);
-//         assert_eq!(result,Ok(2));
-
-//         // parse too many data words
-//         result = message.parse(packets[2]);
-//         assert!(result.is_err());
-//     }
-
-//     #[test]
-//     fn test_parse_mode_with_data_r_directed_receiving() {
-//         let mut message = Message::new(
-//             MessageType::Directed(
-//                 DirectedMessage::ModeWithDataR(
-//                     MessageSide::Receiving)));
-
-//         let packets = &[
-//             Packet::service([0b00000000, 0b00000000]), // service word
-//             Packet::data([0b00000000, 0b00000000]), // data word
-//             Packet::data([0b00000000, 0b00000000]), // data word
-//         ];
-
-//         let mut result;
-
-//         // parse the command word
-//         result = message.parse(packets[0]);
-//         assert_eq!(result,Ok(1));
-
-//         // parse one data word
-//         result = message.parse(packets[1]);
-//         assert_eq!(result,Ok(2));
-
-//         // parse too many data words
-//         result = message.parse(packets[2]);
-//         assert!(result.is_err());
-//     }
-
-//     #[test]
-//     fn test_parse_mode_with_data_r_directed_sending() {
-//         let mut message = Message::new(
-//             MessageType::Directed(
-//                 DirectedMessage::ModeWithDataR(
-//                     MessageSide::Sending)));
-
-//         let packets = &[
-//             Packet::service([0b00000000, 0b00000000]), // service word
-//             Packet::data([0b00000000, 0b00000000]), // data word
-//         ];
-
-//         let mut result;
-
-//         // parse the command word
-//         result = message.parse(packets[0]);
-//         assert_eq!(result,Ok(1));
-
-//         // parse too many data words
-//         result = message.parse(packets[1]);
-//         assert!(result.is_err());
-//     }
-
-//     #[test]
-//     fn test_parse_bc_to_rt_broadcast_receiving() {
-//         let mut message = Message::new(
-//             MessageType::Broadcast(
-//                 BroadcastMessage::BcToRt(
-//                     MessageSide::Receiving)));
-
-//         let packets = &[
-//             Packet::service([0b00000000, 0b00000000]), // service word
-//             Packet::data([0b00000000, 0b00000000]),    // data word
-//             Packet::data([0b00000000, 0b00000000]),    // data word
-//         ];
-
-//         let mut result;
-
-//         // parse the command word
-//         result = message.parse(packets[0]);
-//         assert_eq!(result,Ok(1));
-
-//         // parse first data word
-//         result = message.parse(packets[1]);
-//         assert_eq!(result,Ok(2));
-
-//         // parse second data word
-//         result = message.parse(packets[2]);
-//         assert_eq!(result,Ok(3));
-//     }
-
-//     #[test]
-//     fn test_parse_bc_to_rt_broadcast_sending() {
-//         let mut message = Message::new(
-//             MessageType::Broadcast(
-//                 BroadcastMessage::BcToRt(
-//                     MessageSide::Sending)));
-
-//         let packets = &[
-//             Packet::service([0b00000000, 0b00000000]), // service word
-//         ];
-
-//         // parse the command word
-//         let result = message.parse(packets[0]);
-//         assert!(result.is_err());
-//     }
-
-//     #[test]
-//     fn test_parse_rt_to_rt_broadcast_receiving() {
-//         let mut message = Message::new(
-//             MessageType::Broadcast(
-//                 BroadcastMessage::RtToRt(
-//                     MessageSide::Receiving)));
-
-//         let packets = &[
-//             Packet::service([0b00000000, 0b00000000]), // receive command
-//             Packet::service([0b00000100, 0b00000000]), // transmit command
-//             Packet::data([0b00000000, 0b00000000]),    // data word
-//         ];
-
-//         let mut result;
-
-//         // parse first command word
-//         result = message.parse(packets[0]);
-//         assert_eq!(result,Ok(1));
-
-//         // parse second command word
-//         result = message.parse(packets[1]);
-//         assert_eq!(result,Ok(2));
-
-//         // parse data word
-//         result = message.parse(packets[2]);
-//         assert!(result.is_err());
-//     }
-
-//     #[test]
-//     fn test_parse_rt_to_rt_broadcast_sending() {
-//         let mut message = Message::new(
-//             MessageType::Broadcast(
-//                 BroadcastMessage::RtToRt(
-//                     MessageSide::Sending)));
-
-//         let packets = &[
-//             Packet::service([0b00000000, 0b00000000]), // status word
-//             Packet::data([0b00000000, 0b00000000]),    // data word
-//             Packet::data([0b00000000, 0b00000000]),    // data word
-//         ];
-
-//         let mut result;
-
-//         // parse status word
-//         result = message.parse(packets[0]);
-//         assert_eq!(result,Ok(1));
-
-//         // parse data word
-//         result = message.parse(packets[1]);
-//         assert_eq!(result,Ok(2));
-
-//         // parse data word
-//         result = message.parse(packets[2]);
-//         assert_eq!(result,Ok(3));
-//     }
-
-//     #[test]
-//     fn test_parse_mode_without_data_broadcast_receiving() {
-//         let mut message = Message::new(
-//             MessageType::Broadcast(
-//                 BroadcastMessage::ModeWithoutData(
-//                     MessageSide::Receiving)));
-
-//         let packets = &[
-//             Packet::service([0b00000000, 0b00000000]), // mode code command
-//             Packet::data([0b00000000, 0b00000000]), // data word
-//         ];
-
-//         let mut result;
-
-//         // parse command word
-//         result = message.parse(packets[0]);
-//         assert_eq!(result,Ok(1));
-
-//         // parse data word
-//         result = message.parse(packets[1]);
-//         assert!(result.is_err());
-//     }
-
-//     #[test]
-//     fn test_parse_mode_without_data_broadcast_sending() {
-//         let mut message = Message::new(
-//             MessageType::Broadcast(
-//                 BroadcastMessage::ModeWithoutData(
-//                     MessageSide::Sending)));
-
-//         let packets = &[
-//             Packet::service([0b00000000, 0b00000000]), // status word
-//             Packet::data([0b00000000, 0b00000000]), // data word
-//         ];
-
-//         let mut result;
-
-//         // parse status word
-//         result = message.parse(packets[0]);
-//         assert!(result.is_err());
-
-//         // parse data word
-//         result = message.parse(packets[1]);
-//         assert!(result.is_err());
-//     }
-
-//     #[test]
-//     fn test_parse_mode_with_data_r_broadcast_receiving() {
-//         let mut message = Message::new(
-//             MessageType::Broadcast(
-//                 BroadcastMessage::ModeWithDataR(
-//                     MessageSide::Receiving)));
-
-//         let packets = &[
-//             Packet::service([0b00000000, 0b00000000]), // mode code command
-//             Packet::data([0b00000000, 0b00000000]), // data word
-//         ];
-
-//         let mut result;
-
-//         // parse command word
-//         result = message.parse(packets[0]);
-//         assert_eq!(result,Ok(1));
-
-//         // parse data word
-//         result = message.parse(packets[1]);
-//         assert_eq!(result,Ok(2));
-//     }
-
-//     #[test]
-//     fn test_parse_mode_with_data_r_broadcast_sending() {
-//         let mut message = Message::new(
-//             MessageType::Broadcast(
-//                 BroadcastMessage::ModeWithDataR(
-//                     MessageSide::Sending)));
-
-//         let packets = &[
-//             Packet::service([0b00000000, 0b00000000]), // mode code command
-//             Packet::data([0b00000000, 0b00000000]), // data word
-//         ];
-
-//         let mut result;
-
-//         // parse command word
-//         result = message.parse(packets[0]);
-//         assert!(result.is_err());
-
-//         // parse data word
-//         result = message.parse(packets[1]);
-//         assert!(result.is_err());
-//     }
-
-// }
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+
+    #[test]
+    fn test_create_message() {
+        let message = Message::new();
+
+        assert_eq!(message.is_full(),false);
+        assert_eq!(message.is_empty(),true);
+        assert_eq!(message.first(),None);
+        assert_eq!(message.last(),None);
+
+        assert_eq!(message.word_count(),0);
+        assert_eq!(message.data_count(),0);
+    }
+
+    #[test]
+    fn test_message_command_add() {
+        let mut message = Message::new();
+
+        let word = Word::Command(CommandWord::new(0b0001100001100010));
+        let result = message.add(word.clone());
+
+        assert_eq!(result,Ok(1));
+        assert_eq!(message.first(),Some(&word));
+        assert_eq!(message.last(),Some(&word));
+    }
+
+    #[test]
+    fn test_message_command_data() {
+        let mut message = Message::new();
+
+        let word = Word::Command(CommandWord::new(0b0001100001100010));
+        message.add(word.clone()).unwrap();
+        
+        assert_eq!(message.word_count(),1);
+        assert_eq!(message.data_count(),0);
+        assert_eq!(message.data_expected(),2);
+    }
+
+    #[test]
+    fn test_message_command_add_data() {
+        let mut message = Message::new();
+
+        let word = Word::Command(CommandWord::new(0b0001100001100010));
+        message.add(word.clone()).unwrap();
+        
+        let data = Word::Data(DataWord::new(0b0110100001101001));
+        message.add(data.clone()).unwrap();
+        
+        assert_eq!(message.word_count(),2);
+        assert_eq!(message.data_count(),1);
+    }
+
+    #[test]
+    fn test_message_status_add() {
+        let mut message = Message::new();
+
+        let word = Word::Status(StatusWord::new(0b0001100000000010));
+        let result = message.add(word.clone());
+
+        assert_eq!(result,Ok(1));
+        assert_eq!(message.first(),Some(&word));
+        assert_eq!(message.last(),Some(&word));
+    }
+
+    #[test]
+    fn test_message_status_add_invalid() {
+        let mut message = Message::new();
+
+        // word is using the reserved bits (0b0000000011100000)
+        let word = Word::Status(StatusWord::new(0b0000000011100000));
+        let result = message.add(word.clone());
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_message_status_no_data() {
+        let mut message = Message::new();
+
+        let word = Word::Status(StatusWord::new(0b0001100000000010));
+        message.add(word.clone()).unwrap();
+        
+        assert_eq!(message.word_count(),1);
+        assert_eq!(message.data_count(),0);
+        assert_eq!(message.data_expected(),0);
+    }
+
+    #[test]
+    fn test_message_status_add_data() {
+        let mut message = Message::new();
+
+        let status = Word::Status(StatusWord::new(0b0001100000000000));
+        message.add(status.clone()).unwrap();
+
+        let data = Word::Data(DataWord::new(0b0110100001101001));
+        message.add(data.clone()).unwrap();
+        
+        assert_eq!(message.word_count(),2);
+        assert_eq!(message.data_count(),1);
+
+        // status words don't have a word count field, and the 
+        // number of data words following a status word is set
+        // by an earlier request.
+        assert_eq!(message.data_expected(),0);
+    }
+
+    #[test]
+    fn test_message_as_text() {
+        let mut message = Message::new();
+
+        let word = Word::Command(CommandWord::new(0b0001100001100011));
+        message.add(word.clone()).unwrap();
+        
+        let data1 = Word::Data(DataWord::new(0b0100100001100101));
+        let data2 = Word::Data(DataWord::new(0b0110110001101100));
+        let data3 = Word::Data(DataWord::new(0b0110111100000000));
+
+
+        message.add(data1).unwrap();
+        message.add(data2).unwrap();
+        message.add(data3).unwrap();
+        
+        assert_eq!(message.as_text(),"Hello\0");
+    }
+
+}

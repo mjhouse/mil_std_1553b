@@ -1,7 +1,7 @@
 
 /// Given data with unspecified length, removes the first
 /// 20 bits and converts them to a (sync,data,parity) triplet.
-fn process(align: bool, mut data: &[u8]) -> (u8,u16,u8) {
+pub fn process(align: bool, mut data: &[u8]) -> (u8,u16,u8) {
     let mut sync = 0;
     let mut word = 0;
     let mut parity = 0;
@@ -35,13 +35,6 @@ fn process(align: bool, mut data: &[u8]) -> (u8,u16,u8) {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // only useable with no_std commented out
-    macro_rules! debug_bytes {
-        ( $w: expr ) => {
-            println!("bits: {:#018b}", $w);
-        }
-    }
 
 
     #[test]
