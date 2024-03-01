@@ -177,11 +177,8 @@ impl CommandWord {
     }
 
     /// Convert the word into a byte array
-    pub fn bytes(&self) -> [u8;2] {
-        [
-            (self.data >> 8) as u8,
-            (self.data >> 0) as u8,
-        ]
+    pub fn bytes(&self) -> [u8; 2] {
+        [(self.data >> 8) as u8, (self.data >> 0) as u8]
     }
 }
 
@@ -396,11 +393,8 @@ impl StatusWord {
     }
 
     /// Convert the word into a byte array
-    pub fn bytes(&self) -> [u8;2] {
-        [
-            (self.data >> 8) as u8,
-            (self.data >> 0) as u8,
-        ]
+    pub fn bytes(&self) -> [u8; 2] {
+        [(self.data >> 8) as u8, (self.data >> 0) as u8]
     }
 }
 
@@ -423,17 +417,9 @@ impl DataWord {
         }
     }
 
-    /// Convert data to text
-    pub fn as_text(&self) -> String {
-        String::from_utf8_lossy(&self.bytes()).to_string()
-    }
-
     /// Convert the word into a byte array
-    pub fn bytes(&self) -> [u8;2] {
-        [
-            (self.data >> 8) as u8,
-            (self.data >> 0) as u8,
-        ]
+    pub fn bytes(&self) -> [u8; 2] {
+        [(self.data >> 8) as u8, (self.data >> 0) as u8]
     }
 }
 
@@ -738,30 +724,23 @@ mod tests {
     }
 
     #[test]
-    fn test_data_convert_text() {
-        let word = DataWord::new(0b0110100001101001);
-        let text = word.as_text();
-        assert_eq!(text,"hi");
-    }
-
-    #[test]
     fn test_data_bytes() {
         let word = DataWord::new(0b0110100001101001);
         let data = word.bytes();
-        assert_eq!(data,[0b01101000, 0b01101001]);
+        assert_eq!(data, [0b01101000, 0b01101001]);
     }
 
     #[test]
     fn test_command_bytes() {
         let word = CommandWord::new(0b0110100001101001);
         let data = word.bytes();
-        assert_eq!(data,[0b01101000, 0b01101001]);
+        assert_eq!(data, [0b01101000, 0b01101001]);
     }
 
     #[test]
     fn test_status_bytes() {
         let word = StatusWord::new(0b0110100001101001);
         let data = word.bytes();
-        assert_eq!(data,[0b01101000, 0b01101001]);
+        assert_eq!(data, [0b01101000, 0b01101001]);
     }
 }

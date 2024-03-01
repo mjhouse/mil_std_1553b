@@ -1,4 +1,4 @@
-// #![no_std]
+#![no_std]
 
 //! A "word" in the 1553B standard is made up of twenty bits, total. Three sync bits,
 //! 16 bits of data (in one of three different formats), and a trailing parity
@@ -20,7 +20,3 @@ pub mod fields;
 pub mod flags;
 pub mod message;
 pub mod word;
-
-// mod message;
-// mod parse;
-// mod packets;

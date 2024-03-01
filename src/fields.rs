@@ -1,7 +1,9 @@
+//! Fields found in command and status words
+
 /// Represents a field inside of a 16-bit word
 ///
-/// Given a word, can read or write a value equal to or
-/// less than one byte in size.
+/// Given a mask and offset, the Field struct can get 
+/// or set between 1 and 8 bits in a u16 word.
 pub struct Field {
     /// The mask used to isolate the value
     mask: u16,

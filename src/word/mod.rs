@@ -1,3 +1,5 @@
+//! Words transmitted across a bus
+
 #[macro_use]
 mod traits;
 mod enums;

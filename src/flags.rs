@@ -1,3 +1,5 @@
+//! Flags parsed from fields
+
 use num_enum::{FromPrimitive, IntoPrimitive};
 
 macro_rules! fit {
@@ -28,9 +30,9 @@ macro_rules! eqs {
 /// with the mode code, the T/R bit determines if the data word is transmitted or
 /// received by the remote terminal.
 ///
-/// Mode Codes are listed on page 40, in table 5, of the MIL-STD-1553 Tutorial[^tutorial].
+/// Mode Codes are listed on page 40, in table 5, of the MIL-STD-1553 Tutorial[^1].
 ///
-/// [^tutorial]: <http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf>
+/// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[derive(Debug, Clone, PartialEq, Eq, IntoPrimitive, FromPrimitive)]
 #[repr(u8)]
 pub enum ModeCode {
@@ -202,7 +204,9 @@ impl ModeCode {
 /// command (logic 0) indicates that the remote terminal is going to receive
 /// data. The only exceptions to this rule are associated with mode commands.
 ///
-/// This flag is called T/R or Transmit/Receive in the documentation.
+/// This flag is called T/R or Transmit/Receive on page 28 of the MIL-STD-1553 Tutorial[^1].
+///
+/// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[derive(Debug, Clone, PartialEq, Eq, IntoPrimitive, FromPrimitive)]
 #[repr(u8)]
 pub enum TransmitReceive {
@@ -236,6 +240,10 @@ impl TransmitReceive {
 ///
 /// This 5-bit address is found in the Terminal Address (TA) field located at bit times 4-8
 /// (index 0-4). A value of 0b11111 is reserved in the TA field as a broadcast address.
+///
+/// This field is described on page 28 of the MIL-STD-1553 Tutorial[^1].
+///
+/// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Address {
@@ -298,6 +306,10 @@ impl Address {
 /// This 5-bit address is found in the Subaddress (SA) field located at bit times
 /// 10-14 (index 6-10). If the SA value is 0b00000 or 0b11111, then the field is
 /// decoded as a Mode Code command.
+///
+/// This field is described on page 28 of the MIL-STD-1553 Tutorial[^1].
+///
+/// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum SubAddress {
@@ -361,11 +373,17 @@ impl SubAddress {
 /// The instrumentation bit in the status word is always set to a logic 0,
 /// and if used, the same bit in a command word is set to logic 1. This bit
 /// is the MSB of the Subaddress field, and if used will limit the subaddresses
-/// used to 10000-11110, reducinged the number available from 30 to 15. It is
-/// also the reason there are two mode code identifiers (see [Address](crate::flags::Address)).
+/// used to 10000-11110, reducing the number of addressable terminals from 30 
+/// to 15. It is also the reason there are two mode code identifiers 
+/// (see [SubAddress](crate::flags::SubAddress)).
 ///
 /// **Most systems no longer use this flag, as the cost in reduced subaddress
 /// range is too high**.
+///
+/// This field is described in the status word diagram on page 28 of the 
+/// MIL-STD-1553 Tutorial[^1].
+///
+/// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[derive(Debug, Clone, PartialEq, Eq, IntoPrimitive, FromPrimitive)]
 #[repr(u8)]
 pub enum Instrumentation {
@@ -402,6 +420,11 @@ impl Instrumentation {
 /// processing. The bus controller, on receiving this flag, takes a predetermined
 /// action such as issuing a series of messages or requests for further data
 /// to the remote terminal.
+///
+/// This field is described in the status word diagram on page 28 of the 
+/// MIL-STD-1553 Tutorial[^1].
+///
+/// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[derive(Debug, Clone, PartialEq, Eq, IntoPrimitive, FromPrimitive)]
 #[repr(u8)]
 pub enum ServiceRequest {
@@ -437,6 +460,11 @@ impl ServiceRequest {
 /// and must be set to a logic “0”. The bus controller should declare a message
 /// in error if the remote terminal responds with any of these bits set in its
 /// status word.
+///
+/// This field is described in the status word diagram on page 28 of the 
+/// MIL-STD-1553 Tutorial[^1].
+///
+/// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[derive(Debug, Clone, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Reserved {
@@ -471,6 +499,11 @@ impl Reserved {
 /// suppresses transmission of its status words. The bus controller may then
 /// issue a Transmit Status word or Transmit Last Command mode code to
 /// determine if the terminal received the message properly.
+///
+/// This field is described in the status word diagram on page 28 of the 
+/// MIL-STD-1553 Tutorial[^1].
+///
+/// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[derive(Debug, Clone, PartialEq, Eq, IntoPrimitive, FromPrimitive)]
 #[repr(u8)]
 pub enum BroadcastCommand {
@@ -506,6 +539,11 @@ impl BroadcastCommand {
 /// feedback to the bus controller when the remote terminal is unable to move
 /// data between the remote terminal electronics and the subsystem in compliance
 /// to a command from the bus controller.
+///
+/// This field is called "Busy" in the status word diagram on page 28 of the 
+/// MIL-STD-1553 Tutorial[^1].
+///
+/// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[derive(Debug, Clone, PartialEq, Eq, IntoPrimitive, FromPrimitive)]
 #[repr(u8)]
 pub enum TerminalBusy {
@@ -542,6 +580,11 @@ impl TerminalBusy {
 /// on transmitting its status word, becomes the bus controller, and the bus
 /// controller, on receiving the status word with this flag, ceases to
 /// control the bus.
+///
+/// This field is called "Dynamic Bus Acceptance" in the status word diagram on 
+/// page 28 of the MIL-STD-1553 Tutorial[^1].
+///
+/// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[derive(Debug, Clone, PartialEq, Eq, IntoPrimitive, FromPrimitive)]
 #[repr(u8)]
 pub enum BusControlAccept {

@@ -1,19 +1,19 @@
 use super::enums::*;
 use crate::errors::*;
-use crate::word::{CommandWord, DataWord, StatusWord};
 use crate::message::Array;
 use crate::word::Type as Word;
+use crate::word::{CommandWord, DataWord, StatusWord};
 
 /// A message sent between two terminals on the bus
 ///
 /// The Message object does very minimal message validation
-/// for the message structure: 
+/// for the message structure:
 ///
 /// * Command or status words are always the first word.
 /// * Data words are limited based on the command word count.
 /// * Messages can't exceed max message size.
 ///
-/// It does not validate larger messaging formats that 
+/// It does not validate larger messaging formats that
 /// require context about previous messages or terminal type.
 pub struct Message {
     words: Array<Word, MAX_WORDS>,
@@ -21,7 +21,9 @@ pub struct Message {
 
 impl Message {
     pub fn new() -> Self {
-        Self { words: Array::new(Word::None) }
+        Self {
+            words: Array::new(Word::None),
+        }
     }
 
     /// Check if the message is full
@@ -90,7 +92,7 @@ impl Message {
             Word::Data(v) => self.add_data(v),
             Word::Status(v) => self.add_status(v),
             Word::Command(v) => self.add_command(v),
-            _ => Err(Error::WordIsInvalid)
+            _ => Err(Error::WordIsInvalid),
         }
     }
 
@@ -110,11 +112,9 @@ impl Message {
     pub fn add_status(&mut self, word: StatusWord) -> Result<usize> {
         if !self.is_empty() {
             Err(Error::StatusWordNotFirst)
-        } 
-        else if !word.is_valid() {
+        } else if !word.is_valid() {
             Err(Error::InvalidStatusWord)
-        }
-        else {
+        } else {
             self.words.push(Word::Status(word));
             Ok(self.words.len())
         }
@@ -130,36 +130,23 @@ impl Message {
             Ok(self.words.len())
         }
     }
-
-    /// Convert data words to text
-    pub fn as_text(&self) -> String {
-        let mut text = String::new();
-        for word in self.words.iter() {
-            if let Word::Data(w) = word {
-                text += &w.as_text();
-            }
-        }
-        text
-    }
-
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-
     #[test]
     fn test_create_message() {
         let message = Message::new();
 
-        assert_eq!(message.is_full(),false);
-        assert_eq!(message.is_empty(),true);
-        assert_eq!(message.first(),None);
-        assert_eq!(message.last(),None);
+        assert_eq!(message.is_full(), false);
+        assert_eq!(message.is_empty(), true);
+        assert_eq!(message.first(), None);
+        assert_eq!(message.last(), None);
 
-        assert_eq!(message.word_count(),0);
-        assert_eq!(message.data_count(),0);
+        assert_eq!(message.word_count(), 0);
+        assert_eq!(message.data_count(), 0);
     }
 
     #[test]
@@ -169,9 +156,9 @@ mod tests {
         let word = Word::Command(CommandWord::new(0b0001100001100010));
         let result = message.add(word.clone());
 
-        assert_eq!(result,Ok(1));
-        assert_eq!(message.first(),Some(&word));
-        assert_eq!(message.last(),Some(&word));
+        assert_eq!(result, Ok(1));
+        assert_eq!(message.first(), Some(&word));
+        assert_eq!(message.last(), Some(&word));
     }
 
     #[test]
@@ -180,10 +167,10 @@ mod tests {
 
         let word = Word::Command(CommandWord::new(0b0001100001100010));
         message.add(word.clone()).unwrap();
-        
-        assert_eq!(message.word_count(),1);
-        assert_eq!(message.data_count(),0);
-        assert_eq!(message.data_expected(),2);
+
+        assert_eq!(message.word_count(), 1);
+        assert_eq!(message.data_count(), 0);
+        assert_eq!(message.data_expected(), 2);
     }
 
     #[test]
@@ -192,12 +179,12 @@ mod tests {
 
         let word = Word::Command(CommandWord::new(0b0001100001100010));
         message.add(word.clone()).unwrap();
-        
+
         let data = Word::Data(DataWord::new(0b0110100001101001));
         message.add(data.clone()).unwrap();
-        
-        assert_eq!(message.word_count(),2);
-        assert_eq!(message.data_count(),1);
+
+        assert_eq!(message.word_count(), 2);
+        assert_eq!(message.data_count(), 1);
     }
 
     #[test]
@@ -207,9 +194,9 @@ mod tests {
         let word = Word::Status(StatusWord::new(0b0001100000000010));
         let result = message.add(word.clone());
 
-        assert_eq!(result,Ok(1));
-        assert_eq!(message.first(),Some(&word));
-        assert_eq!(message.last(),Some(&word));
+        assert_eq!(result, Ok(1));
+        assert_eq!(message.first(), Some(&word));
+        assert_eq!(message.last(), Some(&word));
     }
 
     #[test]
@@ -228,10 +215,10 @@ mod tests {
 
         let word = Word::Status(StatusWord::new(0b0001100000000010));
         message.add(word.clone()).unwrap();
-        
-        assert_eq!(message.word_count(),1);
-        assert_eq!(message.data_count(),0);
-        assert_eq!(message.data_expected(),0);
+
+        assert_eq!(message.word_count(), 1);
+        assert_eq!(message.data_count(), 0);
+        assert_eq!(message.data_expected(), 0);
     }
 
     #[test]
@@ -243,33 +230,14 @@ mod tests {
 
         let data = Word::Data(DataWord::new(0b0110100001101001));
         message.add(data.clone()).unwrap();
-        
-        assert_eq!(message.word_count(),2);
-        assert_eq!(message.data_count(),1);
 
-        // status words don't have a word count field, and the 
+        assert_eq!(message.word_count(), 2);
+        assert_eq!(message.data_count(), 1);
+
+        // status words don't have a word count field, and the
         // number of data words following a status word is set
         // by an earlier request.
-        assert_eq!(message.data_expected(),0);
-    }
-
-    #[test]
-    fn test_message_as_text() {
-        let mut message = Message::new();
-
-        let word = Word::Command(CommandWord::new(0b0001100001100011));
-        message.add(word.clone()).unwrap();
-        
-        let data1 = Word::Data(DataWord::new(0b0100100001100101));
-        let data2 = Word::Data(DataWord::new(0b0110110001101100));
-        let data3 = Word::Data(DataWord::new(0b0110111100000000));
-
-
-        message.add(data1).unwrap();
-        message.add(data2).unwrap();
-        message.add(data3).unwrap();
-        
-        assert_eq!(message.as_text(),"Hello\0");
+        assert_eq!(message.data_expected(), 0);
     }
 
 }

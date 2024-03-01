@@ -1,3 +1,8 @@
+/// An array with a fixed maximum size
+///
+/// This struct has a maximum size and a
+/// limit that can be increased or decreased
+/// within that size.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Array<T, const S: usize>
 where
@@ -71,12 +76,6 @@ where
             self.data[self.count] = value;
             self.count += 1;
         }
-    }
-
-    /// Iterate over elements in the array
-    pub fn iter(&self) -> std::slice::Iter<T> 
-    {
-        self.data.iter()
     }
 
     /// Count the number of elements that satisfy a predicate

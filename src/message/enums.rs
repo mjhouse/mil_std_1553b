@@ -1,41 +1,68 @@
 /// a message can only contain 32 words
 pub const MAX_WORDS: usize = 33;
 
-/// Whether a message should be parsed as a sender or receiver
+/// The type of the message
+///
+/// Directed means that the message is between one
+/// terminal and another, or between a terminal and
+/// the bus controller. These messages are immediately
+/// followed by a status word sent from the receiving
+/// terminal to the bus controller to validate receipt.
+///
+/// Broadcast indicates that the message is transmitted
+/// to multiple remote terminals at the same time. To
+/// validate receipt, the bus controller must poll the
+/// terminals for their status words.
+///
+/// Directed and broadcast message formats are described 
+/// in chapter 4 of the MIL-STD-1553 Tutorial[^1].
+///
+/// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[derive(Clone)]
-pub enum MessageSide {
-    Sending,
-    Receiving,
+pub enum MessageType {
+    /// The message is intended for a single receiver
+    Directed(MessageDirection),
+
+    /// The message is intended for multiple terminals
+    Broadcast(MessageDirection),
 }
 
-/// The information transfer formats (DirectedMessage) are based on the command/response
-/// philosophy in that all error free transmissions received by a remote
-/// terminal are followed by the transmission of a status word from the
-/// terminal to the bus controller. This handshaking principle validates the
-/// receipt of the message by the remote terminal.
+/// The direction and target of a message
 ///
-/// Broadcast messages are transmitted to multiple remote terminals at the
-/// same time. The terminals suppress the transmission of their status words
-/// (not doing so would have multiple boxes trying to talk at the same time and
-/// thereby “jam” the bus). In order for the bus controller to determine if a
-/// terminal received the message, a polling sequence to each terminal must be
-/// initiated to collect the status words.
+/// Defines whether the message is directed from one remote
+/// terminal (RT) to another, to the bus controller, to
+/// all terminals on the bus, etc. These various message 
+/// forms are described in chapter 4 of the MIL-STD-1553 
+/// Tutorial[^1].
 ///
-/// See: http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf (p. 29-30)
+/// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[derive(Clone)]
 pub enum MessageDirection {
+    /// Message from the bus controller to a remote terminal
     BcToRt(MessageSide),
+    /// Message from the remote terminal to the bus controller
     RtToBc(MessageSide),
+    /// Message from one remote terminal to another
     RtToRt(MessageSide),
+    /// Mode code message without data
     ModeWithoutData(MessageSide),
+    /// Mode code message expected data in response
     ModeWithDataT(MessageSide),
+    /// Mode code message including data
     ModeWithDataR(MessageSide),
 }
 
-/// MessageType is used to signal the type of message that should be parsed
-/// next.
+/// The role of the terminal parsing the message
+///
+/// The side on which the message is being parsed can
+/// determine what the message words should be parsed
+/// as.
 #[derive(Clone)]
-pub enum MessageType {
-    Directed(MessageDirection),
-    Broadcast(MessageDirection),
+pub enum MessageSide {
+
+    /// Message is parsed or constructed by the sender
+    Sending,
+
+    /// Message is parsed or constructed by the receiver
+    Receiving,
 }
