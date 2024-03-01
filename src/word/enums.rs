@@ -28,7 +28,7 @@ pub enum Sync {
     Data = 0b001,
 
     /// The sync waveform indicates command or status
-    NotData = 0b100,
+    Service = 0b100,
 }
 
 /// Container enum for the different kinds of words
@@ -58,7 +58,7 @@ impl Parity {
     /// Get the value of the enum as a u8
     #[must_use = "Value is created but never used"]
     pub fn as_u8(&self) -> u8 {
-        self.clone().into()
+        (*self).into()
     }
 
     /// Get the value of the enum as a u32
@@ -70,19 +70,13 @@ impl Parity {
     /// Check if the enum is the Zero variant
     #[must_use = "Result of check is never used"]
     pub fn is_zero(&self) -> bool {
-        match self {
-            Self::Zero => true,
-            _ => false,
-        }
+        matches!(self, Self::Zero)
     }
 
     /// Check if the enum is the One variant
     #[must_use = "Result of check is never used"]
     pub fn is_one(&self) -> bool {
-        match self {
-            Self::One => true,
-            _ => false,
-        }
+        matches!(self, Self::One)
     }
 }
 
@@ -90,16 +84,19 @@ impl Sync {
     /// Get the value of the enum as a u8
     #[must_use = "Value is created but never used"]
     pub fn value(&self) -> u8 {
-        self.clone().into()
+        (*self).into()
     }
 
     /// Check if the enum is the Data variant
     #[must_use = "Result of check is never used"]
     pub const fn is_data(&self) -> bool {
-        match self {
-            Self::Data => true,
-            _ => false,
-        }
+        matches!(self, Self::Data)
+    }
+
+    /// Check if the enum is the Service variant
+    #[must_use = "Result of check is never used"]
+    pub const fn is_service(&self) -> bool {
+        matches!(self, Self::Service)
     }
 }
 
@@ -107,37 +104,31 @@ impl Type {
     /// Check if contained word is command
     #[must_use = "Result of check is never used"]
     pub fn is_command(&self) -> bool {
-        match self {
-            Self::Command(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Command(_))
     }
 
     /// Check if contained word is status
     #[must_use = "Result of check is never used"]
     pub fn is_status(&self) -> bool {
-        match self {
-            Self::Status(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Status(_))
     }
 
     /// Check if contained word is data
     #[must_use = "Result of check is never used"]
     pub fn is_data(&self) -> bool {
-        match self {
-            Self::Data(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Data(_))
     }
 
     /// Check if there is a contained word
     #[must_use = "Result of check is never used"]
     pub fn is_some(&self) -> bool {
-        match self {
-            Self::None => false,
-            _ => true,
-        }
+        !self.is_none()
+    }
+
+    /// Check if there is no contained word
+    #[must_use = "Result of check is never used"]
+    pub fn is_none(&self) -> bool {
+        matches!(self, Self::None)
     }
 
     /// Get the number of associated data words

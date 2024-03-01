@@ -14,7 +14,7 @@ pub const MAX_WORDS: usize = 33;
 /// validate receipt, the bus controller must poll the
 /// terminals for their status words.
 ///
-/// Directed and broadcast message formats are described 
+/// Directed and broadcast message formats are described
 /// in chapter 4 of the MIL-STD-1553 Tutorial[^1].
 ///
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
@@ -31,8 +31,8 @@ pub enum MessageType {
 ///
 /// Defines whether the message is directed from one remote
 /// terminal (RT) to another, to the bus controller, to
-/// all terminals on the bus, etc. These various message 
-/// forms are described in chapter 4 of the MIL-STD-1553 
+/// all terminals on the bus, etc. These various message
+/// forms are described in chapter 4 of the MIL-STD-1553
 /// Tutorial[^1].
 ///
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
@@ -59,7 +59,6 @@ pub enum MessageDirection {
 /// as.
 #[derive(Clone)]
 pub enum MessageSide {
-
     /// Message is parsed or constructed by the sender
     Sending,
 

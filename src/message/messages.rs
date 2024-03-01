@@ -20,6 +20,7 @@ pub struct Message {
 }
 
 impl Message {
+    /// Create a new message struct
     pub fn new() -> Self {
         Self {
             words: Array::new(Word::None),
@@ -132,6 +133,12 @@ impl Message {
     }
 }
 
+impl Default for Message {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -239,5 +246,4 @@ mod tests {
         // by an earlier request.
         assert_eq!(message.data_expected(), 0);
     }
-
 }

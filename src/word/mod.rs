@@ -3,10 +3,10 @@
 #[macro_use]
 mod traits;
 mod enums;
-mod word;
+mod words;
 
 pub use traits::Word;
 
 pub use enums::{Parity, Sync, Type};
 
-pub use word::{CommandWord, DataWord, StatusWord};
+pub use words::{CommandWord, DataWord, StatusWord};

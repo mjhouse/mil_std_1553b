@@ -113,21 +113,21 @@ impl ModeCode {
     /// If the TR bit is cleared, but this function returns true,
     /// then the message is illegal.
     pub const fn is_transmit(&self) -> bool {
-        match self {
-            Self::DynamicBusControl => true,
-            Self::SynchronizeWithDataWord => true,
-            Self::TransmitStatusWord => true,
-            Self::InitiateSelfTest => true,
-            Self::TransmitterShutdown => true,
-            Self::OverrideTransmitterShutdown => true,
-            Self::InhibitTerminalFlagBit => true,
-            Self::OverrideInhibitTerminalFlagBit => true,
-            Self::ResetRemoteTerminal => true,
-            Self::TransmitVectorWord => true,
-            Self::TransmitLastCommandWord => true,
-            Self::TransmitBITWord => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            Self::DynamicBusControl
+                | Self::SynchronizeWithDataWord
+                | Self::TransmitStatusWord
+                | Self::InitiateSelfTest
+                | Self::TransmitterShutdown
+                | Self::OverrideTransmitterShutdown
+                | Self::InhibitTerminalFlagBit
+                | Self::OverrideInhibitTerminalFlagBit
+                | Self::ResetRemoteTerminal
+                | Self::TransmitVectorWord
+                | Self::TransmitLastCommandWord
+                | Self::TransmitBITWord
+        )
     }
 
     /// Check if mode code is associated with receive messages
@@ -135,12 +135,12 @@ impl ModeCode {
     /// If the TR bit is set, but this function returns true,
     /// then the message is illegal.
     pub const fn is_receive(&self) -> bool {
-        match self {
-            Self::Synchronize => true,
-            Self::SelectedTransmitterShutdown => true,
-            Self::OverrideSelectedTransmitterShutdown => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            Self::Synchronize
+                | Self::SelectedTransmitterShutdown
+                | Self::OverrideSelectedTransmitterShutdown
+        )
     }
 
     /// Check if data is associated with the mode code
@@ -155,15 +155,15 @@ impl ModeCode {
     /// listed here rather than converted to a u8 and
     /// masked to get the bool value.
     pub const fn has_data(&self) -> bool {
-        match self {
-            Self::TransmitVectorWord => true,
-            Self::Synchronize => true,
-            Self::TransmitLastCommandWord => true,
-            Self::TransmitBITWord => true,
-            Self::SelectedTransmitterShutdown => true,
-            Self::OverrideSelectedTransmitterShutdown => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            Self::TransmitVectorWord
+                | Self::Synchronize
+                | Self::TransmitLastCommandWord
+                | Self::TransmitBITWord
+                | Self::SelectedTransmitterShutdown
+                | Self::OverrideSelectedTransmitterShutdown
+        )
     }
 
     /// Check if mode code can be broadcast to all terminals
@@ -173,27 +173,24 @@ impl ModeCode {
     /// Even if a mode code *can* be sent to all RTs, it may
     /// have disasterous consequences if done while in flight.
     pub const fn is_broadcast(&self) -> bool {
-        match self {
-            Self::SynchronizeWithDataWord => true,
-            Self::InitiateSelfTest => true,
-            Self::TransmitterShutdown => true,
-            Self::OverrideTransmitterShutdown => true,
-            Self::InhibitTerminalFlagBit => true,
-            Self::OverrideInhibitTerminalFlagBit => true,
-            Self::ResetRemoteTerminal => true,
-            Self::Synchronize => true,
-            Self::SelectedTransmitterShutdown => true,
-            Self::OverrideSelectedTransmitterShutdown => true,
-            _ => false,
-        }
+        matches!(
+            self,
+            Self::SynchronizeWithDataWord
+                | Self::InitiateSelfTest
+                | Self::TransmitterShutdown
+                | Self::OverrideTransmitterShutdown
+                | Self::InhibitTerminalFlagBit
+                | Self::OverrideInhibitTerminalFlagBit
+                | Self::ResetRemoteTerminal
+                | Self::Synchronize
+                | Self::SelectedTransmitterShutdown
+                | Self::OverrideSelectedTransmitterShutdown
+        )
     }
 
     /// Check if the mode code is unrecognized
     pub const fn is_unknown(&self) -> bool {
-        match self {
-            Self::UnknownModeCode(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::UnknownModeCode(_))
     }
 }
 
@@ -221,18 +218,12 @@ pub enum TransmitReceive {
 impl TransmitReceive {
     /// Check if this enum is the transmit variant
     pub const fn is_transmit(&self) -> bool {
-        match self {
-            Self::Transmit => true,
-            _ => false,
-        }
+        matches!(self, Self::Transmit)
     }
 
     /// Check if this enum is the receive variant
     pub const fn is_receive(&self) -> bool {
-        match self {
-            Self::Receive => true,
-            _ => false,
-        }
+        matches!(self, Self::Receive)
     }
 }
 
@@ -278,26 +269,17 @@ impl Address {
 
     /// Check if this enum contains an address
     pub const fn is_value(&self) -> bool {
-        match self {
-            Self::Value(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Value(_))
     }
 
     /// Check if this enum contains an unknown address
     pub const fn is_unknown(&self) -> bool {
-        match self {
-            Self::Unknown(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Unknown(_))
     }
 
     /// Check if this address is a reserved broadcast value
     pub const fn is_broadcast(&self) -> bool {
-        match self {
-            Self::Broadcast(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Broadcast(_))
     }
 }
 
@@ -345,26 +327,17 @@ impl SubAddress {
 
     /// Check if this enum contains an address
     pub const fn is_value(&self) -> bool {
-        match self {
-            Self::Value(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Value(_))
     }
 
     /// Check if this enum contains an invalid/unkown address
     pub const fn is_unknown(&self) -> bool {
-        match self {
-            Self::Unknown(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Unknown(_))
     }
 
     /// Check if this address is a reserved mode code value
     pub const fn is_mode_code(&self) -> bool {
-        match self {
-            Self::ModeCode(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::ModeCode(_))
     }
 }
 
@@ -373,14 +346,14 @@ impl SubAddress {
 /// The instrumentation bit in the status word is always set to a logic 0,
 /// and if used, the same bit in a command word is set to logic 1. This bit
 /// is the MSB of the Subaddress field, and if used will limit the subaddresses
-/// used to 10000-11110, reducing the number of addressable terminals from 30 
-/// to 15. It is also the reason there are two mode code identifiers 
+/// used to 10000-11110, reducing the number of addressable terminals from 30
+/// to 15. It is also the reason there are two mode code identifiers
 /// (see [SubAddress](crate::flags::SubAddress)).
 ///
 /// **Most systems no longer use this flag, as the cost in reduced subaddress
 /// range is too high**.
 ///
-/// This field is described in the status word diagram on page 28 of the 
+/// This field is described in the status word diagram on page 28 of the
 /// MIL-STD-1553 Tutorial[^1].
 ///
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
@@ -398,18 +371,12 @@ pub enum Instrumentation {
 impl Instrumentation {
     /// Check if this enum is the Status variant
     pub const fn is_status(&self) -> bool {
-        match self {
-            Self::Status => true,
-            _ => false,
-        }
+        matches!(self, Self::Status)
     }
 
     /// Check if this enum is the Command variant
     pub const fn is_command(&self) -> bool {
-        match self {
-            Self::Command => true,
-            _ => false,
-        }
+        matches!(self, Self::Command)
     }
 }
 
@@ -421,7 +388,7 @@ impl Instrumentation {
 /// action such as issuing a series of messages or requests for further data
 /// to the remote terminal.
 ///
-/// This field is described in the status word diagram on page 28 of the 
+/// This field is described in the status word diagram on page 28 of the
 /// MIL-STD-1553 Tutorial[^1].
 ///
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
@@ -439,18 +406,12 @@ pub enum ServiceRequest {
 impl ServiceRequest {
     /// Check if enum is the NoService variant
     pub const fn is_noservice(&self) -> bool {
-        match self {
-            Self::NoService => true,
-            _ => false,
-        }
+        matches!(self, Self::NoService)
     }
 
     /// Check if the enum is the Service variant
     pub const fn is_service(&self) -> bool {
-        match self {
-            Self::Service => true,
-            _ => false,
-        }
+        matches!(self, Self::Service)
     }
 }
 
@@ -461,7 +422,7 @@ impl ServiceRequest {
 /// in error if the remote terminal responds with any of these bits set in its
 /// status word.
 ///
-/// This field is described in the status word diagram on page 28 of the 
+/// This field is described in the status word diagram on page 28 of the
 /// MIL-STD-1553 Tutorial[^1].
 ///
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
@@ -478,18 +439,12 @@ pub enum Reserved {
 impl Reserved {
     /// Check if this enum is the None variant
     pub const fn is_none(&self) -> bool {
-        match self {
-            Self::None => true,
-            _ => false,
-        }
+        matches!(self, Self::None)
     }
 
     /// Check if this enum is the Value variant
     pub const fn is_value(&self) -> bool {
-        match self {
-            Self::Value(_) => true,
-            _ => false,
-        }
+        matches!(self, Self::Value(_))
     }
 }
 
@@ -500,7 +455,7 @@ impl Reserved {
 /// issue a Transmit Status word or Transmit Last Command mode code to
 /// determine if the terminal received the message properly.
 ///
-/// This field is described in the status word diagram on page 28 of the 
+/// This field is described in the status word diagram on page 28 of the
 /// MIL-STD-1553 Tutorial[^1].
 ///
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
@@ -518,18 +473,12 @@ pub enum BroadcastCommand {
 impl BroadcastCommand {
     /// Check if enum is the NotReceived variant
     pub const fn is_notreceived(&self) -> bool {
-        match self {
-            Self::NotReceived => true,
-            _ => false,
-        }
+        matches!(self, Self::NotReceived)
     }
 
     /// Check if the enum is the Received variant
     pub const fn is_received(&self) -> bool {
-        match self {
-            Self::Received => true,
-            _ => false,
-        }
+        matches!(self, Self::Received)
     }
 }
 
@@ -540,7 +489,7 @@ impl BroadcastCommand {
 /// data between the remote terminal electronics and the subsystem in compliance
 /// to a command from the bus controller.
 ///
-/// This field is called "Busy" in the status word diagram on page 28 of the 
+/// This field is called "Busy" in the status word diagram on page 28 of the
 /// MIL-STD-1553 Tutorial[^1].
 ///
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
@@ -558,18 +507,12 @@ pub enum TerminalBusy {
 impl TerminalBusy {
     /// Check if enum is the NotBusy variant
     pub const fn is_notbusy(&self) -> bool {
-        match self {
-            Self::NotBusy => true,
-            _ => false,
-        }
+        matches!(self, Self::NotBusy)
     }
 
     /// Check if the enum is the Busy variant
     pub const fn is_busy(&self) -> bool {
-        match self {
-            Self::Busy => true,
-            _ => false,
-        }
+        matches!(self, Self::Busy)
     }
 }
 
@@ -581,7 +524,7 @@ impl TerminalBusy {
 /// controller, on receiving the status word with this flag, ceases to
 /// control the bus.
 ///
-/// This field is called "Dynamic Bus Acceptance" in the status word diagram on 
+/// This field is called "Dynamic Bus Acceptance" in the status word diagram on
 /// page 28 of the MIL-STD-1553 Tutorial[^1].
 ///
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
@@ -599,18 +542,12 @@ pub enum BusControlAccept {
 impl BusControlAccept {
     /// Check if the enum is the NotAccepted variant
     pub const fn is_notaccepted(&self) -> bool {
-        match self {
-            Self::NotAccepted => true,
-            _ => false,
-        }
+        matches!(self, Self::NotAccepted)
     }
 
     /// Check if the enum is the Accepted variant
     pub const fn is_accepted(&self) -> bool {
-        match self {
-            Self::Accepted => true,
-            _ => false,
-        }
+        matches!(self, Self::Accepted)
     }
 }
 

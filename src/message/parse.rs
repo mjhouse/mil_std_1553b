@@ -1,6 +1,6 @@
 /// Given data with unspecified length, removes the first
 /// 20 bits and converts them to a (sync,data,parity) triplet.
-pub fn process(align: bool, mut data: &[u8]) -> (u8, u16, u8) {
+pub fn process(align: bool, data: &[u8]) -> (u8, u16, u8) {
     let mut sync = 0;
     let mut word = 0;
     let mut parity = 0;
@@ -23,9 +23,6 @@ pub fn process(align: bool, mut data: &[u8]) -> (u8, u16, u8) {
         word |= (data[1] as u16 & 0b0000000011111111) << 7;
         word |= (data[2] as u16 & 0b0000000011111110) >> 1;
     }
-
-    // take off the first 2 bytes
-    data = &data[..2];
 
     (sync, word, parity)
 }

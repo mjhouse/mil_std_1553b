@@ -83,16 +83,16 @@ impl CommandWord {
 
     /// Get the direction of transmission
     ///
-    /// See [Direction](crate::flags::Direction) for more information
-    /// about this field.
+    /// See [TransmitReceive](crate::flags::TransmitReceive) enum for
+    /// more information about this field.
     pub fn transmit_receive(&self) -> TransmitReceive {
         TransmitReceive::from(COMMAND_TRANSMIT_RECEIVE_FIELD.get(self.data()))
     }
 
     /// Set the direction of transmission
     ///
-    /// See [CommandWord::transmit_receive] for more information
-    /// about this field.
+    /// See [TransmitReceive](crate::flags::TransmitReceive) enum for
+    /// more information about this field.
     pub fn set_transmit_receive(&mut self, value: TransmitReceive) {
         self.data = COMMAND_TRANSMIT_RECEIVE_FIELD.set(self.data(), value.into());
     }
@@ -143,7 +143,7 @@ impl CommandWord {
     /// value. See [CommandWord::word_count] for more information.
     pub fn set_word_count(&mut self, value: u8) {
         if !self.is_mode_code() {
-            self.data = COMMAND_WORD_COUNT_FIELD.set(self.data(), value.into());
+            self.data = COMMAND_WORD_COUNT_FIELD.set(self.data(), value);
         }
     }
 
@@ -178,7 +178,7 @@ impl CommandWord {
 
     /// Convert the word into a byte array
     pub fn bytes(&self) -> [u8; 2] {
-        [(self.data >> 8) as u8, (self.data >> 0) as u8]
+        [(self.data >> 8) as u8, self.data as u8]
     }
 }
 
@@ -394,7 +394,7 @@ impl StatusWord {
 
     /// Convert the word into a byte array
     pub fn bytes(&self) -> [u8; 2] {
-        [(self.data >> 8) as u8, (self.data >> 0) as u8]
+        [(self.data >> 8) as u8, self.data as u8]
     }
 }
 
@@ -419,7 +419,7 @@ impl DataWord {
 
     /// Convert the word into a byte array
     pub fn bytes(&self) -> [u8; 2] {
-        [(self.data >> 8) as u8, (self.data >> 0) as u8]
+        [(self.data >> 8) as u8, self.data as u8]
     }
 }
 
