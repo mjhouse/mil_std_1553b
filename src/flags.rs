@@ -348,7 +348,7 @@ impl SubAddress {
 /// is the MSB of the Subaddress field, and if used will limit the subaddresses
 /// used to 10000-11110, reducing the number of addressable terminals from 30
 /// to 15. It is also the reason there are two mode code identifiers
-/// (see [SubAddress](crate::flags::SubAddress)).
+/// (see [SubAddress]).
 ///
 /// **Most systems no longer use this flag, as the cost in reduced subaddress
 /// range is too high**.

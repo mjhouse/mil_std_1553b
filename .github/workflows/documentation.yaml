@@ -25,6 +25,11 @@ jobs:
     - name: Build Documentation
       run: cargo doc --all --no-deps
 
+    - name: Fix permissions
+      run: |
+        chmod -c -R +rX "target/doc/" | while read line; do
+          echo "::warning title=Invalid file permissions automatically fixed::$line"
+        done
     - name: Deploy artifacts
       uses: actions/upload-pages-artifact@v3
       with: 
