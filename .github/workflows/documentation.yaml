@@ -46,7 +46,7 @@ jobs:
   deploy:
 
     name: Deploy
-    needs: build
+    needs: build 
 
     permissions:
       pages: write
