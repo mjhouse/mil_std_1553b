@@ -1,0 +1,48 @@
+name: Documentation
+on:
+  push:
+   branches:
+   - master
+
+env:
+  CARGO_INCREMENTAL: 0
+  CARGO_NET_RETRY: 10
+  RUSTFLAGS: "-D warnings -W unreachable-pub"
+  RUSTUP_MAX_RETRIES: 10
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      run: rustup update --no-self-update stable
+
+    - name: Build Documentation
+      run: cargo doc --all --no-deps
+
+    - name: Deploy artifacts
+      uses: actions/upload-pages-artifact@v3
+      with: 
+      - path: ./target/doc
+
+  deploy:
+    needs: build
+
+    permissions:
+      pages: write      # to deploy 
+      id-token: write   # to verify the deployment originates from an appropriate source
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy pages
+        id: deployment
+        uses: actions/deploy-pages@v4
