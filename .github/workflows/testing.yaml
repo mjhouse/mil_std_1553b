@@ -1,0 +1,45 @@
+name: Testing
+
+on:
+  push:
+    branches: [development]
+  pull_request:
+    branches: [development]
+
+jobs:
+
+  test:
+
+    name: Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      run: rustup update --no-self-update stable
+
+    - name: Build library
+      run: cargo build --verbose
+    
+    - name: Test library
+      run: cargo test --verbose
+
+  merge:
+
+    name: Merge
+    needs: [ test ]
+    runs-on: ubuntu-latest
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Merge branch
+        uses: devmasx/merge-branch@1.4.0
+        with:
+          type: now
+          target_branch: master
+          github_token: ${{ secrets.GITHUB_TOKEN }}
