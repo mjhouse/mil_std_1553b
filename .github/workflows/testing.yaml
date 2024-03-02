@@ -1,10 +1,9 @@
 name: Testing
 
-on:
-  push:
-    branches: [development]
-  pull_request:
-    branches: [development]
+on: 
+  pull_request
+# - push:
+#     branches: [development]
 
 jobs:
 
