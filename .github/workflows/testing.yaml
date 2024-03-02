@@ -42,4 +42,4 @@ jobs:
         with:
           type: now
           target_branch: master
-          github_token: ${{ secrets.PIPELINE_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
