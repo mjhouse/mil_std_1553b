@@ -1,19 +1,35 @@
 use super::{CommandWord, DataWord, StatusWord};
-use num_enum::{FromPrimitive, IntoPrimitive};
 
 /// The sync waveform preceding a word
 ///
 /// This flag is derived from the 3-bit sync waveform
 /// preceding each transmitted word.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, IntoPrimitive, FromPrimitive)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 #[repr(u8)]
 pub enum Sync {
     /// The sync waveform indicates data
-    #[default]
     Data = 0b001,
 
     /// The sync waveform indicates command or status
     Service = 0b100,
+}
+
+impl From<u8> for Sync {
+    fn from(value: u8) -> Self {
+        match value {
+            0b100 => Self::Service,
+            _ => Self::Data
+        }
+    }
+}
+
+impl From<Sync> for u8 {
+    fn from(value: Sync) -> Self {
+        match value {
+            Sync::Service => 0b100,
+            Sync::Data => 0b001
+        }
+    }
 }
 
 /// Container enum for the different kinds of words
