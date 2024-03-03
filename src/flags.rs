@@ -131,6 +131,7 @@ impl ModeCode {
     ///
     /// If the TR bit is set, but this function returns true,
     /// then the message is illegal.
+    #[must_use = "Returned value is not used"]
     pub const fn is_receive(&self) -> bool {
         matches!(
             self,
@@ -151,6 +152,7 @@ impl ModeCode {
     /// For clarity, the enum variants are explicitly
     /// listed here rather than converted to a u8 and
     /// masked to get the bool value.
+    #[must_use = "Returned value is not used"]
     pub const fn has_data(&self) -> bool {
         matches!(
             self,
@@ -169,6 +171,7 @@ impl ModeCode {
     /// (RTs) while for other codes, this would be nonsensical.
     /// Even if a mode code *can* be sent to all RTs, it may
     /// have disasterous consequences if done while in flight.
+    #[must_use = "Returned value is not used"]
     pub const fn is_broadcast(&self) -> bool {
         matches!(
             self,
@@ -186,6 +189,7 @@ impl ModeCode {
     }
 
     /// Check if the mode code is unrecognized
+    #[must_use = "Returned value is not used"]
     pub const fn is_unknown(&self) -> bool {
         matches!(self, Self::UnknownModeCode(_))
     }
@@ -261,11 +265,13 @@ pub enum TransmitReceive {
 
 impl TransmitReceive {
     /// Check if this enum is the transmit variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_transmit(&self) -> bool {
         matches!(self, Self::Transmit)
     }
 
     /// Check if this enum is the receive variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_receive(&self) -> bool {
         matches!(self, Self::Receive)
     }
@@ -321,6 +327,7 @@ impl Address {
     }
 
     /// Get the actual u8 value of the address
+    #[must_use = "Returned value is not used"]
     pub const fn value(&self) -> u8 {
         match self {
             Self::Value(k) => *k,
@@ -330,16 +337,19 @@ impl Address {
     }
 
     /// Check if this enum contains an address
+    #[must_use = "Returned value is not used"]
     pub const fn is_value(&self) -> bool {
         matches!(self, Self::Value(_))
     }
 
     /// Check if this enum contains an unknown address
+    #[must_use = "Returned value is not used"]
     pub const fn is_unknown(&self) -> bool {
         matches!(self, Self::Unknown(_))
     }
 
     /// Check if this address is a reserved broadcast value
+    #[must_use = "Returned value is not used"]
     pub const fn is_broadcast(&self) -> bool {
         matches!(self, Self::Broadcast(_))
     }
@@ -455,11 +465,13 @@ pub enum Instrumentation {
 
 impl Instrumentation {
     /// Check if this enum is the Status variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_status(&self) -> bool {
         matches!(self, Self::Status)
     }
 
     /// Check if this enum is the Command variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_command(&self) -> bool {
         matches!(self, Self::Command)
     }
@@ -507,11 +519,13 @@ pub enum ServiceRequest {
 
 impl ServiceRequest {
     /// Check if enum is the NoService variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_noservice(&self) -> bool {
         matches!(self, Self::NoService)
     }
 
     /// Check if the enum is the Service variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_service(&self) -> bool {
         matches!(self, Self::Service)
     }
@@ -558,11 +572,13 @@ pub enum Reserved {
 
 impl Reserved {
     /// Check if this enum is the None variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_none(&self) -> bool {
         matches!(self, Self::None)
     }
 
     /// Check if this enum is the Value variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_value(&self) -> bool {
         matches!(self, Self::Value(_))
     }
@@ -609,11 +625,13 @@ pub enum BroadcastCommand {
 
 impl BroadcastCommand {
     /// Check if enum is the NotReceived variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_notreceived(&self) -> bool {
         matches!(self, Self::NotReceived)
     }
 
     /// Check if the enum is the Received variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_received(&self) -> bool {
         matches!(self, Self::Received)
     }
@@ -660,11 +678,13 @@ pub enum TerminalBusy {
 
 impl TerminalBusy {
     /// Check if enum is the NotBusy variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_notbusy(&self) -> bool {
         matches!(self, Self::NotBusy)
     }
 
     /// Check if the enum is the Busy variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_busy(&self) -> bool {
         matches!(self, Self::Busy)
     }
@@ -712,11 +732,13 @@ pub enum BusControlAccept {
 
 impl BusControlAccept {
     /// Check if the enum is the NotAccepted variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_notaccepted(&self) -> bool {
         matches!(self, Self::NotAccepted)
     }
 
     /// Check if the enum is the Accepted variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_accepted(&self) -> bool {
         matches!(self, Self::Accepted)
     }
