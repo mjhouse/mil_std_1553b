@@ -1,6 +1,6 @@
 # MIL STD 1553B
 
-Rust implementation of 1553 message parsing
+Rust implementation of 1553 message parsing 
 
 ## Words
 
