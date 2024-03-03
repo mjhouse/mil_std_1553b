@@ -3,6 +3,11 @@ use crate::fields::*;
 use crate::flags::*;
 
 /// Calculate a parity bit given a u16 word value
+///
+/// MIL STD 1553B uses an odd parity bit (1 if the 
+/// bit count of the data is even, 0 if not)[^1].
+///
+/// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf) 
 #[inline]
 #[must_use = "Result is not used"]
 fn parity(v: u16) -> u8 {
