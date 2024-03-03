@@ -102,7 +102,7 @@ pub enum ModeCode {
 impl ModeCode {
     /// Get the actual u8 value of the mode code
     pub fn value(&self) -> u8 {
-        self.clone().into()
+        (*self).into()
     }
 
     /// Check if mode code is associated with transmit messages
@@ -210,7 +210,7 @@ impl From<u8> for ModeCode {
             0b10011 => TransmitBITWord,
             0b10100 => SelectedTransmitterShutdown,
             0b10101 => OverrideSelectedTransmitterShutdown,
-            v => UnknownModeCode(v)
+            v => UnknownModeCode(v),
         }
     }
 }
@@ -275,7 +275,7 @@ impl From<u8> for TransmitReceive {
     fn from(value: u8) -> Self {
         match value {
             1 => Self::Transmit,
-            _ => Self::Receive
+            _ => Self::Receive,
         }
     }
 }
@@ -284,7 +284,7 @@ impl From<TransmitReceive> for u8 {
     fn from(value: TransmitReceive) -> Self {
         match value {
             TransmitReceive::Transmit => 1,
-            TransmitReceive::Receive => 0
+            TransmitReceive::Receive => 0,
         }
     }
 }
@@ -469,7 +469,7 @@ impl From<u8> for Instrumentation {
     fn from(value: u8) -> Self {
         match value {
             1 => Self::Command,
-            _ => Self::Status
+            _ => Self::Status,
         }
     }
 }
@@ -478,7 +478,7 @@ impl From<Instrumentation> for u8 {
     fn from(value: Instrumentation) -> Self {
         match value {
             Instrumentation::Command => 1,
-            Instrumentation::Status => 0
+            Instrumentation::Status => 0,
         }
     }
 }
@@ -521,7 +521,7 @@ impl From<u8> for ServiceRequest {
     fn from(value: u8) -> Self {
         match value {
             1 => Self::Service,
-            _ => Self::NoService
+            _ => Self::NoService,
         }
     }
 }
@@ -530,7 +530,7 @@ impl From<ServiceRequest> for u8 {
     fn from(value: ServiceRequest) -> Self {
         match value {
             ServiceRequest::Service => 1,
-            ServiceRequest::NoService => 0
+            ServiceRequest::NoService => 0,
         }
     }
 }
@@ -572,7 +572,7 @@ impl From<u8> for Reserved {
     fn from(value: u8) -> Self {
         match value {
             0 => Self::None,
-            v => Self::Value(v)
+            v => Self::Value(v),
         }
     }
 }
@@ -581,7 +581,7 @@ impl From<Reserved> for u8 {
     fn from(value: Reserved) -> Self {
         match value {
             Reserved::None => 0,
-            Reserved::Value(v) => v
+            Reserved::Value(v) => v,
         }
     }
 }
@@ -623,7 +623,7 @@ impl From<u8> for BroadcastCommand {
     fn from(value: u8) -> Self {
         match value {
             1 => Self::Received,
-            _ => Self::NotReceived
+            _ => Self::NotReceived,
         }
     }
 }
@@ -632,7 +632,7 @@ impl From<BroadcastCommand> for u8 {
     fn from(value: BroadcastCommand) -> Self {
         match value {
             BroadcastCommand::Received => 1,
-            BroadcastCommand::NotReceived => 0
+            BroadcastCommand::NotReceived => 0,
         }
     }
 }
@@ -674,7 +674,7 @@ impl From<u8> for TerminalBusy {
     fn from(value: u8) -> Self {
         match value {
             1 => Self::Busy,
-            _ => Self::NotBusy
+            _ => Self::NotBusy,
         }
     }
 }
@@ -683,7 +683,7 @@ impl From<TerminalBusy> for u8 {
     fn from(value: TerminalBusy) -> Self {
         match value {
             TerminalBusy::Busy => 1,
-            TerminalBusy::NotBusy => 0
+            TerminalBusy::NotBusy => 0,
         }
     }
 }
@@ -726,7 +726,7 @@ impl From<u8> for BusControlAccept {
     fn from(value: u8) -> Self {
         match value {
             1 => Self::Accepted,
-            _ => Self::NotAccepted
+            _ => Self::NotAccepted,
         }
     }
 }
@@ -735,7 +735,7 @@ impl From<BusControlAccept> for u8 {
     fn from(value: BusControlAccept) -> Self {
         match value {
             BusControlAccept::Accepted => 1,
-            BusControlAccept::NotAccepted => 0
+            BusControlAccept::NotAccepted => 0,
         }
     }
 }

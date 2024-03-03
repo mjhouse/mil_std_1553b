@@ -113,7 +113,7 @@ impl From<u8> for TerminalError {
     fn from(value: u8) -> Self {
         match value {
             1 => Self::Error,
-            _ => Self::None
+            _ => Self::None,
         }
     }
 }
@@ -122,7 +122,7 @@ impl From<TerminalError> for u8 {
     fn from(value: TerminalError) -> Self {
         match value {
             TerminalError::Error => 1,
-            TerminalError::None => 0
+            TerminalError::None => 0,
         }
     }
 }
@@ -165,7 +165,7 @@ impl From<u8> for SubsystemError {
     fn from(value: u8) -> Self {
         match value {
             1 => Self::Error,
-            _ => Self::None
+            _ => Self::None,
         }
     }
 }
@@ -174,7 +174,7 @@ impl From<SubsystemError> for u8 {
     fn from(value: SubsystemError) -> Self {
         match value {
             SubsystemError::Error => 1,
-            SubsystemError::None => 0
+            SubsystemError::None => 0,
         }
     }
 }
@@ -217,7 +217,7 @@ impl From<u8> for MessageError {
     fn from(value: u8) -> Self {
         match value {
             1 => Self::Error,
-            _ => Self::None
+            _ => Self::None,
         }
     }
 }
@@ -226,7 +226,7 @@ impl From<MessageError> for u8 {
     fn from(value: MessageError) -> Self {
         match value {
             MessageError::Error => 1,
-            MessageError::None => 0
+            MessageError::None => 0,
         }
     }
 }
