@@ -2,13 +2,19 @@ use crate::errors::{MessageError, SubsystemError, TerminalError};
 use crate::fields::*;
 use crate::flags::*;
 
-macro_rules! parity {
-    ( $t:ident ) => {
-        match $t.count_ones() % 2 {
-            0 => 1,
-            _ => 0,
-        }
-    };
+/// Calculate a parity bit given a u16 word value
+///
+/// MIL STD 1553B uses an odd parity bit (1 if the 
+/// bit count of the data is even, 0 if not)[^1].
+///
+/// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf) 
+#[inline]
+#[must_use = "Result is not used"]
+fn parity(v: u16) -> u8 {
+    match v.count_ones() % 2 {
+        0 => 1,
+        _ => 0,
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -44,7 +50,7 @@ impl CommandWord {
     pub fn new(data: u16) -> Self {
         Self {
             data,
-            parity: parity!(data),
+            parity: parity(data),
         }
     }
 
@@ -62,6 +68,7 @@ impl CommandWord {
     /// more information.
     pub fn set_address(&mut self, value: Address) {
         self.data = COMMAND_TERMINAL_ADDRESS_FIELD.set(self.data, value.into());
+        self.parity = parity(self.data);
     }
 
     /// Get the subaddress of this word
@@ -81,6 +88,7 @@ impl CommandWord {
     /// more information.
     pub fn set_subaddress(&mut self, value: SubAddress) {
         self.data = COMMAND_SUBADDRESS_FIELD.set(self.data, value.into());
+        self.parity = parity(self.data);
     }
 
     /// Get the direction of transmission
@@ -97,6 +105,7 @@ impl CommandWord {
     /// more information about this field.
     pub fn set_transmit_receive(&mut self, value: TransmitReceive) {
         self.data = COMMAND_TRANSMIT_RECEIVE_FIELD.set(self.data, value.into());
+        self.parity = parity(self.data);
     }
 
     /// Get the mode code of this word
@@ -120,6 +129,7 @@ impl CommandWord {
     pub fn set_mode_code(&mut self, value: ModeCode) {
         if self.is_mode_code() {
             self.data = COMMAND_MODE_CODE_FIELD.set(self.data, value.into());
+            self.parity = parity(self.data);
         }
     }
 
@@ -146,6 +156,7 @@ impl CommandWord {
     pub fn set_word_count(&mut self, value: u8) {
         if !self.is_mode_code() {
             self.data = COMMAND_WORD_COUNT_FIELD.set(self.data, value);
+            self.parity = parity(self.data);
         }
     }
 
@@ -214,7 +225,7 @@ impl StatusWord {
     pub fn new(data: u16) -> Self {
         Self {
             data,
-            parity: parity!(data),
+            parity: parity(data),
         }
     }
 
@@ -232,6 +243,7 @@ impl StatusWord {
     /// more information.
     pub fn set_address(&mut self, value: Address) {
         self.data = STATUS_TERMINAL_ADDRESS_FIELD.set(self.data, value.into());
+        self.parity = parity(self.data);
     }
 
     /// Get Instrumentation flag of the status word
@@ -248,6 +260,7 @@ impl StatusWord {
     /// more information.
     pub fn set_instrumentation(&mut self, value: Instrumentation) {
         self.data = STATUS_INSTRUMENTATION_FIELD.set(self.data, value.into());
+        self.parity = parity(self.data);
     }
 
     /// Get Service Request flag of the status word
@@ -264,6 +277,7 @@ impl StatusWord {
     /// more information.
     pub fn set_service_request(&mut self, value: ServiceRequest) {
         self.data = STATUS_SERVICE_REQUEST_FIELD.set(self.data, value.into());
+        self.parity = parity(self.data);
     }
 
     /// Get the value of the reserved portion of the status word
@@ -280,6 +294,7 @@ impl StatusWord {
     /// more information.
     pub fn set_reserved(&mut self, value: Reserved) {
         self.data = STATUS_RESERVED_BITS_FIELD.set(self.data, value.into());
+        self.parity = parity(self.data);
     }
 
     /// Get the Broadcast Command flag from the status word
@@ -297,6 +312,7 @@ impl StatusWord {
     /// more information.
     pub fn set_broadcast_received(&mut self, value: BroadcastCommand) {
         self.data = STATUS_BROADCAST_RECEIVED_FIELD.set(self.data, value.into());
+        self.parity = parity(self.data);
     }
 
     /// Get the Busy flag from the status word
@@ -314,6 +330,7 @@ impl StatusWord {
     /// more information.
     pub fn set_terminal_busy(&mut self, value: TerminalBusy) {
         self.data = STATUS_TERMINAL_BUSY_FIELD.set(self.data, value.into());
+        self.parity = parity(self.data);
     }
 
     /// Get the Dynamic Bus Control Acceptance flag from the status word
@@ -331,6 +348,7 @@ impl StatusWord {
     /// more information.
     pub fn set_dynamic_bus_acceptance(&mut self, value: BusControlAccept) {
         self.data = STATUS_DYNAMIC_BUS_ACCEPT_FIELD.set(self.data, value.into());
+        self.parity = parity(self.data);
     }
 
     /// Check if the message error flag is set
@@ -347,6 +365,7 @@ impl StatusWord {
     /// more information.
     pub fn set_message_error(&mut self, value: MessageError) {
         self.data = STATUS_MESSAGE_ERROR_FIELD.set(self.data, value.into());
+        self.parity = parity(self.data);
     }
 
     /// Check if the subsystem error flag is set
@@ -363,6 +382,7 @@ impl StatusWord {
     /// more information.
     pub fn set_subsystem_error(&mut self, value: SubsystemError) {
         self.data = STATUS_SUBSYSTEM_FLAG_FIELD.set(self.data, value.into());
+        self.parity = parity(self.data);
     }
 
     /// Check if the terminal error flag is set
@@ -379,6 +399,7 @@ impl StatusWord {
     /// more information.
     pub fn set_terminal_error(&mut self, value: TerminalError) {
         self.data = STATUS_TERMINAL_FLAG_FIELD.set(self.data, value.into());
+        self.parity = parity(self.data);
     }
 
     /// Check if any of the various error flags are set
@@ -442,7 +463,7 @@ impl DataWord {
     pub fn new(data: u16) -> Self {
         Self {
             data,
-            parity: parity!(data),
+            parity: parity(data),
         }
     }
 
@@ -469,6 +490,24 @@ impl DataWord {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_command_parity_update() {
+        let mut word = CommandWord::new(0b0000000000101010);
+        assert_eq!(word.parity,0);
+
+        word.set_address(Address::Value(0b00000001));
+        assert_eq!(word.parity,1);
+    }
+
+    #[test]
+    fn test_status_parity_update() {
+        let mut word = StatusWord::new(0b0000000010101010);
+        assert_eq!(word.parity,1);
+
+        word.set_address(Address::Value(0b00000001));
+        assert_eq!(word.parity,0);
+    }
 
     #[test]
     fn test_command_is_valid() {
