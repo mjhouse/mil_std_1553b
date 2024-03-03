@@ -1,5 +1,3 @@
-/// a message can only contain 32 words
-pub const MAX_WORDS: usize = 33;
 
 /// The type of the message
 ///
@@ -18,7 +16,7 @@ pub const MAX_WORDS: usize = 33;
 /// in chapter 4 of the MIL-STD-1553 Tutorial[^1].
 ///
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
-#[derive(Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum MessageType {
     /// The message is intended for a single receiver
     Directed(MessageDirection),
@@ -36,7 +34,7 @@ pub enum MessageType {
 /// Tutorial[^1].
 ///
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
-#[derive(Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum MessageDirection {
     /// Message from the bus controller to a remote terminal
     BcToRt(MessageSide),
@@ -57,7 +55,7 @@ pub enum MessageDirection {
 /// The side on which the message is being parsed can
 /// determine what the message words should be parsed
 /// as.
-#[derive(Clone)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum MessageSide {
     /// Message is parsed or constructed by the sender
     Sending,
