@@ -6,3 +6,6 @@ pub mod fields;
 pub mod flags;
 pub mod message;
 pub mod word;
+
+pub use message::Message;
+pub use word::{CommandWord,StatusWord,DataWord};

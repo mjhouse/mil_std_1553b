@@ -3,6 +3,21 @@
 /// A result type which uses the [Error] enum as the error type.
 pub type Result<T> = core::result::Result<T, Error>;
 
+/// Calculate a parity bit given a u16 word value
+///
+/// MIL STD 1553B uses an odd parity bit (1 if the 
+/// bit count of the data is even, 0 if not)[^1].
+///
+/// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf) 
+#[inline]
+#[must_use = "Returned value is not used"]
+pub(crate) fn parity<T: Into<u16>>(v: T) -> u8 {
+    match v.into().count_ones() % 2 {
+        0 => 1,
+        _ => 0,
+    }
+}
+
 /// An error deriving from the software itself, rather than a terminal.
 ///
 /// These errors occur during parsing or other calculations when those
@@ -99,11 +114,13 @@ pub enum TerminalError {
 
 impl TerminalError {
     /// Check if the enum is the 'None' variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_none(&self) -> bool {
         matches!(self, Self::None)
     }
 
     /// Check if the enum is the 'Error' variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_error(&self) -> bool {
         matches!(self, Self::Error)
     }
@@ -151,11 +168,13 @@ pub enum SubsystemError {
 
 impl SubsystemError {
     /// Check if the enum is 'None' variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_none(&self) -> bool {
         matches!(self, Self::None)
     }
 
     /// Check if the enum is 'Error' variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_error(&self) -> bool {
         matches!(self, Self::Error)
     }
@@ -203,11 +222,13 @@ pub enum MessageError {
 
 impl MessageError {
     /// Check if the enum is 'None' variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_none(&self) -> bool {
         matches!(self, Self::None)
     }
 
     /// Check if enum is 'Error' variant
+    #[must_use = "Returned value is not used"]
     pub const fn is_error(&self) -> bool {
         matches!(self, Self::Error)
     }

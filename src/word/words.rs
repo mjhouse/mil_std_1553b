@@ -1,37 +1,51 @@
-use crate::errors::{MessageError, SubsystemError, TerminalError};
+use crate::errors::{MessageError, SubsystemError, TerminalError, parity};
 use crate::fields::*;
 use crate::flags::*;
 
-/// Calculate a parity bit given a u16 word value
+/// Specifies the function that a remote terminal is to perform
 ///
-/// MIL STD 1553B uses an odd parity bit (1 if the 
-/// bit count of the data is even, 0 if not)[^1].
+/// This word is parsed from a packet that includes an initial service 
+/// sync flag. Only the active bus controller emits this word.[^1]
 ///
-/// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf) 
-#[inline]
-#[must_use = "Result is not used"]
-fn parity(v: u16) -> u8 {
-    match v.count_ones() % 2 {
-        0 => 1,
-        _ => 0,
-    }
-}
-
+/// [^1]: p30 [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CommandWord {
+    /// Data of the word
     data: u16,
+
+    /// Parity of the word
     parity: u8,
 }
 
+/// Sent in response to a valid message from the bus controller
+///
+/// This word is parsed from a packet that includes an initial service 
+/// sync flag. Status words are only transmitted by a remote terminal 
+/// in response to a message from the bus controller.[^1]
+///
+/// [^1]: p31 [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StatusWord {
+    /// Data of the word
     data: u16,
+
+    /// Parity of the word
     parity: u8,
 }
 
+/// Contains the actual information that is being transmitted.
+///
+/// This word is parsed from a packet that includes an initial data 
+/// sync flag. Data words can be transmitted by either a remote terminal 
+/// (transmit command) or a bus controller (receive command).[^1]
+///
+/// [^1]: p31 [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DataWord {
+    /// Data of the word
     data: u16,
+
+    /// Parity of the word
     parity: u8,
 }
 
@@ -172,6 +186,7 @@ impl CommandWord {
     ///
     /// See [CommandWord::transmit_receive]
     /// for more information.
+    #[must_use = "Returned value is not used"]
     pub fn is_transmit(&self) -> bool {
         self.transmit_receive().is_transmit()
     }
@@ -180,6 +195,7 @@ impl CommandWord {
     ///
     /// See [CommandWord::transmit_receive]
     /// for more information.
+    #[must_use = "Returned value is not used"]
     pub fn is_receive(&self) -> bool {
         self.transmit_receive().is_receive()
     }
@@ -192,6 +208,7 @@ impl CommandWord {
     /// Check if the word is valid
     ///
     /// Checks that the parity bit is correct.
+    #[must_use = "Returned value is not used"]
     pub fn is_valid(&self) -> bool {
         let parity = self.parity as u32;
         let data = self.data.count_ones();
@@ -416,6 +433,7 @@ impl StatusWord {
     ///
     /// See [StatusWord::terminal_busy] for
     /// more information.
+    #[must_use = "Returned value is not used"]
     pub fn is_busy(&self) -> bool {
         self.terminal_busy().is_busy()
     }
@@ -427,6 +445,7 @@ impl StatusWord {
     ///
     /// See [StatusWord::reserved] for more information about
     /// the reserved field.
+    #[must_use = "Returned value is not used"]
     pub fn is_valid(&self) -> bool {
         let parity = self.parity as u32;
         let data = self.data.count_ones();
@@ -470,6 +489,7 @@ impl DataWord {
     /// Check if the word is valid
     ///
     /// Checks that the parity bit is correct.
+    #[must_use = "Returned value is not used"]
     pub fn is_valid(&self) -> bool {
         let parity = self.parity as u32;
         let data = self.data.count_ones();

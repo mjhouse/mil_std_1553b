@@ -32,11 +32,13 @@ impl Message {
     }
 
     /// Check if the message is full
+    #[must_use = "Returned value is not used"]
     pub fn is_full(&self) -> bool {
-        self.count == MAX_WORDS
+        self.data_count() == self.data_expected()
     }
 
     /// Check if the message is empty
+    #[must_use = "Returned value is not used"]
     pub fn is_empty(&self) -> bool {
         self.count == 0
     }
@@ -79,25 +81,29 @@ impl Message {
 
     /// Get the expected number of data words
     pub fn data_expected(&self) -> usize {
-        self.first().map(Word::data).unwrap_or(0)
+        self.first().map(Word::data_count).unwrap_or(0)
     }
 
     /// Check if message has data words
+    #[must_use = "Returned value is not used"]
     pub fn has_data(&self) -> bool {
         self.data_count() > 0
     }
 
     /// Check if message can contain more data words
+    #[must_use = "Returned value is not used"]
     pub fn has_space(&self) -> bool {
         self.data_count() < self.data_expected()
     }
 
     /// Check if message starts with a command word
+    #[must_use = "Returned value is not used"]
     pub fn has_command(&self) -> bool {
         self.first().map(Word::is_command).unwrap_or(false)
     }
 
     /// Check if message starts with a status word
+    #[must_use = "Returned value is not used"]
     pub fn has_status(&self) -> bool {
         self.first().map(Word::is_status).unwrap_or(false)
     }
@@ -114,7 +120,7 @@ impl Message {
 
     /// Add a data word, returning the size of the message on success
     pub fn add_data(&mut self, word: DataWord) -> Result<usize> {
-        if self.is_full() {
+        if self.is_full() && self.has_command() {
             Err(Error::MessageIsFull)
         } else if self.is_empty() {
             Err(Error::FirstWordIsData)
@@ -164,7 +170,7 @@ mod tests {
     fn test_create_message() {
         let message = Message::new();
 
-        assert_eq!(message.is_full(), false);
+        assert_eq!(message.is_full(), true);
         assert_eq!(message.is_empty(), true);
         assert_eq!(message.first(), None);
         assert_eq!(message.last(), None);
