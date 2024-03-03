@@ -8,7 +8,7 @@ macro_rules! parity {
             0 => 1,
             _ => 0,
         }
-    }
+    };
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -401,10 +401,10 @@ impl StatusWord {
 
     /// Check if the word is valid
     ///
-    /// Checks if the reserved field of the word is being 
-    /// used and that the parity bit is correct. 
+    /// Checks if the reserved field of the word is being
+    /// used and that the parity bit is correct.
     ///
-    /// See [StatusWord::reserved] for more information about 
+    /// See [StatusWord::reserved] for more information about
     /// the reserved field.
     pub fn is_valid(&self) -> bool {
         let parity = self.parity as u32;
