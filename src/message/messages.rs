@@ -16,7 +16,9 @@ const MAX_WORDS: usize = 33;
 ///
 /// It does not validate larger messaging formats that
 /// require context about previous messages or terminal type.
+#[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct Message {
+    count: usize,
     words: [Word; MAX_WORDS],
 }
 
@@ -24,46 +26,55 @@ impl Message {
     /// Create a new message struct
     pub fn new() -> Self {
         Self {
+            count: 0,
             words: [Word::None; MAX_WORDS],
         }
     }
 
     /// Check if the message is full
     pub fn is_full(&self) -> bool {
-        self.words.iter().filter(|w| w.is_none()).count() == 0
+        self.count == MAX_WORDS
     }
 
     /// Check if the message is empty
     pub fn is_empty(&self) -> bool {
-        self.words.iter().filter(|w| w.is_some()).count() == 0
+        self.count == 0
     }
 
     /// Clear all words from the message
     pub fn clear(&mut self) {
+        self.count = 0;
         self.words = [Word::None; MAX_WORDS];
     }
 
     /// Get the last word in the message
     pub fn last(&self) -> Option<&Word> {
-        self.words.iter().rev().find(|w| w.is_some())
+        match self.count {
+            0 => None,
+            i => self.words.get(i - 1),
+        }
     }
 
     /// Get the first word in the message
     pub fn first(&self) -> Option<&Word> {
-        match self.words.first() {
-            Some(Word::None) | None => None,
-            Some(v) => Some(v)
+        match self.count {
+            0 => None,
+            _ => self.words.get(0),
         }
     }
 
     /// Get the number of words
     pub fn word_count(&self) -> usize {
-        self.words.iter().filter(|w| w.is_some()).count()
+        self.count
     }
 
     /// Get the number of data words
     pub fn data_count(&self) -> usize {
-        self.words.iter().filter(|w| w.is_data()).count()
+        self.words
+            .iter()
+            .take_while(|w| w.is_some())
+            .filter(|w| w.is_data())
+            .count()
     }
 
     /// Get the expected number of data words
@@ -108,9 +119,9 @@ impl Message {
         } else if self.is_empty() {
             Err(Error::FirstWordIsData)
         } else {
-            let index = self.word_count();
-            self.words[index] = Word::Data(word);
-            Ok(index + 1)
+            self.words[self.count] = Word::Data(word);
+            self.count += 1;
+            Ok(self.count)
         }
     }
 
@@ -121,9 +132,9 @@ impl Message {
         } else if !word.is_valid() {
             Err(Error::InvalidStatusWord)
         } else {
-            let index = self.word_count();
-            self.words[index] = Word::Status(word);
-            Ok(index + 1)
+            self.words[self.count] = Word::Status(word);
+            self.count += 1;
+            Ok(self.count)
         }
     }
 
@@ -132,9 +143,9 @@ impl Message {
         if !self.is_empty() {
             Err(Error::CommandWordNotFirst)
         } else {
-            let index = self.word_count();
-            self.words[index] = Word::Command(word);
-            Ok(index + 1)
+            self.words[self.count] = Word::Command(word);
+            self.count += 1;
+            Ok(self.count)
         }
     }
 }

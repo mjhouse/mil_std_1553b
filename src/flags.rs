@@ -102,7 +102,7 @@ pub enum ModeCode {
 impl ModeCode {
     /// Get the actual u8 value of the mode code
     pub fn value(&self) -> u8 {
-        self.clone().into()
+        (*self).into()
     }
 
     /// Check if mode code is associated with transmit messages
