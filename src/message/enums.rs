@@ -1,4 +1,3 @@
-
 /// The type of the message
 ///
 /// Directed means that the message is between one

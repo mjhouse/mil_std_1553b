@@ -18,7 +18,7 @@ impl From<u8> for Sync {
     fn from(value: u8) -> Self {
         match value {
             0b100 => Self::Service,
-            _ => Self::Data
+            _ => Self::Data,
         }
     }
 }
@@ -27,7 +27,7 @@ impl From<Sync> for u8 {
     fn from(value: Sync) -> Self {
         match value {
             Sync::Service => 0b100,
-            Sync::Data => 0b001
+            Sync::Data => 0b001,
         }
     }
 }

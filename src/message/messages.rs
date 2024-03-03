@@ -1,5 +1,4 @@
 use crate::errors::*;
-use crate::message::Array;
 use crate::word::Type as Word;
 use crate::word::{CommandWord, DataWord, StatusWord};
 
@@ -18,50 +17,53 @@ const MAX_WORDS: usize = 33;
 /// It does not validate larger messaging formats that
 /// require context about previous messages or terminal type.
 pub struct Message {
-    words: Array<Word, MAX_WORDS>,
+    words: [Word; MAX_WORDS],
 }
 
 impl Message {
     /// Create a new message struct
     pub fn new() -> Self {
         Self {
-            words: Array::new(Word::None),
+            words: [Word::None; MAX_WORDS],
         }
     }
 
     /// Check if the message is full
     pub fn is_full(&self) -> bool {
-        self.words.is_full()
+        self.words.iter().filter(|w| w.is_none()).count() == 0
     }
 
     /// Check if the message is empty
     pub fn is_empty(&self) -> bool {
-        self.words.is_empty()
+        self.words.iter().filter(|w| w.is_some()).count() == 0
     }
 
     /// Clear all words from the message
     pub fn clear(&mut self) {
-        self.words.clear();
+        self.words = [Word::None; MAX_WORDS];
     }
 
     /// Get the last word in the message
     pub fn last(&self) -> Option<&Word> {
-        self.words.last()
+        self.words.iter().rev().find(|w| w.is_some())
     }
 
     /// Get the first word in the message
     pub fn first(&self) -> Option<&Word> {
-        self.words.first()
+        match self.words.first() {
+            Some(Word::None) | None => None,
+            Some(v) => Some(v)
+        }
     }
 
     /// Get the number of words
     pub fn word_count(&self) -> usize {
-        self.words.count(|w| w.is_some())
+        self.words.iter().filter(|w| w.is_some()).count()
     }
 
     /// Get the number of data words
     pub fn data_count(&self) -> usize {
-        self.words.count(|w| w.is_data())
+        self.words.iter().filter(|w| w.is_data()).count()
     }
 
     /// Get the expected number of data words
@@ -106,8 +108,9 @@ impl Message {
         } else if self.is_empty() {
             Err(Error::FirstWordIsData)
         } else {
-            self.words.push(Word::Data(word));
-            Ok(self.words.len())
+            let index = self.word_count();
+            self.words[index] = Word::Data(word);
+            Ok(index + 1)
         }
     }
 
@@ -118,8 +121,9 @@ impl Message {
         } else if !word.is_valid() {
             Err(Error::InvalidStatusWord)
         } else {
-            self.words.push(Word::Status(word));
-            Ok(self.words.len())
+            let index = self.word_count();
+            self.words[index] = Word::Status(word);
+            Ok(index + 1)
         }
     }
 
@@ -128,9 +132,9 @@ impl Message {
         if !self.is_empty() {
             Err(Error::CommandWordNotFirst)
         } else {
-            self.words.resize(word.count() + 1);
-            self.words.push(Word::Command(word));
-            Ok(self.words.len())
+            let index = self.word_count();
+            self.words[index] = Word::Command(word);
+            Ok(index + 1)
         }
     }
 }
