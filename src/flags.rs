@@ -1,7 +1,5 @@
 //! Flags parsed from fields
 
-use num_enum::{FromPrimitive, IntoPrimitive};
-
 macro_rules! fit {
     ( $v: expr, $p: expr ) => {
         ($v & $p) > 0
@@ -33,7 +31,7 @@ macro_rules! eqs {
 /// Mode Codes are listed on page 40, in table 5, of the MIL-STD-1553 Tutorial[^1].
 ///
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
-#[derive(Debug, Clone, PartialEq, Eq, IntoPrimitive, FromPrimitive)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[repr(u8)]
 pub enum ModeCode {
     /// Dynamic Bus Control Mode Code is used to pass control of the data
@@ -98,7 +96,6 @@ pub enum ModeCode {
 
     /// Unknown Mode Code is a catch-all for parsed mode codes that we don't
     /// recognize. This doesn't mean they are invalid, but they may be system-specific.
-    #[num_enum(catch_all)]
     UnknownModeCode(u8),
 }
 
@@ -194,6 +191,54 @@ impl ModeCode {
     }
 }
 
+impl From<u8> for ModeCode {
+    fn from(value: u8) -> Self {
+        use ModeCode::*;
+        match value {
+            0b00000 => DynamicBusControl,
+            0b00001 => Synchronize,
+            0b00010 => TransmitStatusWord,
+            0b00011 => InitiateSelfTest,
+            0b00100 => TransmitterShutdown,
+            0b00101 => OverrideTransmitterShutdown,
+            0b00110 => InhibitTerminalFlagBit,
+            0b00111 => OverrideInhibitTerminalFlagBit,
+            0b01000 => ResetRemoteTerminal,
+            0b10000 => TransmitVectorWord,
+            0b10001 => SynchronizeWithDataWord,
+            0b10010 => TransmitLastCommandWord,
+            0b10011 => TransmitBITWord,
+            0b10100 => SelectedTransmitterShutdown,
+            0b10101 => OverrideSelectedTransmitterShutdown,
+            v => UnknownModeCode(v)
+        }
+    }
+}
+
+impl From<ModeCode> for u8 {
+    fn from(value: ModeCode) -> Self {
+        use ModeCode::*;
+        match value {
+            DynamicBusControl => 0b00000,
+            Synchronize => 0b00001,
+            TransmitStatusWord => 0b00010,
+            InitiateSelfTest => 0b00011,
+            TransmitterShutdown => 0b00100,
+            OverrideTransmitterShutdown => 0b00101,
+            InhibitTerminalFlagBit => 0b00110,
+            OverrideInhibitTerminalFlagBit => 0b00111,
+            ResetRemoteTerminal => 0b01000,
+            TransmitVectorWord => 0b10000,
+            SynchronizeWithDataWord => 0b10001,
+            TransmitLastCommandWord => 0b10010,
+            TransmitBITWord => 0b10011,
+            SelectedTransmitterShutdown => 0b10100,
+            OverrideSelectedTransmitterShutdown => 0b10101,
+            UnknownModeCode(v) => v,
+        }
+    }
+}
+
 /// The direction of message transmission from the point of view of the remote terminal.
 ///
 /// This flag is available in bit 9 (index 5). A transmit bit (logic 1)
@@ -204,11 +249,10 @@ impl ModeCode {
 /// This flag is called T/R or Transmit/Receive on page 28 of the MIL-STD-1553 Tutorial[^1].
 ///
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
-#[derive(Debug, Clone, PartialEq, Eq, IntoPrimitive, FromPrimitive)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[repr(u8)]
 pub enum TransmitReceive {
     /// The remote terminal is receiving data
-    #[default]
     Receive = 0,
 
     /// The remote terminal is to transmit data
@@ -224,6 +268,24 @@ impl TransmitReceive {
     /// Check if this enum is the receive variant
     pub const fn is_receive(&self) -> bool {
         matches!(self, Self::Receive)
+    }
+}
+
+impl From<u8> for TransmitReceive {
+    fn from(value: u8) -> Self {
+        match value {
+            1 => Self::Transmit,
+            _ => Self::Receive
+        }
+    }
+}
+
+impl From<TransmitReceive> for u8 {
+    fn from(value: TransmitReceive) -> Self {
+        match value {
+            TransmitReceive::Transmit => 1,
+            TransmitReceive::Receive => 0
+        }
     }
 }
 
@@ -280,6 +342,18 @@ impl Address {
     /// Check if this address is a reserved broadcast value
     pub const fn is_broadcast(&self) -> bool {
         matches!(self, Self::Broadcast(_))
+    }
+}
+
+impl From<u8> for Address {
+    fn from(v: u8) -> Address {
+        Address::new(v)
+    }
+}
+
+impl From<Address> for u8 {
+    fn from(v: Address) -> u8 {
+        v.value()
     }
 }
 
@@ -341,6 +415,18 @@ impl SubAddress {
     }
 }
 
+impl From<u8> for SubAddress {
+    fn from(v: u8) -> SubAddress {
+        SubAddress::new(v)
+    }
+}
+
+impl From<SubAddress> for u8 {
+    fn from(v: SubAddress) -> u8 {
+        v.value()
+    }
+}
+
 /// Used to differentiate between a command and status word.
 ///
 /// The instrumentation bit in the status word is always set to a logic 0,
@@ -357,11 +443,10 @@ impl SubAddress {
 /// MIL-STD-1553 Tutorial[^1].
 ///
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
-#[derive(Debug, Clone, PartialEq, Eq, IntoPrimitive, FromPrimitive)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[repr(u8)]
 pub enum Instrumentation {
     /// The containing word is a status word
-    #[default]
     Status = 0,
 
     /// The containing word is a command word
@@ -380,6 +465,24 @@ impl Instrumentation {
     }
 }
 
+impl From<u8> for Instrumentation {
+    fn from(value: u8) -> Self {
+        match value {
+            1 => Self::Command,
+            _ => Self::Status
+        }
+    }
+}
+
+impl From<Instrumentation> for u8 {
+    fn from(value: Instrumentation) -> Self {
+        match value {
+            Instrumentation::Command => 1,
+            Instrumentation::Status => 0
+        }
+    }
+}
+
 /// Used by a remote terminal to tell the bus controller that it needs to be serviced.
 ///
 /// This flag is located at bit time 11 (index 7) and is typically used when
@@ -392,11 +495,10 @@ impl Instrumentation {
 /// MIL-STD-1553 Tutorial[^1].
 ///
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
-#[derive(Debug, Clone, PartialEq, Eq, IntoPrimitive, FromPrimitive)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[repr(u8)]
 pub enum ServiceRequest {
     /// This terminal does not require servicing
-    #[default]
     NoService = 0,
 
     /// This terminal requires servicing
@@ -415,6 +517,24 @@ impl ServiceRequest {
     }
 }
 
+impl From<u8> for ServiceRequest {
+    fn from(value: u8) -> Self {
+        match value {
+            1 => Self::Service,
+            _ => Self::NoService
+        }
+    }
+}
+
+impl From<ServiceRequest> for u8 {
+    fn from(value: ServiceRequest) -> Self {
+        match value {
+            ServiceRequest::Service => 1,
+            ServiceRequest::NoService => 0
+        }
+    }
+}
+
 /// Reserved bits that should always be zero
 ///
 /// Bit times 12-14 (index 8-10) are reserved for future growth of the standard
@@ -426,7 +546,7 @@ impl ServiceRequest {
 /// MIL-STD-1553 Tutorial[^1].
 ///
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[repr(u8)]
 pub enum Reserved {
     /// The reserved bits are empty
@@ -448,6 +568,24 @@ impl Reserved {
     }
 }
 
+impl From<u8> for Reserved {
+    fn from(value: u8) -> Self {
+        match value {
+            0 => Self::None,
+            v => Self::Value(v)
+        }
+    }
+}
+
+impl From<Reserved> for u8 {
+    fn from(value: Reserved) -> Self {
+        match value {
+            Reserved::None => 0,
+            Reserved::Value(v) => v
+        }
+    }
+}
+
 /// Indicates that the remote terminal has received a valid broadcast command.
 ///
 /// On receiving such a command, the remote terminal sets this flag and
@@ -459,11 +597,10 @@ impl Reserved {
 /// MIL-STD-1553 Tutorial[^1].
 ///
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
-#[derive(Debug, Clone, PartialEq, Eq, IntoPrimitive, FromPrimitive)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[repr(u8)]
 pub enum BroadcastCommand {
     /// This terminal has not received a broadcast command
-    #[default]
     NotReceived = 0,
 
     /// This termina received a broadcast command
@@ -482,6 +619,24 @@ impl BroadcastCommand {
     }
 }
 
+impl From<u8> for BroadcastCommand {
+    fn from(value: u8) -> Self {
+        match value {
+            1 => Self::Received,
+            _ => Self::NotReceived
+        }
+    }
+}
+
+impl From<BroadcastCommand> for u8 {
+    fn from(value: BroadcastCommand) -> Self {
+        match value {
+            BroadcastCommand::Received => 1,
+            BroadcastCommand::NotReceived => 0
+        }
+    }
+}
+
 /// Indicates that the remote terminal is busy
 ///
 /// The Busy bit, located at bit time 16 (index 12) is provided as
@@ -493,11 +648,10 @@ impl BroadcastCommand {
 /// MIL-STD-1553 Tutorial[^1].
 ///
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
-#[derive(Debug, Clone, PartialEq, Eq, IntoPrimitive, FromPrimitive)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[repr(u8)]
 pub enum TerminalBusy {
     /// This terminal is not busy
-    #[default]
     NotBusy = 0,
 
     /// This terminal is busy
@@ -516,6 +670,24 @@ impl TerminalBusy {
     }
 }
 
+impl From<u8> for TerminalBusy {
+    fn from(value: u8) -> Self {
+        match value {
+            1 => Self::Busy,
+            _ => Self::NotBusy
+        }
+    }
+}
+
+impl From<TerminalBusy> for u8 {
+    fn from(value: TerminalBusy) -> Self {
+        match value {
+            TerminalBusy::Busy => 1,
+            TerminalBusy::NotBusy => 0
+        }
+    }
+}
+
 /// Informs the bus controller that the terminal has accepted bus control.
 ///
 /// This flag is set by remote terminals that have received the Dynamic Bus
@@ -528,11 +700,10 @@ impl TerminalBusy {
 /// page 28 of the MIL-STD-1553 Tutorial[^1].
 ///
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
-#[derive(Debug, Clone, PartialEq, Eq, IntoPrimitive, FromPrimitive)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[repr(u8)]
 pub enum BusControlAccept {
     /// This terminal has refused control of the bus
-    #[default]
     NotAccepted = 0,
 
     /// This terminal has accepted control of the bus
@@ -551,44 +722,20 @@ impl BusControlAccept {
     }
 }
 
-impl From<u8> for Address {
-    fn from(v: u8) -> Address {
-        Address::new(v)
-    }
-}
-
-impl From<u8> for SubAddress {
-    fn from(v: u8) -> SubAddress {
-        SubAddress::new(v)
-    }
-}
-
-impl From<SubAddress> for u8 {
-    fn from(v: SubAddress) -> u8 {
-        v.value()
-    }
-}
-
-impl From<Address> for u8 {
-    fn from(v: Address) -> u8 {
-        v.value()
-    }
-}
-
-impl From<u8> for Reserved {
-    fn from(v: u8) -> Reserved {
-        match v {
-            0 => Reserved::None,
-            k => Reserved::Value(k),
+impl From<u8> for BusControlAccept {
+    fn from(value: u8) -> Self {
+        match value {
+            1 => Self::Accepted,
+            _ => Self::NotAccepted
         }
     }
 }
 
-impl From<Reserved> for u8 {
-    fn from(v: Reserved) -> u8 {
-        match v {
-            Reserved::None => 0,
-            Reserved::Value(k) => k,
+impl From<BusControlAccept> for u8 {
+    fn from(value: BusControlAccept) -> Self {
+        match value {
+            BusControlAccept::Accepted => 1,
+            BusControlAccept::NotAccepted => 0
         }
     }
 }

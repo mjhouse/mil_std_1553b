@@ -4,6 +4,7 @@
 ///
 /// Given a mask and offset, the Field struct can get
 /// or set between 1 and 8 bits in a u16 word.
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Field {
     /// The mask used to isolate the value
     mask: u16,

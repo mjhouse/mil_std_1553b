@@ -3,7 +3,7 @@
 /// This struct has a maximum size and a
 /// limit that can be increased or decreased
 /// within that size.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Array<T, const S: usize>
 where
     T: Clone + Copy,

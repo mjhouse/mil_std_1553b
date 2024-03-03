@@ -22,7 +22,7 @@ macro_rules! make_parity {
     }};
 }
 
-#[derive(Clone, Copy)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Packet {
     pub sync: u8,
     pub bytes: [u8; 2],

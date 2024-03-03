@@ -1,8 +1,10 @@
-use super::enums::*;
 use crate::errors::*;
 use crate::message::Array;
 use crate::word::Type as Word;
 use crate::word::{CommandWord, DataWord, StatusWord};
+
+/// a message can only contain 32 words
+const MAX_WORDS: usize = 33;
 
 /// A message sent between two terminals on the bus
 ///

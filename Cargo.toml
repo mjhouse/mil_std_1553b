@@ -20,6 +20,3 @@ categories = [
     "no-std::no-alloc", 
     "parser-implementations"
 ]
-
-[dependencies]
-num_enum = { version = "0.7.0" }
