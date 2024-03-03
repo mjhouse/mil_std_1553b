@@ -63,7 +63,7 @@ impl Packet {
     }
 
     /// Convert this packet into a data word
-    pub fn as_data(&self) -> Result<DataWord> {
+    pub fn to_data(&self) -> Result<DataWord> {
         if self.is_valid() & self.is_data() {
             Ok(DataWord::new(self.value()))
         } else {
@@ -72,7 +72,7 @@ impl Packet {
     }
 
     /// Convert this packet into a status word
-    pub fn as_status(&self) -> Result<StatusWord> {
+    pub fn to_status(&self) -> Result<StatusWord> {
         if self.is_valid() & self.is_service() {
             Ok(StatusWord::new(self.value()))
         } else {
@@ -81,7 +81,7 @@ impl Packet {
     }
 
     /// Convert this packet into a command word
-    pub fn as_command(&self) -> Result<CommandWord> {
+    pub fn to_command(&self) -> Result<CommandWord> {
         if self.is_valid() & self.is_service() {
             Ok(CommandWord::new(self.value()))
         } else {
@@ -93,7 +93,7 @@ impl Packet {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::flags::{Address, SubAddress};
+    use crate::flags::{Address, BroadcastCommand, SubAddress};
 
     /// The leading sync pattern for a data word
     const DATA_SYNC: u8 = 0b001;
@@ -179,12 +179,21 @@ mod tests {
     #[test]
     fn test_packet_convert_command() {
         let packet = Packet::new(SERV_SYNC,[0b00011000, 0b01100010],0);
-        let word = packet.as_command().unwrap();
+        let word = packet.to_command().unwrap();
 
         assert_eq!(word.address(), Address::new(3));
         assert_eq!(word.subaddress(), SubAddress::new(3));
 
         assert!(!word.is_mode_code());
         assert_eq!(word.word_count(), Some(2));
+    }
+
+    #[test]
+    fn test_packet_convert_status() {
+        let packet = Packet::new(SERV_SYNC,[0b00011000, 0b00010000],0);
+        let word = packet.to_status().unwrap();
+
+        assert_eq!(word.address(), Address::new(3));
+        assert_eq!(word.broadcast_received(),BroadcastCommand::Received);
     }
 }
