@@ -35,9 +35,16 @@ impl From<Sync> for u8 {
 /// Container enum for the different kinds of words
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Type {
+    /// No contained word
     None,
+
+    /// Command word
     Command(CommandWord),
+
+    /// Status word
     Status(StatusWord),
+
+    /// Data word
     Data(DataWord),
 }
 
@@ -49,13 +56,13 @@ impl Sync {
     }
 
     /// Check if the enum is the Data variant
-    #[must_use = "Result of check is never used"]
+    #[must_use = "Returned value is not used"]
     pub const fn is_data(&self) -> bool {
         matches!(self, Self::Data)
     }
 
     /// Check if the enum is the Service variant
-    #[must_use = "Result of check is never used"]
+    #[must_use = "Returned value is not used"]
     pub const fn is_service(&self) -> bool {
         matches!(self, Self::Service)
     }
@@ -63,37 +70,37 @@ impl Sync {
 
 impl Type {
     /// Check if contained word is command
-    #[must_use = "Result of check is never used"]
+    #[must_use = "Returned value is not used"]
     pub fn is_command(&self) -> bool {
         matches!(self, Self::Command(_))
     }
 
     /// Check if contained word is status
-    #[must_use = "Result of check is never used"]
+    #[must_use = "Returned value is not used"]
     pub fn is_status(&self) -> bool {
         matches!(self, Self::Status(_))
     }
 
     /// Check if contained word is data
-    #[must_use = "Result of check is never used"]
+    #[must_use = "Returned value is not used"]
     pub fn is_data(&self) -> bool {
         matches!(self, Self::Data(_))
     }
 
     /// Check if there is a contained word
-    #[must_use = "Result of check is never used"]
+    #[must_use = "Returned value is not used"]
     pub fn is_some(&self) -> bool {
         !self.is_none()
     }
 
     /// Check if there is no contained word
-    #[must_use = "Result of check is never used"]
+    #[must_use = "Returned value is not used"]
     pub fn is_none(&self) -> bool {
         matches!(self, Self::None)
     }
 
     /// Get the number of associated data words
-    pub fn data(&self) -> usize {
+    pub fn data_count(&self) -> usize {
         match self {
             Self::Command(c) => c.count(),
             _ => 0,
