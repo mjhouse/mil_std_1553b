@@ -107,3 +107,21 @@ impl Type {
         }
     }
 }
+
+impl From<CommandWord> for Type {
+    fn from(value: CommandWord) -> Self {
+        Type::Command(value)
+    }
+}
+
+impl From<StatusWord> for Type {
+    fn from(value: StatusWord) -> Self {
+        Type::Status(value)
+    }
+}
+
+impl From<DataWord> for Type {
+    fn from(value: DataWord) -> Self {
+        Type::Data(value)
+    }
+}
