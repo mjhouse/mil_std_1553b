@@ -20,25 +20,24 @@ or military projects that can't have virally licensed dependencies.
 ### Creating a message
 
 ```rust
-    use mil_std_1553b::*;
-
-    let mut message = Message::new();
-
-    message.add_command(CommandWord::new()
-        .with_subaddress(12)
-        .with_subaddress(5)
-        .with_word_count(2)
-        .build()
-        .unwrap()
-    ).unwrap();
-
-    message.add_data(DataWord::new()).unwrap();
-    message.add_data(DataWord::new()).unwrap();
+# use mil_std_1553b::*;
+# fn try_main() -> Result<()> {
+    let message = Message::new()
+        .with_command(CommandWord::new()
+            .with_subaddress(12)
+            .with_subaddress(5)
+            .with_word_count(2)
+            .build()?
+        )?
+        .with_data(DataWord::new())?
+        .with_data(DataWord::new())?;
 
     assert!(message.is_full());
     assert_eq!(message.word_count(),3);
     assert_eq!(message.data_count(),2);
     assert_eq!(message.data_expected(),2);
+# Ok(())
+# }
 ```
 
 ## Words

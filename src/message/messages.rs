@@ -109,13 +109,19 @@ impl Message {
     }
 
     /// Add a generic word to the message, returning size on success
-    pub fn add(&mut self, word: Word) -> Result<usize> {
-        match word {
+    pub fn add<T: Into<Word>>(&mut self, word: T) -> Result<usize> {
+        match word.into() {
             Word::Data(v) => self.add_data(v),
             Word::Status(v) => self.add_status(v),
             Word::Command(v) => self.add_command(v),
             _ => Err(Error::WordIsInvalid),
         }
+    }
+
+    /// Constructor method to add a word to the message
+    pub fn with_word<T: Into<Word>>(mut self, word: T) -> Result<Self> {
+        self.add(word)?;
+        Ok(self)
     }
 
     /// Add a data word, returning the size of the message on success
@@ -131,6 +137,12 @@ impl Message {
         }
     }
 
+    /// Constructor method to add a data word to the message
+    pub fn with_data<T: Into<DataWord>>(mut self, word: T) -> Result<Self> {
+        self.add_data(word.into())?;
+        Ok(self)
+    }
+
     /// Add a status word, returning the size of the message on success
     pub fn add_status(&mut self, word: StatusWord) -> Result<usize> {
         if !self.is_empty() {
@@ -144,6 +156,12 @@ impl Message {
         }
     }
 
+    /// Constructor method to add a status word to the message
+    pub fn with_status<T: Into<StatusWord>>(mut self, word: T) -> Result<Self> {
+        self.add_status(word.into())?;
+        Ok(self)
+    }
+
     /// Add a command word, returning the size of the message on success
     pub fn add_command(&mut self, word: CommandWord) -> Result<usize> {
         if !self.is_empty() {
@@ -153,6 +171,12 @@ impl Message {
             self.count += 1;
             Ok(self.count)
         }
+    }
+
+    /// Constructor method to add a command word to the message
+    pub fn with_command<T: Into<CommandWord>>(mut self, word: T) -> Result<Self> {
+        self.add_command(word.into())?;
+        Ok(self)
     }
 }
 
