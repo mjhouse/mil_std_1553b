@@ -24,19 +24,19 @@ or military projects that can't have virally licensed dependencies.
 
     let mut message = Message::new();
 
-    let mut command = CommandWord::new(0b0001100001100010);
-    assert_eq!(command.count(),2);
+    message.add_command(CommandWord::new()
+        .with_subaddress(12)
+        .with_subaddress(5)
+        .with_word_count(2)
+    ).unwrap();
 
-    message.add_command(command);
-    assert_eq!(message.data_count(),0);
-    assert_eq!(message.data_expected(),2);
-
-    // add two data words
-    message.add_data(DataWord::new(0b0110100001101001)).unwrap();
-    message.add_data(DataWord::new(0b0110100001101001)).unwrap();
+    message.add_data(DataWord::new()).unwrap();
+    message.add_data(DataWord::new()).unwrap();
 
     assert!(message.is_full());
     assert_eq!(message.word_count(),3);
+    assert_eq!(message.data_count(),2);
+    assert_eq!(message.data_expected(),2);
 ```
 
 ## Words

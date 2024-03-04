@@ -41,6 +41,9 @@ pub enum Error {
     /// A word was found to be invalid while building a message
     WordIsInvalid,
 
+    /// A byte array could not be converted to a string
+    StringIsInvalid,
+
     /// An invalid StatusWord was given while building a message
     InvalidStatusWord,
 
