@@ -80,8 +80,12 @@ impl CommandWord {
     ///
     /// See [CommandWord::address] for
     /// more information.
-    pub fn set_address(&mut self, value: Address) {
-        self.data = COMMAND_TERMINAL_ADDRESS_FIELD.set(self.data, value.into());
+    pub fn set_address<T>(&mut self, value: T)
+        where 
+            T: Into<Address>
+    {
+        let field = value.into();
+        self.data = COMMAND_TERMINAL_ADDRESS_FIELD.set(self.data, field.into());
         self.parity = parity(self.data);
     }
 
@@ -100,8 +104,12 @@ impl CommandWord {
     ///
     /// See [CommandWord::subaddress] for
     /// more information.
-    pub fn set_subaddress(&mut self, value: SubAddress) {
-        self.data = COMMAND_SUBADDRESS_FIELD.set(self.data, value.into());
+    pub fn set_subaddress<T>(&mut self, value: T)
+        where 
+            T: Into<SubAddress>
+    {
+        let field = value.into();
+        self.data = COMMAND_SUBADDRESS_FIELD.set(self.data, field.into());
         self.parity = parity(self.data);
     }
 
@@ -117,8 +125,12 @@ impl CommandWord {
     ///
     /// See [TransmitReceive](crate::flags::TransmitReceive) enum for
     /// more information about this field.
-    pub fn set_transmit_receive(&mut self, value: TransmitReceive) {
-        self.data = COMMAND_TRANSMIT_RECEIVE_FIELD.set(self.data, value.into());
+    pub fn set_transmit_receive<T>(&mut self, value: T)
+        where 
+            T: Into<TransmitReceive>
+    {
+        let field = value.into();
+        self.data = COMMAND_TRANSMIT_RECEIVE_FIELD.set(self.data, field.into());
         self.parity = parity(self.data);
     }
 
@@ -140,9 +152,13 @@ impl CommandWord {
     ///
     /// This method will do nothing if the subaddress is not set to the ModeCode
     /// value. See [CommandWord::mode_code] for more information.
-    pub fn set_mode_code(&mut self, value: ModeCode) {
+    pub fn set_mode_code<T>(&mut self, value: T)
+        where 
+            T: Into<ModeCode>
+    {
         if self.is_mode_code() {
-            self.data = COMMAND_MODE_CODE_FIELD.set(self.data, value.into());
+            let field = value.into();
+            self.data = COMMAND_MODE_CODE_FIELD.set(self.data, field.into());
             self.parity = parity(self.data);
         }
     }
@@ -258,8 +274,12 @@ impl StatusWord {
     ///
     /// See [StatusWord::address] for
     /// more information.
-    pub fn set_address(&mut self, value: Address) {
-        self.data = STATUS_TERMINAL_ADDRESS_FIELD.set(self.data, value.into());
+    pub fn set_address<T>(&mut self, value: T)
+        where
+            T: Into<Address>
+    {
+        let field = value.into();
+        self.data = STATUS_TERMINAL_ADDRESS_FIELD.set(self.data, field.into());
         self.parity = parity(self.data);
     }
 
@@ -275,8 +295,12 @@ impl StatusWord {
     ///
     /// See [StatusWord::instrumentation] for
     /// more information.
-    pub fn set_instrumentation(&mut self, value: Instrumentation) {
-        self.data = STATUS_INSTRUMENTATION_FIELD.set(self.data, value.into());
+    pub fn set_instrumentation<T>(&mut self, value: T)
+        where
+            T: Into<Instrumentation>
+    {
+        let field = value.into();
+        self.data = STATUS_INSTRUMENTATION_FIELD.set(self.data, field.into());
         self.parity = parity(self.data);
     }
 
@@ -292,8 +316,12 @@ impl StatusWord {
     ///
     /// See [StatusWord::service_request] for
     /// more information.
-    pub fn set_service_request(&mut self, value: ServiceRequest) {
-        self.data = STATUS_SERVICE_REQUEST_FIELD.set(self.data, value.into());
+    pub fn set_service_request<T>(&mut self, value: T)
+        where
+            T: Into<ServiceRequest>
+    {
+        let field = value.into();
+        self.data = STATUS_SERVICE_REQUEST_FIELD.set(self.data, field.into());
         self.parity = parity(self.data);
     }
 
@@ -309,8 +337,12 @@ impl StatusWord {
     ///
     /// See [StatusWord::reserved] for
     /// more information.
-    pub fn set_reserved(&mut self, value: Reserved) {
-        self.data = STATUS_RESERVED_BITS_FIELD.set(self.data, value.into());
+    pub fn set_reserved<T>(&mut self, value: T)
+        where
+            T: Into<Reserved>
+    {
+        let field = value.into();
+        self.data = STATUS_RESERVED_BITS_FIELD.set(self.data, field.into());
         self.parity = parity(self.data);
     }
 
@@ -327,8 +359,12 @@ impl StatusWord {
     ///
     /// See [StatusWord::broadcast_received] for
     /// more information.
-    pub fn set_broadcast_received(&mut self, value: BroadcastCommand) {
-        self.data = STATUS_BROADCAST_RECEIVED_FIELD.set(self.data, value.into());
+    pub fn set_broadcast_received<T>(&mut self, value: T)
+        where
+            T: Into<BroadcastCommand>
+    {
+        let field = value.into();
+        self.data = STATUS_BROADCAST_RECEIVED_FIELD.set(self.data, field.into());
         self.parity = parity(self.data);
     }
 
@@ -345,8 +381,12 @@ impl StatusWord {
     ///
     /// See [StatusWord::terminal_busy] for
     /// more information.
-    pub fn set_terminal_busy(&mut self, value: TerminalBusy) {
-        self.data = STATUS_TERMINAL_BUSY_FIELD.set(self.data, value.into());
+    pub fn set_terminal_busy<T>(&mut self, value: T)
+        where 
+            T: Into<TerminalBusy>
+    {
+        let field = value.into();
+        self.data = STATUS_TERMINAL_BUSY_FIELD.set(self.data, field.into());
         self.parity = parity(self.data);
     }
 
@@ -363,8 +403,12 @@ impl StatusWord {
     ///
     /// See [StatusWord::dynamic_bus_acceptance] for
     /// more information.
-    pub fn set_dynamic_bus_acceptance(&mut self, value: BusControlAccept) {
-        self.data = STATUS_DYNAMIC_BUS_ACCEPT_FIELD.set(self.data, value.into());
+    pub fn set_dynamic_bus_acceptance<T>(&mut self, value: T)
+        where 
+            T: Into<BusControlAccept>
+    {
+        let field = value.into();
+        self.data = STATUS_DYNAMIC_BUS_ACCEPT_FIELD.set(self.data, field.into());
         self.parity = parity(self.data);
     }
 
@@ -380,8 +424,12 @@ impl StatusWord {
     ///
     /// See [StatusWord::message_error] for
     /// more information.
-    pub fn set_message_error(&mut self, value: MessageError) {
-        self.data = STATUS_MESSAGE_ERROR_FIELD.set(self.data, value.into());
+    pub fn set_message_error<T>(&mut self, value: T)
+        where 
+            T: Into<MessageError>
+    {
+        let field = value.into();
+        self.data = STATUS_MESSAGE_ERROR_FIELD.set(self.data, field.into());
         self.parity = parity(self.data);
     }
 
@@ -397,8 +445,12 @@ impl StatusWord {
     ///
     /// See [StatusWord::subsystem_error] for
     /// more information.
-    pub fn set_subsystem_error(&mut self, value: SubsystemError) {
-        self.data = STATUS_SUBSYSTEM_FLAG_FIELD.set(self.data, value.into());
+    pub fn set_subsystem_error<T>(&mut self, value: T)
+        where 
+            T: Into<SubsystemError>
+    {
+        let field = value.into();
+        self.data = STATUS_SUBSYSTEM_FLAG_FIELD.set(self.data, field.into());
         self.parity = parity(self.data);
     }
 
@@ -414,8 +466,12 @@ impl StatusWord {
     ///
     /// See [`StatusWord::terminal_error`][StatusWord::terminal_error] for
     /// more information.
-    pub fn set_terminal_error(&mut self, value: TerminalError) {
-        self.data = STATUS_TERMINAL_FLAG_FIELD.set(self.data, value.into());
+    pub fn set_terminal_error<T>(&mut self, value: T)
+        where 
+            T: Into<TerminalError>
+    {
+        let field = value.into();
+        self.data = STATUS_TERMINAL_FLAG_FIELD.set(self.data, field.into());
         self.parity = parity(self.data);
     }
 
