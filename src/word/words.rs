@@ -794,6 +794,24 @@ impl DataWord {
 
 }
 
+impl Default for CommandWord {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Default for StatusWord {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Default for DataWord {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
