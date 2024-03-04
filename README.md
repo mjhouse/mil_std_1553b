@@ -28,6 +28,8 @@ or military projects that can't have virally licensed dependencies.
         .with_subaddress(12)
         .with_subaddress(5)
         .with_word_count(2)
+        .build()
+        .unwrap()
     ).unwrap();
 
     message.add_data(DataWord::new()).unwrap();

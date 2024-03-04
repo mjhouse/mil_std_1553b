@@ -1,4 +1,4 @@
-use crate::errors::{parity, MessageError, SubsystemError, TerminalError};
+use crate::errors::{parity, Result, Error, MessageError, SubsystemError, TerminalError};
 use crate::fields::*;
 use crate::flags::*;
 
@@ -294,7 +294,6 @@ impl CommandWord {
     pub fn is_valid(&self) -> bool {
         let parity = self.parity as u32;
         let data = self.data.count_ones();
-
         ((data + parity) % 2) != 0
     }
 
@@ -306,6 +305,15 @@ impl CommandWord {
     /// Get the word as a u16
     pub fn data(&self) -> u16 {
         self.data
+    }
+
+    /// Finish and validate construction of a word
+    pub fn build(self) -> Result<Self> {
+        if self.is_valid() {
+            Ok(self)
+        } else {
+            Err(Error::WordIsInvalid)
+        }
     }
 }
 
@@ -716,6 +724,15 @@ impl StatusWord {
     pub fn data(&self) -> u16 {
         self.data
     }
+
+    /// Finish and validate construction of a word
+    pub fn build(self) -> Result<Self> {
+        if self.is_valid() {
+            Ok(self)
+        } else {
+            Err(Error::WordIsInvalid)
+        }
+    }
 }
 
 impl DataWord {
@@ -766,6 +783,15 @@ impl DataWord {
         self.data
     }
 
+    /// Finish and validate construction of a word
+    pub fn build(self) -> Result<Self> {
+        if self.is_valid() {
+            Ok(self)
+        } else {
+            Err(Error::WordIsInvalid)
+        }
+    }
+
 }
 
 #[cfg(test)]
@@ -779,7 +805,9 @@ mod tests {
             .with_terminal_busy(1)
             .with_message_error(1)
             .with_terminal_error(1)
-            .with_subsystem_error(1);
+            .with_subsystem_error(1)
+            .build()
+            .unwrap();
 
         assert_eq!(word.address(),Address::Value(4));
         assert_eq!(word.terminal_busy(),TerminalBusy::Busy);
@@ -794,7 +822,9 @@ mod tests {
             .with_address(4)
             .with_subaddress(2)
             .with_transmit_receive(1)
-            .with_word_count(3);
+            .with_word_count(3)
+            .build()
+            .unwrap();
 
         assert!(!word.is_mode_code());
         assert_eq!(word.word_count(),Some(3));
