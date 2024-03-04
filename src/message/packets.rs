@@ -65,7 +65,7 @@ impl Packet {
     /// Convert this packet into a data word
     pub fn to_data(&self) -> Result<DataWord> {
         if self.is_valid() & self.is_data() {
-            Ok(DataWord::new(self.value()))
+            Ok(DataWord::from(self.value()))
         } else {
             Err(Error::PacketIsInvalid)
         }
@@ -74,7 +74,7 @@ impl Packet {
     /// Convert this packet into a status word
     pub fn to_status(&self) -> Result<StatusWord> {
         if self.is_valid() & self.is_service() {
-            Ok(StatusWord::new(self.value()))
+            Ok(StatusWord::from(self.value()))
         } else {
             Err(Error::PacketIsInvalid)
         }
@@ -83,7 +83,7 @@ impl Packet {
     /// Convert this packet into a command word
     pub fn to_command(&self) -> Result<CommandWord> {
         if self.is_valid() & self.is_service() {
-            Ok(CommandWord::new(self.value()))
+            Ok(CommandWord::from(self.value()))
         } else {
             Err(Error::PacketIsInvalid)
         }

@@ -183,7 +183,7 @@ mod tests {
     fn test_message_command_add() {
         let mut message = Message::new();
 
-        let word = Word::Command(CommandWord::new(0b0001100001100010));
+        let word = Word::Command(CommandWord::from(0b0001100001100010));
         let result = message.add(word.clone());
 
         assert_eq!(result, Ok(1));
@@ -195,7 +195,7 @@ mod tests {
     fn test_message_command_data() {
         let mut message = Message::new();
 
-        let word = Word::Command(CommandWord::new(0b0001100001100010));
+        let word = Word::Command(CommandWord::from(0b0001100001100010));
         message.add(word.clone()).unwrap();
 
         assert_eq!(message.word_count(), 1);
@@ -207,10 +207,10 @@ mod tests {
     fn test_message_command_add_data() {
         let mut message = Message::new();
 
-        let word = Word::Command(CommandWord::new(0b0001100001100010));
+        let word = Word::Command(CommandWord::from(0b0001100001100010));
         message.add(word.clone()).unwrap();
 
-        let data = Word::Data(DataWord::new(0b0110100001101001));
+        let data = Word::Data(DataWord::from(0b0110100001101001));
         message.add(data.clone()).unwrap();
 
         assert_eq!(message.word_count(), 2);
@@ -221,7 +221,7 @@ mod tests {
     fn test_message_status_add() {
         let mut message = Message::new();
 
-        let word = Word::Status(StatusWord::new(0b0001100000000010));
+        let word = Word::Status(StatusWord::from(0b0001100000000010));
         let result = message.add(word.clone());
 
         assert_eq!(result, Ok(1));
@@ -234,7 +234,7 @@ mod tests {
         let mut message = Message::new();
 
         // word is using the reserved bits (0b0000000011100000)
-        let word = Word::Status(StatusWord::new(0b0000000011100000));
+        let word = Word::Status(StatusWord::from(0b0000000011100000));
         let result = message.add(word.clone());
         assert!(result.is_err());
     }
@@ -243,7 +243,7 @@ mod tests {
     fn test_message_status_no_data() {
         let mut message = Message::new();
 
-        let word = Word::Status(StatusWord::new(0b0001100000000010));
+        let word = Word::Status(StatusWord::from(0b0001100000000010));
         message.add(word.clone()).unwrap();
 
         assert_eq!(message.word_count(), 1);
@@ -255,10 +255,10 @@ mod tests {
     fn test_message_status_add_data() {
         let mut message = Message::new();
 
-        let status = Word::Status(StatusWord::new(0b0001100000000000));
+        let status = Word::Status(StatusWord::from(0b0001100000000000));
         message.add(status.clone()).unwrap();
 
-        let data = Word::Data(DataWord::new(0b0110100001101001));
+        let data = Word::Data(DataWord::from(0b0110100001101001));
         message.add(data.clone()).unwrap();
 
         assert_eq!(message.word_count(), 2);
