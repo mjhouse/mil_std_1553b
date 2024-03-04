@@ -8,4 +8,22 @@ pub mod message;
 pub mod word;
 
 pub use message::Message;
-pub use word::{CommandWord,StatusWord,DataWord};
+
+pub use word::{
+    CommandWord,
+    StatusWord,
+    DataWord
+};
+
+pub use flags::{
+    ModeCode,
+    TransmitReceive,
+    Address,
+    SubAddress,
+    Instrumentation,
+    ServiceRequest,
+    Reserved,
+    BroadcastCommand,
+    TerminalBusy,
+    BusControlAccept,
+};
