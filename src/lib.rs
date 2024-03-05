@@ -10,26 +10,11 @@ pub mod word;
 
 pub use message::Message;
 
-pub use errors::{
-    Result,
-    Error
-};
+pub use errors::{Error, Result};
 
-pub use word::{
-    CommandWord,
-    StatusWord,
-    DataWord
-};
+pub use word::{CommandWord, DataWord, StatusWord};
 
 pub use flags::{
-    ModeCode,
-    TransmitReceive,
-    Address,
-    SubAddress,
-    Instrumentation,
-    ServiceRequest,
-    Reserved,
-    BroadcastCommand,
-    TerminalBusy,
-    BusControlAccept,
+    Address, BroadcastCommand, BusControlAccept, Instrumentation, ModeCode, Reserved,
+    ServiceRequest, SubAddress, TerminalBusy, TransmitReceive,
 };
