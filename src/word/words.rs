@@ -826,7 +826,7 @@ impl DataWord {
     ///
     /// Fails if the internal data is not valid
     /// UTF-8.
-    pub const fn as_str(&self) -> Result<&str> {
+    pub const fn as_string(&self) -> Result<&str> {
         match core::str::from_utf8(self.as_bytes()) {
             Ok(s) => Ok(s),
             Err(_) => Err(Error::StringIsInvalid),
@@ -926,7 +926,7 @@ mod tests {
 
         assert_eq!(word.as_bytes(), &[0b01001000, 0b01001001]);
         assert_eq!(word.to_u16(), 0b0100100001001001u16);
-        assert_eq!(word.as_str(), Ok("HI"));
+        assert_eq!(word.as_string(), Ok("HI"));
         assert_eq!(word.parity(), 0);
     }
 
@@ -938,7 +938,7 @@ mod tests {
 
         assert_eq!(word.as_bytes(), &[0b01001000, 0b01001001]);
         assert_eq!(word.to_u16(), 0b0100100001001001u16);
-        assert_eq!(word.as_str(), Ok("HI"));
+        assert_eq!(word.as_string(), Ok("HI"));
         assert_eq!(word.parity(), 0);
     }
 
@@ -951,7 +951,7 @@ mod tests {
 
         assert_eq!(word.as_bytes(), &[0b01001000, 0b01001001]);
         assert_eq!(word.to_u16(), 0b0100100001001001u16);
-        assert_eq!(word.as_str(), Ok("HI"));
+        assert_eq!(word.as_string(), Ok("HI"));
         assert_eq!(word.parity(), 0);
     }
 
