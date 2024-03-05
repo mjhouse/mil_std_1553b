@@ -234,7 +234,7 @@ mod tests {
         let word = Word::Command(CommandWord::from(0b0001100001100010));
         message.add(word.clone()).unwrap();
 
-        let data = Word::Data(DataWord::from(0b0110100001101001));
+        let data = Word::Data(DataWord::from_data(0b0110100001101001));
         message.add(data.clone()).unwrap();
 
         assert_eq!(message.word_count(), 2);
@@ -282,7 +282,7 @@ mod tests {
         let status = Word::Status(StatusWord::from(0b0001100000000000));
         message.add(status.clone()).unwrap();
 
-        let data = Word::Data(DataWord::from(0b0110100001101001));
+        let data = Word::Data(DataWord::from_data(0b0110100001101001));
         message.add(data.clone()).unwrap();
 
         assert_eq!(message.word_count(), 2);

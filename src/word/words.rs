@@ -1,10 +1,10 @@
-use crate::errors::{parity, Result, Error, MessageError, SubsystemError, TerminalError};
+use crate::errors::{parity, Error, MessageError, Result, SubsystemError, TerminalError};
 use crate::fields::*;
 use crate::flags::*;
 
 /// Specifies the function that a remote terminal is to perform
 ///
-/// This word is parsed from a packet that includes an initial service 
+/// This word is parsed from a packet that includes an initial service
 /// sync flag. Only the active bus controller emits this word.[^1]
 ///
 /// [^1]: p30 [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
@@ -19,8 +19,8 @@ pub struct CommandWord {
 
 /// Sent in response to a valid message from the bus controller
 ///
-/// This word is parsed from a packet that includes an initial service 
-/// sync flag. Status words are only transmitted by a remote terminal 
+/// This word is parsed from a packet that includes an initial service
+/// sync flag. Status words are only transmitted by a remote terminal
 /// in response to a message from the bus controller.[^1]
 ///
 /// [^1]: p31 [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
@@ -33,30 +33,42 @@ pub struct StatusWord {
     parity: u8,
 }
 
-/// Contains the actual information that is being transmitted.
+/// Contains data that is being transmitted in a message.
 ///
-/// This word is parsed from a packet that includes an initial data 
-/// sync flag. Data words can be transmitted by either a remote terminal 
-/// (transmit command) or a bus controller (receive command).[^1]
+/// This word is parsed from a packet that includes an initial data
+/// sync flag. Data words can be transmitted by either a remote terminal
+/// (transmit command) or a bus controller (receive command) and contain
+/// two bytes of data each.[^1]
+///
+/// ## Example
+///
+/// ```rust
+/// # use mil_std_1553b::*;
+/// # fn try_main() -> Result<()> {
+/// let word = DataWord::new()
+///     .with_data(0b0100100001001001u16)
+///     .with_calculated_parity()
+///     .build()?;
+///
+/// assert_eq!(word.as_string(),Ok("HI"));
+/// # Ok(())
+/// # }
+/// ```
 ///
 /// [^1]: p31 [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DataWord {
     /// Data of the word
-    data: u16,
+    data: [u8; 2],
 
     /// Parity of the word
     parity: u8,
 }
 
 impl CommandWord {
-
     /// Create an empty word
     pub fn new() -> Self {
-        Self {
-            data: 0,
-            parity: 1,
-        }
+        Self { data: 0, parity: 1 }
     }
 
     /// Create a new command word given the data
@@ -90,8 +102,8 @@ impl CommandWord {
     /// See [CommandWord::address] for
     /// more information.
     pub fn set_address<T>(&mut self, value: T)
-        where 
-            T: Into<Address>
+    where
+        T: Into<Address>,
     {
         let field = value.into();
         self.data = COMMAND_TERMINAL_ADDRESS_FIELD.set(self.data, field.into());
@@ -103,8 +115,8 @@ impl CommandWord {
     /// See [CommandWord::address] for
     /// more information.
     pub fn with_address<T>(mut self, value: T) -> Self
-        where 
-            T: Into<Address>
+    where
+        T: Into<Address>,
     {
         self.set_address(value);
         self
@@ -126,8 +138,8 @@ impl CommandWord {
     /// See [CommandWord::subaddress] for
     /// more information.
     pub fn set_subaddress<T>(&mut self, value: T)
-        where 
-            T: Into<SubAddress>
+    where
+        T: Into<SubAddress>,
     {
         let field = value.into();
         self.data = COMMAND_SUBADDRESS_FIELD.set(self.data, field.into());
@@ -139,8 +151,8 @@ impl CommandWord {
     /// See [CommandWord::subaddress] for
     /// more information.
     pub fn with_subaddress<T>(mut self, value: T) -> Self
-        where 
-            T: Into<SubAddress>
+    where
+        T: Into<SubAddress>,
     {
         self.set_subaddress(value);
         self
@@ -159,8 +171,8 @@ impl CommandWord {
     /// See [TransmitReceive](crate::flags::TransmitReceive) enum for
     /// more information about this field.
     pub fn set_transmit_receive<T>(&mut self, value: T)
-        where 
-            T: Into<TransmitReceive>
+    where
+        T: Into<TransmitReceive>,
     {
         let field = value.into();
         self.data = COMMAND_TRANSMIT_RECEIVE_FIELD.set(self.data, field.into());
@@ -172,8 +184,8 @@ impl CommandWord {
     /// See [TransmitReceive](crate::flags::TransmitReceive) enum for
     /// more information about this field.
     pub fn with_transmit_receive<T>(mut self, value: T) -> Self
-        where 
-            T: Into<TransmitReceive>
+    where
+        T: Into<TransmitReceive>,
     {
         self.set_transmit_receive(value);
         self
@@ -198,8 +210,8 @@ impl CommandWord {
     /// This method will do nothing if the subaddress is not set to the ModeCode
     /// value. See [CommandWord::mode_code] for more information.
     pub fn set_mode_code<T>(&mut self, value: T)
-        where 
-            T: Into<ModeCode>
+    where
+        T: Into<ModeCode>,
     {
         if self.is_mode_code() {
             let field = value.into();
@@ -213,8 +225,8 @@ impl CommandWord {
     /// This method will do nothing if the subaddress is not set to the ModeCode
     /// value. See [CommandWord::mode_code] for more information.
     pub fn with_mode_code<T>(mut self, value: T) -> Self
-        where 
-            T: Into<ModeCode>
+    where
+        T: Into<ModeCode>,
     {
         self.set_mode_code(value);
         self
@@ -318,13 +330,9 @@ impl CommandWord {
 }
 
 impl StatusWord {
-
     /// Create an empty word
     pub fn new() -> Self {
-        Self {
-            data: 0,
-            parity: 1,
-        }
+        Self { data: 0, parity: 1 }
     }
 
     /// Create a new status word given the data
@@ -358,8 +366,8 @@ impl StatusWord {
     /// See [StatusWord::address] for
     /// more information.
     pub fn set_address<T>(&mut self, value: T)
-        where
-            T: Into<Address>
+    where
+        T: Into<Address>,
     {
         let field = value.into();
         self.data = STATUS_TERMINAL_ADDRESS_FIELD.set(self.data, field.into());
@@ -371,8 +379,8 @@ impl StatusWord {
     /// See [StatusWord::address] for
     /// more information.
     pub fn with_address<T>(mut self, value: T) -> Self
-        where
-            T: Into<Address>
+    where
+        T: Into<Address>,
     {
         self.set_address(value);
         self
@@ -391,8 +399,8 @@ impl StatusWord {
     /// See [StatusWord::instrumentation] for
     /// more information.
     pub fn set_instrumentation<T>(&mut self, value: T)
-        where
-            T: Into<Instrumentation>
+    where
+        T: Into<Instrumentation>,
     {
         let field = value.into();
         self.data = STATUS_INSTRUMENTATION_FIELD.set(self.data, field.into());
@@ -404,8 +412,8 @@ impl StatusWord {
     /// See [StatusWord::instrumentation] for
     /// more information.
     pub fn with_instrumentation<T>(mut self, value: T) -> Self
-        where
-            T: Into<Instrumentation>
+    where
+        T: Into<Instrumentation>,
     {
         self.set_instrumentation(value);
         self
@@ -424,8 +432,8 @@ impl StatusWord {
     /// See [StatusWord::service_request] for
     /// more information.
     pub fn set_service_request<T>(&mut self, value: T)
-        where
-            T: Into<ServiceRequest>
+    where
+        T: Into<ServiceRequest>,
     {
         let field = value.into();
         self.data = STATUS_SERVICE_REQUEST_FIELD.set(self.data, field.into());
@@ -437,8 +445,8 @@ impl StatusWord {
     /// See [StatusWord::service_request] for
     /// more information.
     pub fn with_service_request<T>(mut self, value: T) -> Self
-        where
-            T: Into<ServiceRequest>
+    where
+        T: Into<ServiceRequest>,
     {
         self.set_service_request(value);
         self
@@ -457,8 +465,8 @@ impl StatusWord {
     /// See [StatusWord::reserved] for
     /// more information.
     pub fn set_reserved<T>(&mut self, value: T)
-        where
-            T: Into<Reserved>
+    where
+        T: Into<Reserved>,
     {
         let field = value.into();
         self.data = STATUS_RESERVED_BITS_FIELD.set(self.data, field.into());
@@ -470,8 +478,8 @@ impl StatusWord {
     /// See [StatusWord::reserved] for
     /// more information.
     pub fn with_reserved<T>(mut self, value: T) -> Self
-        where
-            T: Into<Reserved>
+    where
+        T: Into<Reserved>,
     {
         self.set_reserved(value);
         self
@@ -491,8 +499,8 @@ impl StatusWord {
     /// See [StatusWord::broadcast_received] for
     /// more information.
     pub fn set_broadcast_received<T>(&mut self, value: T)
-        where
-            T: Into<BroadcastCommand>
+    where
+        T: Into<BroadcastCommand>,
     {
         let field = value.into();
         self.data = STATUS_BROADCAST_RECEIVED_FIELD.set(self.data, field.into());
@@ -504,8 +512,8 @@ impl StatusWord {
     /// See [StatusWord::broadcast_received] for
     /// more information.
     pub fn with_broadcast_received<T>(mut self, value: T) -> Self
-        where
-            T: Into<BroadcastCommand>
+    where
+        T: Into<BroadcastCommand>,
     {
         self.set_broadcast_received(value);
         self
@@ -525,8 +533,8 @@ impl StatusWord {
     /// See [StatusWord::terminal_busy] for
     /// more information.
     pub fn set_terminal_busy<T>(&mut self, value: T)
-        where 
-            T: Into<TerminalBusy>
+    where
+        T: Into<TerminalBusy>,
     {
         let field = value.into();
         self.data = STATUS_TERMINAL_BUSY_FIELD.set(self.data, field.into());
@@ -538,8 +546,8 @@ impl StatusWord {
     /// See [StatusWord::terminal_busy] for
     /// more information.
     pub fn with_terminal_busy<T>(mut self, value: T) -> Self
-        where 
-            T: Into<TerminalBusy>
+    where
+        T: Into<TerminalBusy>,
     {
         self.set_terminal_busy(value);
         self
@@ -559,8 +567,8 @@ impl StatusWord {
     /// See [StatusWord::dynamic_bus_acceptance] for
     /// more information.
     pub fn set_dynamic_bus_acceptance<T>(&mut self, value: T)
-        where 
-            T: Into<BusControlAccept>
+    where
+        T: Into<BusControlAccept>,
     {
         let field = value.into();
         self.data = STATUS_DYNAMIC_BUS_ACCEPT_FIELD.set(self.data, field.into());
@@ -572,8 +580,8 @@ impl StatusWord {
     /// See [StatusWord::dynamic_bus_acceptance] for
     /// more information.
     pub fn with_dynamic_bus_acceptance<T>(mut self, value: T) -> Self
-        where 
-            T: Into<BusControlAccept>
+    where
+        T: Into<BusControlAccept>,
     {
         self.set_dynamic_bus_acceptance(value);
         self
@@ -592,8 +600,8 @@ impl StatusWord {
     /// See [StatusWord::message_error] for
     /// more information.
     pub fn set_message_error<T>(&mut self, value: T)
-        where 
-            T: Into<MessageError>
+    where
+        T: Into<MessageError>,
     {
         let field = value.into();
         self.data = STATUS_MESSAGE_ERROR_FIELD.set(self.data, field.into());
@@ -605,8 +613,8 @@ impl StatusWord {
     /// See [StatusWord::message_error] for
     /// more information.
     pub fn with_message_error<T>(mut self, value: T) -> Self
-        where 
-            T: Into<MessageError>
+    where
+        T: Into<MessageError>,
     {
         self.set_message_error(value);
         self
@@ -625,8 +633,8 @@ impl StatusWord {
     /// See [StatusWord::subsystem_error] for
     /// more information.
     pub fn set_subsystem_error<T>(&mut self, value: T)
-        where 
-            T: Into<SubsystemError>
+    where
+        T: Into<SubsystemError>,
     {
         let field = value.into();
         self.data = STATUS_SUBSYSTEM_FLAG_FIELD.set(self.data, field.into());
@@ -638,8 +646,8 @@ impl StatusWord {
     /// See [StatusWord::subsystem_error] for
     /// more information.
     pub fn with_subsystem_error<T>(mut self, value: T) -> Self
-        where 
-            T: Into<SubsystemError>
+    where
+        T: Into<SubsystemError>,
     {
         self.set_subsystem_error(value);
         self
@@ -658,8 +666,8 @@ impl StatusWord {
     /// See [`StatusWord::terminal_error`][StatusWord::terminal_error] for
     /// more information.
     pub fn set_terminal_error<T>(&mut self, value: T)
-        where 
-            T: Into<TerminalError>
+    where
+        T: Into<TerminalError>,
     {
         let field = value.into();
         self.data = STATUS_TERMINAL_FLAG_FIELD.set(self.data, field.into());
@@ -671,8 +679,8 @@ impl StatusWord {
     /// See [`StatusWord::terminal_error`][StatusWord::terminal_error] for
     /// more information.
     pub fn with_terminal_error<T>(mut self, value: T) -> Self
-        where 
-            T: Into<TerminalError>
+    where
+        T: Into<TerminalError>,
     {
         self.set_terminal_error(value);
         self
@@ -736,62 +744,156 @@ impl StatusWord {
 }
 
 impl DataWord {
-
     /// Create an empty word
-    pub fn new() -> Self {
+    pub const fn new() -> Self {
         Self {
-            data: 0,
+            data: [0, 0],
             parity: 1,
         }
     }
 
-    /// Create a new data word given the data
-    ///
-    /// The complete word is made up of 3 sync bits, 16 data
-    /// bits, and a single parity bit. The sync bits are
-    /// evaluated prior to word construction, the data bits
-    /// are passed in here, and the parity is calculated from
-    /// the given data.
-    ///
-    /// If the parity calculated here is not equal to the
-    /// parity extracted from an incoming message, then this
-    /// word is in error.
-    pub fn from(data: u16) -> Self {
-        Self {
-            data,
-            parity: parity(data),
-        }
+    /// Constructor method to set the word from a string
+    pub fn with_string(mut self, data: &str) -> Result<Self> {
+        self.data = data.as_bytes().try_into()?;
+        Ok(self)
     }
 
-    /// Check if the word is valid
+    /// Constructor method to set the word from a u16
+    pub const fn with_data(mut self, data: u16) -> Self {
+        self.data = data.to_be_bytes();
+        self
+    }
+
+    /// Constructor method to set the word from bytes
+    pub const fn with_bytes(mut self, data: [u8; 2]) -> Self {
+        self.data = data;
+        self
+    }
+
+    /// Constructor method to explicitly set the parity
     ///
-    /// Checks that the parity bit is correct.
-    #[must_use = "Returned value is not used"]
-    pub fn is_valid(&self) -> bool {
-        let parity = self.parity as u32;
-        let data = self.data.count_ones();
-        ((data + parity) % 2) != 0
+    /// This method should only be used if the word
+    /// is being parsed.
+    pub const fn with_parity(mut self, parity: u8) -> Self {
+        self.parity = parity;
+        self
     }
 
-    /// Convert the word into a byte array
-    pub fn bytes(&self) -> [u8; 2] {
-        [(self.data >> 8) as u8, self.data as u8]
-    }
-
-    /// Get the word as a u16
-    pub fn data(&self) -> u16 {
-        self.data
+    /// Constructor method to calculate the parity bit
+    pub const fn with_calculated_parity(mut self) -> Self {
+        self.parity = self.calculate_parity();
+        self
     }
 
     /// Finish and validate construction of a word
-    pub fn build(self) -> Result<Self> {
-        if self.is_valid() {
+    pub const fn build(self) -> Result<Self> {
+        if self.check_parity() {
             Ok(self)
         } else {
             Err(Error::WordIsInvalid)
         }
     }
 
+    /// Create a word from a given &str
+    ///
+    /// Fails if the given &str is not two
+    /// bytes in length.
+    pub fn from_string(data: &str) -> Result<Self> {
+        Ok(Self::new().with_string(data)?.with_calculated_parity())
+    }
+
+    /// Create a word from a given u16 value
+    pub const fn from_data(data: u16) -> Self {
+        Self::new().with_data(data).with_calculated_parity()
+    }
+
+    /// Create a word from a given byte array
+    pub const fn from_bytes(data: [u8; 2]) -> Self {
+        Self::new().with_bytes(data).with_calculated_parity()
+    }
+
+    /// Get the internal data as a byte array
+    pub const fn to_bytes(&self) -> [u8; 2] {
+        self.data
+    }
+
+    /// Get the internal data as a byte slice
+    pub const fn as_bytes(&self) -> &[u8] {
+        &self.data
+    }
+
+    /// Get the internal data as a &str
+    ///
+    /// Fails if the internal data is not valid
+    /// UTF-8.
+    pub const fn as_string(&self) -> Result<&str> {
+        match core::str::from_utf8(self.as_bytes()) {
+            Ok(s) => Ok(s),
+            Err(_) => Err(Error::StringIsInvalid),
+        }
+    }
+
+    /// Get the internal data as u16
+    pub const fn to_u16(&self) -> u16 {
+        u16::from_be_bytes(self.data)
+    }
+
+    /// Get the internal data as i16
+    pub const fn to_i16(&self) -> i16 {
+        self.to_u16() as i16
+    }
+
+    /// Get the internal data as u32
+    pub const fn to_u32(&self) -> u32 {
+        self.to_u16() as u32
+    }
+
+    /// Get the internal data as i32
+    pub const fn to_i32(&self) -> i32 {
+        self.to_u16() as i32
+    }
+
+    /// Get the internal data as u64
+    pub const fn to_u64(&self) -> u64 {
+        self.to_u16() as u64
+    }
+
+    /// Get the internal data as i64
+    pub const fn to_i64(&self) -> i64 {
+        self.to_u16() as i64
+    }
+
+    /// Get a reference to the first byte of the word
+    pub const fn first(&self) -> &u8 {
+        &self.data[0]
+    }
+
+    /// Get a reference to the second byte of the word
+    pub const fn second(&self) -> &u8 {
+        &self.data[1]
+    }
+
+    /// Get a the number of ones in the word
+    pub const fn count_ones(&self) -> u8 {
+        (self.first().count_ones() + self.second().count_ones()) as u8
+    }
+
+    /// Get the current parity bit
+    pub const fn parity(&self) -> u8 {
+        self.parity
+    }
+
+    /// Get a calculated parity bit
+    pub const fn calculate_parity(&self) -> u8 {
+        parity(self.to_u16())
+    }
+
+    /// Check if the current parity bit is correct
+    pub const fn check_parity(&self) -> bool {
+        let parity = self.parity();
+        let data = self.count_ones();
+        ((data + parity) % 2) != 0
+    }
 }
 
 impl Default for CommandWord {
@@ -817,6 +919,43 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_data_with_bytes() {
+        let word = DataWord::new()
+            .with_bytes([0b01001000, 0b01001001])
+            .with_calculated_parity();
+
+        assert_eq!(word.as_bytes(), &[0b01001000, 0b01001001]);
+        assert_eq!(word.to_u16(), 0b0100100001001001u16);
+        assert_eq!(word.as_string(), Ok("HI"));
+        assert_eq!(word.parity(), 0);
+    }
+
+    #[test]
+    fn test_data_with_data() {
+        let word = DataWord::new()
+            .with_data(0b0100100001001001u16)
+            .with_calculated_parity();
+
+        assert_eq!(word.as_bytes(), &[0b01001000, 0b01001001]);
+        assert_eq!(word.to_u16(), 0b0100100001001001u16);
+        assert_eq!(word.as_string(), Ok("HI"));
+        assert_eq!(word.parity(), 0);
+    }
+
+    #[test]
+    fn test_data_with_str() {
+        let word = DataWord::new()
+            .with_string("HI")
+            .unwrap()
+            .with_calculated_parity();
+
+        assert_eq!(word.as_bytes(), &[0b01001000, 0b01001001]);
+        assert_eq!(word.to_u16(), 0b0100100001001001u16);
+        assert_eq!(word.as_string(), Ok("HI"));
+        assert_eq!(word.parity(), 0);
+    }
+
+    #[test]
     fn test_status_with_methods() {
         let word = StatusWord::new()
             .with_address(4)
@@ -827,11 +966,11 @@ mod tests {
             .build()
             .unwrap();
 
-        assert_eq!(word.address(),Address::Value(4));
-        assert_eq!(word.terminal_busy(),TerminalBusy::Busy);
-        assert_eq!(word.message_error(),MessageError::Error);
-        assert_eq!(word.terminal_error(),TerminalError::Error);
-        assert_eq!(word.subsystem_error(),SubsystemError::Error);
+        assert_eq!(word.address(), Address::Value(4));
+        assert_eq!(word.terminal_busy(), TerminalBusy::Busy);
+        assert_eq!(word.message_error(), MessageError::Error);
+        assert_eq!(word.terminal_error(), TerminalError::Error);
+        assert_eq!(word.subsystem_error(), SubsystemError::Error);
     }
 
     #[test]
@@ -845,28 +984,28 @@ mod tests {
             .unwrap();
 
         assert!(!word.is_mode_code());
-        assert_eq!(word.word_count(),Some(3));
-        assert_eq!(word.address(),Address::Value(4));
-        assert_eq!(word.subaddress(),SubAddress::Value(2));
-        assert_eq!(word.transmit_receive(),TransmitReceive::Transmit);
+        assert_eq!(word.word_count(), Some(3));
+        assert_eq!(word.address(), Address::Value(4));
+        assert_eq!(word.subaddress(), SubAddress::Value(2));
+        assert_eq!(word.transmit_receive(), TransmitReceive::Transmit);
     }
 
     #[test]
     fn test_command_parity_update() {
         let mut word = CommandWord::from(0b0000000000101010);
-        assert_eq!(word.parity,0);
+        assert_eq!(word.parity, 0);
 
         word.set_address(Address::Value(0b00000001));
-        assert_eq!(word.parity,1);
+        assert_eq!(word.parity, 1);
     }
 
     #[test]
     fn test_status_parity_update() {
         let mut word = StatusWord::from(0b0000000010101010);
-        assert_eq!(word.parity,1);
+        assert_eq!(word.parity, 1);
 
         word.set_address(Address::Value(0b00000001));
-        assert_eq!(word.parity,0);
+        assert_eq!(word.parity, 0);
     }
 
     #[test]
@@ -1205,8 +1344,8 @@ mod tests {
 
     #[test]
     fn test_data_bytes() {
-        let word = DataWord::from(0b0110100001101001);
-        let data = word.bytes();
+        let word = DataWord::from_data(0b0110100001101001);
+        let data = word.to_bytes();
         assert_eq!(data, [0b01101000, 0b01101001]);
     }
 
