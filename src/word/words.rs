@@ -50,7 +50,7 @@ pub struct StatusWord {
 ///     .with_calculated_parity()
 ///     .build()?;
 ///
-/// assert_eq!(word.as_str(),Ok("HI"));
+/// assert_eq!(word.as_string(),Ok("HI"));
 /// # Ok(())
 /// # }
 /// ```
