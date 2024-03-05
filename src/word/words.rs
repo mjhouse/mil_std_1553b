@@ -41,7 +41,7 @@ pub struct StatusWord {
 /// two bytes of data each.[^1]
 ///
 /// ## Example
-/// 
+///
 /// ```rust
 /// # use mil_std_1553b::*;
 /// # fn try_main() -> Result<()> {
@@ -49,17 +49,17 @@ pub struct StatusWord {
 ///     .with_data(0b0100100001001001u16)
 ///     .with_calculated_parity()
 ///     .build()?;
-/// 
+///
 /// assert_eq!(word.as_str(),Ok("HI"));
 /// # Ok(())
 /// # }
 /// ```
-/// 
+///
 /// [^1]: p31 [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DataWord {
     /// Data of the word
-    data: [u8;2],
+    data: [u8; 2],
 
     /// Parity of the word
     parity: u8,
@@ -744,14 +744,16 @@ impl StatusWord {
 }
 
 impl DataWord {
-
     /// Create an empty word
     pub const fn new() -> Self {
-        Self { data: [0,0], parity: 1 }
+        Self {
+            data: [0, 0],
+            parity: 1,
+        }
     }
 
     /// Constructor method to set the word from a string
-    pub fn with_str(mut self, data: &str) -> Result<Self> {
+    pub fn with_string(mut self, data: &str) -> Result<Self> {
         self.data = data.as_bytes().try_into()?;
         Ok(self)
     }
@@ -763,13 +765,13 @@ impl DataWord {
     }
 
     /// Constructor method to set the word from bytes
-    pub const fn with_bytes(mut self, data: [u8;2]) -> Self {
+    pub const fn with_bytes(mut self, data: [u8; 2]) -> Self {
         self.data = data;
         self
     }
 
     /// Constructor method to explicitly set the parity
-    /// 
+    ///
     /// This method should only be used if the word
     /// is being parsed.
     pub const fn with_parity(mut self, parity: u8) -> Self {
@@ -793,31 +795,25 @@ impl DataWord {
     }
 
     /// Create a word from a given &str
-    /// 
+    ///
     /// Fails if the given &str is not two
     /// bytes in length.
-    pub fn from_str(data: &str) -> Result<Self> {
-        Ok(Self::new()
-            .with_str(data)?
-            .with_calculated_parity())
+    pub fn from_string(data: &str) -> Result<Self> {
+        Ok(Self::new().with_string(data)?.with_calculated_parity())
     }
 
     /// Create a word from a given u16 value
     pub const fn from_data(data: u16) -> Self {
-        Self::new()
-            .with_data(data)
-            .with_calculated_parity()
+        Self::new().with_data(data).with_calculated_parity()
     }
 
     /// Create a word from a given byte array
-    pub const fn from_bytes(data: [u8;2]) -> Self {
-        Self::new()
-            .with_bytes(data)
-            .with_calculated_parity()
+    pub const fn from_bytes(data: [u8; 2]) -> Self {
+        Self::new().with_bytes(data).with_calculated_parity()
     }
 
     /// Get the internal data as a byte array
-    pub const fn to_bytes(&self) -> [u8;2] {
+    pub const fn to_bytes(&self) -> [u8; 2] {
         self.data
     }
 
@@ -827,13 +823,13 @@ impl DataWord {
     }
 
     /// Get the internal data as a &str
-    /// 
+    ///
     /// Fails if the internal data is not valid
     /// UTF-8.
     pub const fn as_str(&self) -> Result<&str> {
         match core::str::from_utf8(self.as_bytes()) {
             Ok(s) => Ok(s),
-            Err(_) => Err(Error::StringIsInvalid)
+            Err(_) => Err(Error::StringIsInvalid),
         }
     }
 
@@ -879,12 +875,11 @@ impl DataWord {
 
     /// Get a the number of ones in the word
     pub const fn count_ones(&self) -> u8 {
-        (self.first().count_ones() + 
-        self.second().count_ones()) as u8
+        (self.first().count_ones() + self.second().count_ones()) as u8
     }
 
     /// Get the current parity bit
-    pub const fn current_parity(&self) -> u8 {
+    pub const fn parity(&self) -> u8 {
         self.parity
     }
 
@@ -895,7 +890,7 @@ impl DataWord {
 
     /// Check if the current parity bit is correct
     pub const fn check_parity(&self) -> bool {
-        let parity = self.current_parity();
+        let parity = self.parity();
         let data = self.count_ones();
         ((data + parity) % 2) != 0
     }
@@ -932,7 +927,7 @@ mod tests {
         assert_eq!(word.as_bytes(), &[0b01001000, 0b01001001]);
         assert_eq!(word.to_u16(), 0b0100100001001001u16);
         assert_eq!(word.as_str(), Ok("HI"));
-        assert_eq!(word.current_parity(), 0);
+        assert_eq!(word.parity(), 0);
     }
 
     #[test]
@@ -944,20 +939,20 @@ mod tests {
         assert_eq!(word.as_bytes(), &[0b01001000, 0b01001001]);
         assert_eq!(word.to_u16(), 0b0100100001001001u16);
         assert_eq!(word.as_str(), Ok("HI"));
-        assert_eq!(word.current_parity(), 0);
+        assert_eq!(word.parity(), 0);
     }
 
     #[test]
     fn test_data_with_str() {
         let word = DataWord::new()
-            .with_str("HI")
+            .with_string("HI")
             .unwrap()
             .with_calculated_parity();
 
         assert_eq!(word.as_bytes(), &[0b01001000, 0b01001001]);
         assert_eq!(word.to_u16(), 0b0100100001001001u16);
         assert_eq!(word.as_str(), Ok("HI"));
-        assert_eq!(word.current_parity(), 0);
+        assert_eq!(word.parity(), 0);
     }
 
     #[test]
