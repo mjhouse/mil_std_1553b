@@ -1,18 +1,20 @@
 //! Error enums and flags
 
+use core::array::TryFromSliceError;
+
 /// A result type which uses the [Error] enum as the error type.
 pub type Result<T> = core::result::Result<T, Error>;
 
 /// Calculate a parity bit given a u16 word value
 ///
-/// MIL STD 1553B uses an odd parity bit (1 if the 
+/// MIL STD 1553B uses an odd parity bit (1 if the
 /// bit count of the data is even, 0 if not)[^1].
 ///
-/// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf) 
+/// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[inline]
 #[must_use = "Returned value is not used"]
-pub(crate) fn parity<T: Into<u16>>(v: T) -> u8 {
-    match v.into().count_ones() % 2 {
+pub(crate) const fn parity(v: u16) -> u8 {
+    match v.count_ones() % 2 {
         0 => 1,
         _ => 0,
     }
@@ -40,6 +42,9 @@ pub enum Error {
 
     /// A word was found to be invalid while building a message
     WordIsInvalid,
+
+    /// An array could not be created from a given slice
+    FromSliceError,
 
     /// A byte array could not be converted to a string
     StringIsInvalid,
@@ -73,6 +78,12 @@ pub enum Error {
 
     /// An error from a terminal elsewhere in the system (see [SystemError])
     SystemError(SystemError),
+}
+
+impl From<TryFromSliceError> for Error {
+    fn from(_: TryFromSliceError) -> Self {
+        Self::FromSliceError
+    }
 }
 
 /// An error deriving from a remote terminal or bus controller.
