@@ -49,11 +49,8 @@ pub enum Error {
     /// A byte array could not be converted to a string
     StringIsInvalid,
 
-    /// An invalid StatusWord was given while building a message
-    InvalidStatusWord,
-
-    /// An invalid CommandWord was given while building a message
-    InvalidCommandWord,
+    /// An invalid word was given while building a message
+    InvalidWord,
 
     /// A message cannot begin with a data word
     FirstWordIsData,
