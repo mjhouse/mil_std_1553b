@@ -8,7 +8,7 @@ pub mod flags;
 pub mod message;
 pub mod word;
 
-pub use message::Message;
+pub use message::{Message, Packet};
 
 pub use errors::{Error, Result};
 

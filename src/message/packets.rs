@@ -7,6 +7,22 @@ use crate::word::{CommandWord, DataWord, StatusWord};
 /// Incoming data is parsed into a triplet of (sync,data,parity)
 /// using this struct, and then may be further parsed as an
 /// explicit command, status, or data word.
+///
+/// ## Example
+///
+/// ```rust
+/// # use mil_std_1553b::*;
+/// # fn try_main() -> Result<()> {
+///     let packet = Packet::new(
+///         0b100,
+///         [0b01000000, 0b00100000],
+///         1
+///     );
+///     assert!(packet.is_service());
+/// # Ok(())
+/// # }
+/// ```
+///
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Packet {
     pub sync: u8,
