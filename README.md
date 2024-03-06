@@ -45,26 +45,52 @@ or military projects that can't have virally licensed dependencies.
 
 ### 1.0.0
 
-- [x] Command, Status, and Data words created
-- [x] Words can be parsed from binary
-- [x] Words can be converted into binary
-- [x] Words have parsing tests
-- [x] Words have conversion tests
+- [x] Words implemented
+    - [x] Command, Status, and Data words created
+    - [x] Words can be parsed from binary
+    - [x] Words can be converted into binary
+    - [x] Words have parsing tests
+    - [x] Words have conversion tests
+    - [x] Documentation exists for words
+- [ ] Messages implemented
+    - [x] Message struct is created
+    - [x] Messages can be constructed from words
+    - [ ] Messages can be parsed from binary
+    - [ ] Messages have parsing tests
+    - [ ] Messages have conversion tests
+    - [x] Documentation exists for messages
+- [ ] Integration tests implemented
+    - [ ] Round-trip tests (binary -> struct -> binary) exist for messages
+    - [ ] Round-trip tests (binary -> struct -> binary) exist for words
+    - [ ] Configuration tests (JSON) exist for words
+    - [ ] Configuration tests (JSON) exist for messages
 
-- [x] Message struct is created
-- [x] Messages can be constructed from words
-- [ ] Messages can be parsed from binary
-- [ ] Messages have parsing tests
-- [ ] Messages have conversion tests
 
-- [ ] Round-trip tests (binary -> struct -> binary) exist for messages
-- [ ] Round-trip tests (binary -> struct -> binary) exist for words
+### 2.0.0
 
-- [ ] Configuration tests (JSON) exist for words
-- [ ] Configuration tests (JSON) exist for messages
-
-- [x] Documentation exists for words
-- [x] Documentation exists for messages
+- [ ] Message pattern constructors designed
+- [ ] Directed pattern constructors implemented
+    - [ ] BC - RT pattern implemented
+    - [ ] BC - RT pattern tests implemented
+    - [ ] RT - BC pattern implemented
+    - [ ] RT - BC pattern tests implemented
+    - [ ] RT - RT pattern implemented
+    - [ ] RT - RT pattern tests implemented
+    - [ ] Mode W/O Data (T) pattern implemented
+    - [ ] Mode W/O Data (T) pattern tests implemented
+    - [ ] Mode With Data (T) pattern implemented
+    - [ ] Mode With Data (T) pattern tests implemented
+    - [ ] Mode With Data (R) pattern implemented
+    - [ ] Mode With Data (R) pattern tests implemented
+- [ ] Broadcast pattern constructors implemented
+    - [ ] BC - RT pattern implemented
+    - [ ] BC - RT pattern tests implemented
+    - [ ] RT - RT pattern implemented
+    - [ ] RT - RT pattern tests implemented
+    - [ ] Mode W/O Data pattern implemented
+    - [ ] Mode W/O Data pattern tests implemented
+    - [ ] Mode With Data pattern implemented
+    - [ ] Mode With Data pattern tests implemented
 
 ## Notes
 
