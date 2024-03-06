@@ -109,4 +109,4 @@ of the word, including the sync bits.
 The bit-time reference is used in the standard, but because we're only dealing with the 16-bit data from each word in this 
 project we'll be using a zero-indexed reference in the actual code.
 
-[^1]: https://www.milstd1553.com/wp-content/uploads/2012/12/MIL-STD-1553B.pdf
+[^1]: <https://www.milstd1553.com/wp-content/uploads/2012/12/MIL-STD-1553B.pdf>
