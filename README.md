@@ -1,6 +1,7 @@
 # MIL STD 1553B
 
-![tests passing](https://github.com/mjhouse/mil_std_1553b/actions/workflows/testing.yaml/badge.svg) [![docs passing](https://github.com/mjhouse/mil_std_1553b/actions/workflows/documentation.yaml/badge.svg)](https://mjhouse.github.io/mil_std_1553b/)
+[![tests passing](https://github.com/mjhouse/mil_std_1553b/actions/workflows/testing.yaml/badge.svg)](https://github.com/mjhouse/mil_std_1553b/actions)
+[![docs passing](https://github.com/mjhouse/mil_std_1553b/actions/workflows/documentation.yaml/badge.svg)](https://mjhouse.github.io/mil_std_1553b/)
 
 This library implements a complete set of Rust structs for parsing or constructing messages that comply with
 the MIL STD 1553B communication protocal.
@@ -40,10 +41,37 @@ or military projects that can't have virally licensed dependencies.
 # }
 ```
 
-## Words
+## Roadmap
+
+### 1.0.0
+
+- [x] Command, Status, and Data words created
+- [x] Words can be parsed from binary
+- [x] Words can be converted into binary
+- [x] Words have parsing tests
+- [x] Words have conversion tests
+
+- [x] Message struct is created
+- [x] Messages can be constructed from words
+- [ ] Messages can be parsed from binary
+- [ ] Messages have parsing tests
+- [ ] Messages have conversion tests
+
+- [ ] Round-trip tests (binary -> struct -> binary) exist for messages
+- [ ] Round-trip tests (binary -> struct -> binary) exist for words
+
+- [ ] Configuration tests (JSON) exist for words
+- [ ] Configuration tests (JSON) exist for messages
+
+- [x] Documentation exists for words
+- [x] Documentation exists for messages
+
+## Notes
+
+### Words
 
 A "word" in the 1553B standard is made up of twenty bits, total. Three sync bits, 16 bits of data (in one of 
-three different formats), and a trailing parity bit. This means that there are two ways of referencing a particular 
+three different formats), and a trailing parity bit [^1]. This means that there are two ways of referencing a particular 
 bit- either with a bit index offset from the beginning of the *word data* or as a "bit time" offset from the beginning 
 of the word, including the sync bits.
 
@@ -55,11 +83,4 @@ of the word, including the sync bits.
 The bit-time reference is used in the standard, but because we're only dealing with the 16-bit data from each word in this 
 project we'll be using a zero-indexed reference in the actual code.
 
-## References
-
-* [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
-* [MIL-HDBK-1553A_1779](http://everyspec.com/MIL-HDBK/MIL-HDBK-1500-1799/MIL-HDBK-1553A_1779/)
-* [UEI Reference](https://www.ueidaq.com/mil-std-1553-tutorial-reference-guide)
-* [1553B Simulator](https://github.com/yabozj/1553B-Simulator)
-* [Designing Command and Telemetry Systems](https://digitalcommons.usu.edu/cgi/viewcontent.cgi?article=2107&context=smallsat)
-* [MIL-STD-1553 Verilog](https://github.com/fpga-soc/mil-std-1553b-soc)
+[^1]: https://www.milstd1553.com/wp-content/uploads/2012/12/MIL-STD-1553B.pdf
