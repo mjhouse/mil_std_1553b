@@ -25,7 +25,7 @@ or military projects that can't have virally licensed dependencies.
 # fn try_main() -> Result<()> {
     let message = Message::new()
         .with_command(CommandWord::new()
-            .with_subaddress(12)
+            .with_address(12)
             .with_subaddress(5)
             .with_word_count(2)
             .build()?

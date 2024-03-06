@@ -40,7 +40,7 @@ impl Packet {
         }
     }
 
-    /// Parse a slice of bytes into sync, bytes, and parity
+    /// Parse a slice of bytes into sync, word, and parity
     /// 
     /// This method interpretes the first 20 bits of the byte 
     /// array as a triplet: 3-bit sync, 16-bit word, and 1-bit
