@@ -1,4 +1,4 @@
-// #![no_std]
+#![no_std]
 #![deny(clippy::unwrap_used)]
 #![doc = include_str!("../README.md")]
 

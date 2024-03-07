@@ -88,20 +88,29 @@ impl Message {
     /// # Ok(())
     /// # }
     pub fn parse_command(data: &[u8]) -> Result<Self> {
-        let mut message = Self::new().with_command(Packet::parse(data, 0)?.to_command()?)?;
+        // get the first word as a command word
+        let mut message = Self::new()
+            .with_command(Packet::parse(data, 0)?
+                .to_command()?)?;
 
-        dbg!(message.data_expected());
+        // get the number of data words expected
+        let num = message.data_expected();
 
-        let sbit = 20;
-        let ebit = 20 * (message.data_expected() + 1);
+        let sbit = 20;             // starting data bit
+        let ebit = 20 * (num + 1); // ending data bit
 
+        // iterate chunks of 20 bits for each word
         for bit in (sbit..ebit).step_by(20) {
-            let index = bit / 8;
-            let offset = bit % 8;
+            let index = bit / 8;  // byte index in the slice
+            let offset = bit % 8; // offset into a byte
 
+            // get a trimmed slice to parse
             let bytes = &data[index..];
 
-            message.add_data(Packet::parse(bytes, offset)?.to_data()?)?;
+            // parse as a data word and add
+            message
+                .add_data(Packet::parse(bytes, offset)?
+                    .to_data()?)?;
         }
 
         Ok(message)
@@ -129,7 +138,9 @@ impl Message {
     pub fn last(&self) -> Option<&Word> {
         match self.count {
             0 => None,
-            i => self.words.get(i - 1),
+            i => self
+                .words
+                .get(i - 1),
         }
     }
 
@@ -137,7 +148,9 @@ impl Message {
     pub fn first(&self) -> Option<&Word> {
         match self.count {
             0 => None,
-            _ => self.words.get(0),
+            _ => self
+                .words
+                .get(0),
         }
     }
 
@@ -157,7 +170,9 @@ impl Message {
 
     /// Get the expected number of data words
     pub fn data_expected(&self) -> usize {
-        self.first().map(Word::data_count).unwrap_or(0)
+        self.first()
+            .map(Word::data_count)
+            .unwrap_or(0)
     }
 
     /// Check if message has data words
@@ -175,13 +190,17 @@ impl Message {
     /// Check if message starts with a command word
     #[must_use = "Returned value is not used"]
     pub fn has_command(&self) -> bool {
-        self.first().map(Word::is_command).unwrap_or(false)
+        self.first()
+            .map(Word::is_command)
+            .unwrap_or(false)
     }
 
     /// Check if message starts with a status word
     #[must_use = "Returned value is not used"]
     pub fn has_status(&self) -> bool {
-        self.first().map(Word::is_status).unwrap_or(false)
+        self.first()
+            .map(Word::is_status)
+            .unwrap_or(false)
     }
 
     /// Add a generic word to the message, returning size on success
@@ -312,7 +331,9 @@ mod tests {
         let mut message = Message::new();
 
         let word = Word::Command(CommandWord::from_data(0b0001100001100010));
-        message.add(word.clone()).unwrap();
+        message
+            .add(word.clone())
+            .unwrap();
 
         assert_eq!(message.word_count(), 1);
         assert_eq!(message.data_count(), 0);
@@ -324,10 +345,14 @@ mod tests {
         let mut message = Message::new();
 
         let word = Word::Command(CommandWord::from_data(0b0001100001100010));
-        message.add(word.clone()).unwrap();
+        message
+            .add(word.clone())
+            .unwrap();
 
         let data = Word::Data(DataWord::from_data(0b0110100001101001));
-        message.add(data.clone()).unwrap();
+        message
+            .add(data.clone())
+            .unwrap();
 
         assert_eq!(message.word_count(), 2);
         assert_eq!(message.data_count(), 1);
@@ -350,7 +375,9 @@ mod tests {
         let mut message = Message::new();
 
         let word = Word::Status(StatusWord::from_data(0b0001100000000010));
-        message.add(word.clone()).unwrap();
+        message
+            .add(word.clone())
+            .unwrap();
 
         assert_eq!(message.word_count(), 1);
         assert_eq!(message.data_count(), 0);
@@ -362,10 +389,14 @@ mod tests {
         let mut message = Message::new();
 
         let status = Word::Status(StatusWord::from_data(0b0001100000000000));
-        message.add(status.clone()).unwrap();
+        message
+            .add(status.clone())
+            .unwrap();
 
         let data = Word::Data(DataWord::from_data(0b0110100001101001));
-        message.add(data.clone()).unwrap();
+        message
+            .add(data.clone())
+            .unwrap();
 
         assert_eq!(message.word_count(), 2);
         assert_eq!(message.data_count(), 1);

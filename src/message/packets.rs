@@ -86,7 +86,9 @@ impl Packet {
         let bytes = &data[c..];
         let mut buffer: [u8; 3] = [0, 0, 0];
 
-        let r = 8 - m.try_into().unwrap_or(8);
+        let r = 8 - m
+            .try_into()
+            .unwrap_or(8);
         let l = m;
 
         buffer[0] |= bytes[0] << l;
@@ -94,12 +96,18 @@ impl Packet {
         buffer[2] |= bytes[2] << l;
 
         if l > 0 {
-            buffer[0] |= bytes[1].checked_shr(r).unwrap_or(0);
-            buffer[1] |= bytes[2].checked_shr(r).unwrap_or(0);
+            buffer[0] |= bytes[1]
+                .checked_shr(r)
+                .unwrap_or(0);
+            buffer[1] |= bytes[2]
+                .checked_shr(r)
+                .unwrap_or(0);
         }
 
         if l > 4 {
-            buffer[2] |= bytes[3].checked_shr(r).unwrap_or(0);
+            buffer[2] |= bytes[3]
+                .checked_shr(r)
+                .unwrap_or(0);
         }
 
         let mut sync: u8 = 0;
@@ -313,7 +321,9 @@ mod tests {
     #[test]
     fn test_packet_convert_command() {
         let packet = Packet::new(SERV_SYNC, [0b00011000, 0b01100010], 0);
-        let word = packet.to_command().unwrap();
+        let word = packet
+            .to_command()
+            .unwrap();
 
         assert_eq!(word.address(), Address::new(3));
         assert_eq!(word.subaddress(), SubAddress::new(3));
@@ -325,7 +335,9 @@ mod tests {
     #[test]
     fn test_packet_convert_status() {
         let packet = Packet::new(SERV_SYNC, [0b00011000, 0b00010000], 0);
-        let word = packet.to_status().unwrap();
+        let word = packet
+            .to_status()
+            .unwrap();
 
         assert_eq!(word.address(), Address::new(3));
         assert_eq!(word.broadcast_received(), BroadcastCommand::Received);
