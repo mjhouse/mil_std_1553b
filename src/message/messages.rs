@@ -1,6 +1,6 @@
-use crate::errors::*;
 use crate::word::Type as Word;
 use crate::word::{CommandWord, DataWord, StatusWord};
+use crate::{errors::*, Packet};
 
 /// a message can only contain 32 words
 const MAX_WORDS: usize = 33;
@@ -56,31 +56,31 @@ impl Message {
     }
 
     /// Parse a slice of bytes into a message
-    /// 
+    ///
     /// This method interpretes the byte array as a series
-    /// of 20-bit long words. Each word is a triplet containing 
-    /// 3-bit sync, 16-bit word, and 1-bit parity. It is 
-    /// assumed that the message being parsed is aligned to the 
+    /// of 20-bit long words. Each word is a triplet containing
+    /// 3-bit sync, 16-bit word, and 1-bit parity. It is
+    /// assumed that the message being parsed is aligned to the
     /// beginning of the slice:
     ///  
     /// aligned:
     ///      | 11111111 | 11111111 | 11110000 |
     /// unaligned:
     ///      | 00001111 | 11111111 | 11111111 |
-    /// 
+    ///
     /// ## Example
     ///
-    /// ```no_run
+    /// ```rust
     /// # use mil_std_1553b::*;
     /// # fn try_main() -> Result<()> {
     ///     let message = Message::parse_command(&[
-    ///         0b10000011, 
+    ///         0b10000011,
     ///         0b00001100,
     ///         0b01010110,
     ///         0b10000110,
     ///         0b10010000
     ///     ])?;
-    /// 
+    ///
     ///     assert!(message.is_full());
     ///     assert!(message.has_command());
     ///     assert_eq!(message.word_count(),2);
@@ -88,11 +88,23 @@ impl Message {
     /// # Ok(())
     /// # }
     pub fn parse_command(data: &[u8]) -> Result<Self> {
-        if data.len() < 3 {
-            return Err(Error::OutOfBounds);
+        let mut message = Self::new().with_command(Packet::parse(data, 0)?.to_command()?)?;
+
+        dbg!(message.data_expected());
+
+        let sbit = 20;
+        let ebit = 20 * (message.data_expected() + 1);
+
+        for bit in (sbit..ebit).step_by(20) {
+            let index = bit / 8;
+            let offset = bit % 8;
+
+            let bytes = &data[index..];
+
+            message.add_data(Packet::parse(bytes, offset)?.to_data()?)?;
         }
 
-        unimplemented!()
+        Ok(message)
     }
 
     /// Check if the message is full
@@ -255,6 +267,20 @@ impl Default for Message {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_parse_command() {
+        let message = Message::parse_command(&[
+            0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
+            0b11100010, 0b11001110, 0b11011110,
+        ])
+        .unwrap();
+
+        assert!(message.is_full());
+        assert!(message.has_command());
+        assert_eq!(message.word_count(), 4);
+        assert_eq!(message.data_count(), 3);
+    }
 
     #[test]
     fn test_create_message() {

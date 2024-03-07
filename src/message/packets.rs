@@ -41,59 +41,81 @@ impl Packet {
     }
 
     /// Parse a slice of bytes into sync, bytes, and parity
-    /// 
-    /// This method interpretes the first 20 bits of the byte 
+    ///
+    /// This method interpretes the first 20 bits of the byte
     /// array as a triplet: 3-bit sync, 16-bit word, and 1-bit
-    /// parity. It is assumed that the word being parsed is 
-    /// aligned to the beginning of the slice:
+    /// parity, given an offset at which to parse.
     ///  
     /// aligned:
     ///      | 11111111 | 11111111 | 11110000 |
-    /// unaligned:
+    /// unaligned (4-byte offset):
     ///      | 00001111 | 11111111 | 11111111 |
-    /// 
+    ///
     /// ## Example
     ///
     /// ```rust
     /// # use mil_std_1553b::*;
     /// # fn try_main() -> Result<()> {
-    ///     let packet = Packet::parse(&[
-    ///         0b10001000, 0b00000100, 0b00010000
-    ///     ],true)?;
-    /// 
-    ///     assert!(packet.is_service());
+    ///    let packet = Packet::parse(&[
+    ///        0b00000000,
+    ///        0b00000011,
+    ///        0b11000000,
+    ///        0b00000000,
+    ///        0b11000000
+    ///    ],14)?;
+    ///
+    ///    assert_eq!(packet.sync, 0b00000111);
+    ///    assert_eq!(packet.bytes, [0b10000000,0b00000001]);
+    ///    assert_eq!(packet.parity, 0b00000001);
     /// # Ok(())
     /// # }
-    pub fn parse(data: &[u8], align: bool) -> Result<Self> {
-        if data.len() < 3 {
+    pub fn parse(data: &[u8], offset: usize) -> Result<Self> {
+        let m = offset % 8; // sub-byte offset
+        let c = offset / 8; // byte offset
+
+        // 3 bytes needed for parsing a word
+        // unless the offset > 4, then 4 bytes.
+        let i = if m > 4 { 4 } else { 3 };
+
+        // need a minimum of byte offset + 3
+        // bytes to parse a word.
+        if data.len() < c + i {
             return Err(Error::OutOfBounds);
         }
-    
+
+        let bytes = &data[c..];
+        let mut buffer: [u8; 3] = [0, 0, 0];
+
+        let r = 8 - m.try_into().unwrap_or(8);
+        let l = m;
+
+        buffer[0] |= bytes[0] << l;
+        buffer[1] |= bytes[1] << l;
+        buffer[2] |= bytes[2] << l;
+
+        if l > 0 {
+            buffer[0] |= bytes[1].checked_shr(r).unwrap_or(0);
+            buffer[1] |= bytes[2].checked_shr(r).unwrap_or(0);
+        }
+
+        if l > 4 {
+            buffer[2] |= bytes[3].checked_shr(r).unwrap_or(0);
+        }
+
         let mut sync: u8 = 0;
-        let mut bytes: [u8;2] = [0,0];
+        let mut word: [u8; 2] = [0, 0];
         let mut parity: u8 = 0;
 
-        if align {
-            sync |= (data[0] & 0b11100000) >> 5;
+        sync |= (buffer[0] & 0b11100000) >> 5;
 
-            bytes[0] |= (data[0] as u8 & 0b00011111) << 3;
-            bytes[0] |= (data[1] as u8 & 0b11100000) >> 5;
-            bytes[1] |= (data[1] as u8 & 0b00011111) << 3;
-            bytes[1] |= (data[2] as u8 & 0b11100000) >> 5;
-    
-            parity |= (data[2] & 0b00010000) >> 4;
-        } else {
-            sync |= (data[0] & 0b00001110) >> 1;
+        word[0] |= (buffer[0] & 0b00011111) << 3;
+        word[0] |= (buffer[1] & 0b11100000) >> 5;
+        word[1] |= (buffer[1] & 0b00011111) << 3;
+        word[1] |= (buffer[2] & 0b11100000) >> 5;
 
-            bytes[0] |= (data[0] as u8 & 0b00000001) << 7;
-            bytes[0] |= (data[1] as u8 & 0b11111110) >> 1;
-            bytes[1] |= (data[1] as u8 & 0b00000001) << 7;
-            bytes[1] |= (data[2] as u8 & 0b11111110) >> 1;
-    
-            parity |= data[2] & 0b00000001;
-        }
-    
-        Ok(Self::new(sync, bytes, parity))
+        parity |= (buffer[2] & 0b00010000) >> 4;
+
+        Ok(Self::new(sync, word, parity))
     }
 
     /// Check if this packet is a data packet
@@ -172,6 +194,46 @@ mod tests {
 
     /// The leading sync pattern for a non-data word
     const SERV_SYNC: u8 = 0b100;
+
+    #[test]
+    fn test_packet_parse_offset_14() {
+        let packet = Packet::parse(
+            &[0b00000000, 0b00000011, 0b11000000, 0b00000000, 0b11000000],
+            14,
+        )
+        .unwrap();
+
+        assert_eq!(packet.sync, 0b00000111);
+        assert_eq!(packet.bytes, [0b10000000, 0b00000001]);
+        assert_eq!(packet.parity, 0b00000001);
+    }
+
+    #[test]
+    fn test_packet_parse_offset_6() {
+        let packet = Packet::parse(&[0b00000011, 0b11000000, 0b00000000, 0b11000000], 6).unwrap();
+
+        assert_eq!(packet.sync, 0b00000111);
+        assert_eq!(packet.bytes, [0b10000000, 0b00000001]);
+        assert_eq!(packet.parity, 0b00000001);
+    }
+
+    #[test]
+    fn test_packet_parse_offset_4() {
+        let packet = Packet::parse(&[0b00001111, 0b00000000, 0b00000011], 4).unwrap();
+
+        assert_eq!(packet.sync, 0b00000111);
+        assert_eq!(packet.bytes, [0b10000000, 0b00000001]);
+        assert_eq!(packet.parity, 0b00000001);
+    }
+
+    #[test]
+    fn test_packet_parse_offset_0() {
+        let packet = Packet::parse(&[0b11110000, 0b00000000, 0b00110000], 0).unwrap();
+
+        assert_eq!(packet.sync, 0b00000111);
+        assert_eq!(packet.bytes, [0b10000000, 0b00000001]);
+        assert_eq!(packet.parity, 0b00000001);
+    }
 
     #[test]
     fn test_packet_value() {
@@ -271,204 +333,106 @@ mod tests {
 
     #[test]
     fn test_packet_parse_word_alternate() {
-        let packet = Packet::parse(&[
-            0b00010101, 
-            0b01010101, 
-            0b01000000
-        ],true).unwrap();
+        let packet = Packet::parse(&[0b00010101, 0b01010101, 0b01000000], 0).unwrap();
 
         assert_eq!(packet.sync, 0b00000000);
-        assert_eq!(packet.bytes, [0b10101010,0b10101010]);
+        assert_eq!(packet.bytes, [0b10101010, 0b10101010]);
         assert_eq!(packet.parity, 0b00000000);
     }
 
     #[test]
     fn test_packet_parse_word_ones() {
-        let packet = Packet::parse(&[
-            0b00011111, 
-            0b11111111, 
-            0b11100000
-        ],true).unwrap();
+        let packet = Packet::parse(&[0b00011111, 0b11111111, 0b11100000], 0).unwrap();
 
         assert_eq!(packet.sync, 0b00000000);
-        assert_eq!(packet.bytes, [0b11111111,0b11111111]);
+        assert_eq!(packet.bytes, [0b11111111, 0b11111111]);
         assert_eq!(packet.parity, 0b00000000);
     }
 
     #[test]
     fn test_packet_parse_word_zeroes() {
-        let packet = Packet::parse(&[
-            0b11100000, 
-            0b00000000, 
-            0b00010000
-        ],true).unwrap();
+        let packet = Packet::parse(&[0b11100000, 0b00000000, 0b00010000], 0).unwrap();
 
         assert_eq!(packet.sync, 0b00000111);
-        assert_eq!(packet.bytes, [0b00000000,0b00000000]);
+        assert_eq!(packet.bytes, [0b00000000, 0b00000000]);
         assert_eq!(packet.parity, 0b00000001);
     }
 
     #[test]
     fn test_packet_parse_sync_zeroes() {
-        let packet = Packet::parse(&[
-            0b00011111, 
-            0b11111111, 
-            0b11111111
-        ],true).unwrap();
+        let packet = Packet::parse(&[0b00011111, 0b11111111, 0b11111111], 0).unwrap();
 
         assert_eq!(packet.sync, 0b00000000);
-        assert_eq!(packet.bytes, [0b11111111,0b11111111]);
+        assert_eq!(packet.bytes, [0b11111111, 0b11111111]);
         assert_eq!(packet.parity, 0b00000001);
     }
 
     #[test]
     fn test_packet_parse_sync_ones() {
-        let packet = Packet::parse(&[
-            0b11100000, 
-            0b00000000, 
-            0b00000000
-        ],true).unwrap();
+        let packet = Packet::parse(&[0b11100000, 0b00000000, 0b00000000], 0).unwrap();
 
         assert_eq!(packet.sync, 0b00000111);
-        assert_eq!(packet.bytes, [0b00000000,0b00000000]);
+        assert_eq!(packet.bytes, [0b00000000, 0b00000000]);
         assert_eq!(packet.parity, 0b00000000);
     }
 
     #[test]
     fn test_packet_parse_parity_one() {
-        let packet = Packet::parse(&[
-            0b00000000, 
-            0b00000000, 
-            0b00010000 // 20th
-        ],true).unwrap();
+        let packet = Packet::parse(
+            &[
+                0b00000000, 0b00000000, 0b00010000, // 20th
+            ],
+            0,
+        )
+        .unwrap();
 
         assert_eq!(packet.sync, 0b00000000);
-        assert_eq!(packet.bytes, [0b00000000,0b00000000]);
+        assert_eq!(packet.bytes, [0b00000000, 0b00000000]);
         assert_eq!(packet.parity, 0b00000001);
     }
 
     #[test]
     fn test_packet_parse_parity_one_right() {
-        let packet = Packet::parse(&[
-            0b00000000, 
-            0b00000000, 
-            0b00001000 // 21st
-        ],true).unwrap();
+        let packet = Packet::parse(
+            &[
+                0b00000000, 0b00000000, 0b00001000, // 21st
+            ],
+            0,
+        )
+        .unwrap();
 
         assert_eq!(packet.sync, 0b00000000);
-        assert_eq!(packet.bytes, [0b00000000,0b00000000]);
+        assert_eq!(packet.bytes, [0b00000000, 0b00000000]);
         assert_eq!(packet.parity, 0b00000000);
     }
 
     #[test]
     fn test_packet_parse_parity_one_left() {
-        let packet = Packet::parse(&[
-            0b00000000, 
-            0b00000000, 
-            0b00100000 // 19th
-        ],true).unwrap();
+        let packet = Packet::parse(
+            &[
+                0b00000000, 0b00000000, 0b00100000, // 19th
+            ],
+            0,
+        )
+        .unwrap();
 
         assert_eq!(packet.sync, 0b00000000);
-        assert_eq!(packet.bytes, [0b00000000,0b00000001]);
+        assert_eq!(packet.bytes, [0b00000000, 0b00000001]);
         assert_eq!(packet.parity, 0b00000000);
     }
 
     #[test]
     fn test_packet_parse_parity_zero() {
-        let packet = Packet::parse(&[
-            0b11111111, 
-            0b11111111, 
-            0b11101111 // 20th
-        ],true).unwrap();
+        let packet = Packet::parse(
+            &[
+                0b11111111, 0b11111111, 0b11101111, // 20th
+            ],
+            0,
+        )
+        .unwrap();
 
         assert_eq!(packet.sync, 0b00000111);
-        assert_eq!(packet.bytes, [0b11111111,0b11111111]);
+        assert_eq!(packet.bytes, [0b11111111, 0b11111111]);
         assert_eq!(packet.parity, 0b00000000);
     }
-
-
-    // #[test]
-    // fn test_process_aligned_word_pattern() {
-    //     let (_, word, _) = process(true, &[0b00010101, 0b01010101, 0b01000000]);
-    //     assert_eq!(word, 0b1010101010101010);
-    // }
-
-    // #[test]
-    // fn test_process_unaligned_word_pattern() {
-    //     let (_, word, _) = process(false, &[0b00000001, 0b01010101, 0b01010100]);
-    //     assert_eq!(word, 0b1010101010101010);
-    // }
-
-    // #[test]
-    // fn test_process_aligned_word_ones() {
-    //     let (_, word, _) = process(true, &[0b00011111, 0b11111111, 0b11100000]);
-    //     assert_eq!(word, 0b1111111111111111);
-    // }
-
-    // #[test]
-    // fn test_process_unaligned_word_ones() {
-    //     let (_, word, _) = process(false, &[0b00000001, 0b11111111, 0b11111110]);
-    //     assert_eq!(word, 0b1111111111111111);
-    // }
-
-    // #[test]
-    // fn test_process_aligned_word_zeros() {
-    //     let (_, word, _) = process(true, &[0b11100000, 0b00000000, 0b00011111]);
-    //     assert_eq!(word, 0);
-    // }
-
-    // #[test]
-    // fn test_process_unaligned_word_zeros() {
-    //     let (_, word, _) = process(false, &[0b11111110, 0b00000000, 0b00000001]);
-    //     assert_eq!(word, 0);
-    // }
-
-    // #[test]
-    // fn test_process_aligned_sync_zeros() {
-    //     let (sync, _, _) = process(true, &[0b00011111, 0b11111111, 0b11111111]);
-    //     assert_eq!(sync, 0);
-    // }
-
-    // #[test]
-    // fn test_process_unaligned_sync_zeros() {
-    //     let (sync, _, _) = process(false, &[0b11110001, 0b11111111, 0b11111111]);
-    //     assert_eq!(sync, 0);
-    // }
-
-    // #[test]
-    // fn test_process_aligned_sync_ones() {
-    //     let (sync, _, _) = process(true, &[0b11100000, 0b00000000, 0b00000000]);
-    //     assert_eq!(sync, 7);
-    // }
-
-    // #[test]
-    // fn test_process_unaligned_sync_ones() {
-    //     let (sync, _, _) = process(false, &[0b00001110, 0b00000000, 0b00000000]);
-    //     assert_eq!(sync, 7);
-    // }
-
-    // #[test]
-    // fn test_process_aligned_parity_bit_one() {
-    //     let (_, _, parity) = process(true, &[0b00000000, 0b00000000, 0b00010000]);
-    //     assert_eq!(parity, 1);
-    // }
-
-    // #[test]
-    // fn test_process_unaligned_parity_bit_one() {
-    //     let (_, _, parity) = process(false, &[0b00000000, 0b00000000, 0b00000001]);
-    //     assert_eq!(parity, 1);
-    // }
-
-    // #[test]
-    // fn test_process_aligned_parity_bit_zero() {
-    //     let (_, _, parity) = process(true, &[0b11111111, 0b11111111, 0b11101111]);
-    //     assert_eq!(parity, 0);
-    // }
-
-    // #[test]
-    // fn test_process_unaligned_parity_bit_zero() {
-    //     let (_, _, parity) = process(false, &[0b11111111, 0b11111111, 0b11111110]);
-    //     assert_eq!(parity, 0);
-    // }
-
 }
