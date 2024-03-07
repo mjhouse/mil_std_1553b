@@ -59,29 +59,41 @@ impl Packet {
     /// # fn try_main() -> Result<()> {
     ///     let packet = Packet::parse(&[
     ///         0b10001000, 0b00000100, 0b00010000
-    ///     ])?;
+    ///     ],true)?;
     /// 
     ///     assert!(packet.is_service());
     /// # Ok(())
     /// # }
-    pub fn parse(data: &[u8]) -> Result<Self> {
+    pub fn parse(data: &[u8], align: bool) -> Result<Self> {
         if data.len() < 3 {
             return Err(Error::OutOfBounds);
         }
     
-        let sync = (data[0] & 0b11100000) >> 5;
+        let mut sync: u8 = 0;
+        let mut bytes: [u8;2] = [0,0];
+        let mut parity: u8 = 0;
 
-        let mut byte1 = 0;
-        byte1 |= (data[0] as u8 & 0b00011111) << 3;
-        byte1 |= (data[1] as u8 & 0b11100000) >> 5;
+        if align {
+            sync |= (data[0] & 0b11100000) >> 5;
 
-        let mut byte2 = 0;
-        byte2 |= (data[1] as u8 & 0b00011111) << 3;
-        byte2 |= (data[2] as u8 & 0b11100000) >> 5;
-
-        let parity = (data[2] & 0b00010000) >> 4;
+            bytes[0] |= (data[0] as u8 & 0b00011111) << 3;
+            bytes[0] |= (data[1] as u8 & 0b11100000) >> 5;
+            bytes[1] |= (data[1] as u8 & 0b00011111) << 3;
+            bytes[1] |= (data[2] as u8 & 0b11100000) >> 5;
     
-        Ok(Self::new(sync, [byte1,byte2], parity))
+            parity |= (data[2] & 0b00010000) >> 4;
+        } else {
+            sync |= (data[0] & 0b00001110) >> 1;
+
+            bytes[0] |= (data[0] as u8 & 0b00000001) << 7;
+            bytes[0] |= (data[1] as u8 & 0b11111110) >> 1;
+            bytes[1] |= (data[1] as u8 & 0b00000001) << 7;
+            bytes[1] |= (data[2] as u8 & 0b11111110) >> 1;
+    
+            parity |= data[2] & 0b00000001;
+        }
+    
+        Ok(Self::new(sync, bytes, parity))
     }
 
     /// Check if this packet is a data packet
@@ -263,7 +275,7 @@ mod tests {
             0b00010101, 
             0b01010101, 
             0b01000000
-        ]).unwrap();
+        ],true).unwrap();
 
         assert_eq!(packet.sync, 0b00000000);
         assert_eq!(packet.bytes, [0b10101010,0b10101010]);
@@ -276,7 +288,7 @@ mod tests {
             0b00011111, 
             0b11111111, 
             0b11100000
-        ]).unwrap();
+        ],true).unwrap();
 
         assert_eq!(packet.sync, 0b00000000);
         assert_eq!(packet.bytes, [0b11111111,0b11111111]);
@@ -289,7 +301,7 @@ mod tests {
             0b11100000, 
             0b00000000, 
             0b00010000
-        ]).unwrap();
+        ],true).unwrap();
 
         assert_eq!(packet.sync, 0b00000111);
         assert_eq!(packet.bytes, [0b00000000,0b00000000]);
@@ -302,7 +314,7 @@ mod tests {
             0b00011111, 
             0b11111111, 
             0b11111111
-        ]).unwrap();
+        ],true).unwrap();
 
         assert_eq!(packet.sync, 0b00000000);
         assert_eq!(packet.bytes, [0b11111111,0b11111111]);
@@ -315,7 +327,7 @@ mod tests {
             0b11100000, 
             0b00000000, 
             0b00000000
-        ]).unwrap();
+        ],true).unwrap();
 
         assert_eq!(packet.sync, 0b00000111);
         assert_eq!(packet.bytes, [0b00000000,0b00000000]);
@@ -328,7 +340,7 @@ mod tests {
             0b00000000, 
             0b00000000, 
             0b00010000 // 20th
-        ]).unwrap();
+        ],true).unwrap();
 
         assert_eq!(packet.sync, 0b00000000);
         assert_eq!(packet.bytes, [0b00000000,0b00000000]);
@@ -341,7 +353,7 @@ mod tests {
             0b00000000, 
             0b00000000, 
             0b00001000 // 21st
-        ]).unwrap();
+        ],true).unwrap();
 
         assert_eq!(packet.sync, 0b00000000);
         assert_eq!(packet.bytes, [0b00000000,0b00000000]);
@@ -354,7 +366,7 @@ mod tests {
             0b00000000, 
             0b00000000, 
             0b00100000 // 19th
-        ]).unwrap();
+        ],true).unwrap();
 
         assert_eq!(packet.sync, 0b00000000);
         assert_eq!(packet.bytes, [0b00000000,0b00000001]);
@@ -367,11 +379,96 @@ mod tests {
             0b11111111, 
             0b11111111, 
             0b11101111 // 20th
-        ]).unwrap();
+        ],true).unwrap();
 
         assert_eq!(packet.sync, 0b00000111);
         assert_eq!(packet.bytes, [0b11111111,0b11111111]);
         assert_eq!(packet.parity, 0b00000000);
     }
+
+
+    // #[test]
+    // fn test_process_aligned_word_pattern() {
+    //     let (_, word, _) = process(true, &[0b00010101, 0b01010101, 0b01000000]);
+    //     assert_eq!(word, 0b1010101010101010);
+    // }
+
+    // #[test]
+    // fn test_process_unaligned_word_pattern() {
+    //     let (_, word, _) = process(false, &[0b00000001, 0b01010101, 0b01010100]);
+    //     assert_eq!(word, 0b1010101010101010);
+    // }
+
+    // #[test]
+    // fn test_process_aligned_word_ones() {
+    //     let (_, word, _) = process(true, &[0b00011111, 0b11111111, 0b11100000]);
+    //     assert_eq!(word, 0b1111111111111111);
+    // }
+
+    // #[test]
+    // fn test_process_unaligned_word_ones() {
+    //     let (_, word, _) = process(false, &[0b00000001, 0b11111111, 0b11111110]);
+    //     assert_eq!(word, 0b1111111111111111);
+    // }
+
+    // #[test]
+    // fn test_process_aligned_word_zeros() {
+    //     let (_, word, _) = process(true, &[0b11100000, 0b00000000, 0b00011111]);
+    //     assert_eq!(word, 0);
+    // }
+
+    // #[test]
+    // fn test_process_unaligned_word_zeros() {
+    //     let (_, word, _) = process(false, &[0b11111110, 0b00000000, 0b00000001]);
+    //     assert_eq!(word, 0);
+    // }
+
+    // #[test]
+    // fn test_process_aligned_sync_zeros() {
+    //     let (sync, _, _) = process(true, &[0b00011111, 0b11111111, 0b11111111]);
+    //     assert_eq!(sync, 0);
+    // }
+
+    // #[test]
+    // fn test_process_unaligned_sync_zeros() {
+    //     let (sync, _, _) = process(false, &[0b11110001, 0b11111111, 0b11111111]);
+    //     assert_eq!(sync, 0);
+    // }
+
+    // #[test]
+    // fn test_process_aligned_sync_ones() {
+    //     let (sync, _, _) = process(true, &[0b11100000, 0b00000000, 0b00000000]);
+    //     assert_eq!(sync, 7);
+    // }
+
+    // #[test]
+    // fn test_process_unaligned_sync_ones() {
+    //     let (sync, _, _) = process(false, &[0b00001110, 0b00000000, 0b00000000]);
+    //     assert_eq!(sync, 7);
+    // }
+
+    // #[test]
+    // fn test_process_aligned_parity_bit_one() {
+    //     let (_, _, parity) = process(true, &[0b00000000, 0b00000000, 0b00010000]);
+    //     assert_eq!(parity, 1);
+    // }
+
+    // #[test]
+    // fn test_process_unaligned_parity_bit_one() {
+    //     let (_, _, parity) = process(false, &[0b00000000, 0b00000000, 0b00000001]);
+    //     assert_eq!(parity, 1);
+    // }
+
+    // #[test]
+    // fn test_process_aligned_parity_bit_zero() {
+    //     let (_, _, parity) = process(true, &[0b11111111, 0b11111111, 0b11101111]);
+    //     assert_eq!(parity, 0);
+    // }
+
+    // #[test]
+    // fn test_process_unaligned_parity_bit_zero() {
+    //     let (_, _, parity) = process(false, &[0b11111111, 0b11111111, 0b11111110]);
+    //     assert_eq!(parity, 0);
+    // }
 
 }

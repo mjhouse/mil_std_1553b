@@ -55,6 +55,46 @@ impl Message {
         }
     }
 
+    /// Parse a slice of bytes into a message
+    /// 
+    /// This method interpretes the byte array as a series
+    /// of 20-bit long words. Each word is a triplet containing 
+    /// 3-bit sync, 16-bit word, and 1-bit parity. It is 
+    /// assumed that the message being parsed is aligned to the 
+    /// beginning of the slice:
+    ///  
+    /// aligned:
+    ///      | 11111111 | 11111111 | 11110000 |
+    /// unaligned:
+    ///      | 00001111 | 11111111 | 11111111 |
+    /// 
+    /// ## Example
+    ///
+    /// ```no_run
+    /// # use mil_std_1553b::*;
+    /// # fn try_main() -> Result<()> {
+    ///     let message = Message::parse_command(&[
+    ///         0b10000011, 
+    ///         0b00001100,
+    ///         0b01010110,
+    ///         0b10000110,
+    ///         0b10010000
+    ///     ])?;
+    /// 
+    ///     assert!(message.is_full());
+    ///     assert!(message.has_command());
+    ///     assert_eq!(message.word_count(),2);
+    ///     assert_eq!(message.data_count(),1);
+    /// # Ok(())
+    /// # }
+    pub fn parse_command(data: &[u8]) -> Result<Self> {
+        if data.len() < 3 {
+            return Err(Error::OutOfBounds);
+        }
+
+        unimplemented!()
+    }
+
     /// Check if the message is full
     #[must_use = "Returned value is not used"]
     pub fn is_full(&self) -> bool {
