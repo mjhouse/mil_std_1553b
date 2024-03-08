@@ -379,14 +379,12 @@ impl CommandWord {
 
     /// Get the word count or 0 if word is a mode code command
     pub fn count(&self) -> usize {
-        self.word_count()
-            .unwrap_or(0) as usize
+        self.word_count().unwrap_or(0) as usize
     }
 
     /// Get a the number of ones in the word
     pub const fn count_ones(&self) -> u8 {
-        self.data
-            .count_ones() as u8
+        self.data.count_ones() as u8
     }
 
     /// Get the current parity bit
@@ -830,14 +828,12 @@ impl StatusWord {
     /// more information.
     #[must_use = "Returned value is not used"]
     pub fn is_busy(&self) -> bool {
-        self.terminal_busy()
-            .is_busy()
+        self.terminal_busy().is_busy()
     }
 
     /// Get a the number of ones in the word
     pub const fn count_ones(&self) -> u8 {
-        self.data
-            .count_ones() as u8
+        self.data.count_ones() as u8
     }
 
     /// Get the current parity bit
@@ -869,9 +865,7 @@ impl DataWord {
 
     /// Constructor method to set the word from a string
     pub fn with_string(mut self, data: &str) -> Result<Self> {
-        self.data = data
-            .as_bytes()
-            .try_into()?;
+        self.data = data.as_bytes().try_into()?;
         Ok(self)
     }
 
@@ -998,12 +992,7 @@ impl DataWord {
 
     /// Get a the number of ones in the word
     pub const fn count_ones(&self) -> u8 {
-        (self
-            .first()
-            .count_ones()
-            + self
-                .second()
-                .count_ones()) as u8
+        (self.first().count_ones() + self.second().count_ones()) as u8
     }
 
     /// Get the current parity bit
@@ -1177,9 +1166,7 @@ mod tests {
     #[test]
     fn test_command_get_address() {
         let word = CommandWord::from_data(COMMAND_TERMINAL_ADDRESS);
-        assert!(word
-            .address()
-            .is_broadcast());
+        assert!(word.address().is_broadcast());
     }
 
     #[test]
@@ -1193,9 +1180,7 @@ mod tests {
     fn test_command_set_broadcast_address() {
         let mut word = CommandWord::from_data(WORD_EMPTY);
         word.set_address(Address::Value(0b11111));
-        assert!(word
-            .address()
-            .is_broadcast());
+        assert!(word.address().is_broadcast());
     }
 
     #[test]
@@ -1254,9 +1239,7 @@ mod tests {
         );
 
         word.set_subaddress(SubAddress::Value(0b01010));
-        assert!(word
-            .mode_code()
-            .is_none());
+        assert!(word.mode_code().is_none());
     }
 
     #[test]
@@ -1265,15 +1248,11 @@ mod tests {
 
         // word count is none because subaddress is ModeCode
         let mut word = CommandWord::from_data(COMMAND_WORD_COUNT);
-        assert!(word
-            .word_count()
-            .is_none());
+        assert!(word.word_count().is_none());
 
         // word count is 32 after subaddress changed
         word.set_subaddress(address);
-        assert!(word
-            .word_count()
-            .is_some());
+        assert!(word.word_count().is_some());
         assert_eq!(word.word_count(), Some(31));
     }
 
@@ -1318,9 +1297,7 @@ mod tests {
     #[test]
     fn test_status_get_address() {
         let word = StatusWord::from_data(STATUS_TERMINAL_ADDRESS);
-        assert!(word
-            .address()
-            .is_broadcast());
+        assert!(word.address().is_broadcast());
     }
 
     #[test]
@@ -1334,9 +1311,7 @@ mod tests {
     fn test_status_set_broadcast_address() {
         let mut word = StatusWord::from_data(WORD_EMPTY);
         word.set_address(Address::Value(0b11111));
-        assert!(word
-            .address()
-            .is_broadcast());
+        assert!(word.address().is_broadcast());
     }
 
     #[test]
@@ -1386,23 +1361,17 @@ mod tests {
     #[test]
     fn test_status_get_reserved() {
         let word = StatusWord::from_data(WORD_EMPTY);
-        assert!(word
-            .reserved()
-            .is_none());
+        assert!(word.reserved().is_none());
 
         let word = StatusWord::from_data(STATUS_RESERVED_BITS);
-        assert!(word
-            .reserved()
-            .is_value());
+        assert!(word.reserved().is_value());
     }
 
     #[test]
     fn test_status_set_reserved() {
         let mut word = StatusWord::from_data(WORD_EMPTY);
         word.set_reserved(Reserved::Value(0b111));
-        assert!(word
-            .reserved()
-            .is_value());
+        assert!(word.reserved().is_value());
     }
 
     #[test]
@@ -1435,9 +1404,7 @@ mod tests {
             .is_notbusy());
 
         let word = StatusWord::from_data(STATUS_TERMINAL_BUSY);
-        assert!(word
-            .terminal_busy()
-            .is_busy());
+        assert!(word.terminal_busy().is_busy());
         assert!(word.is_busy());
     }
 
@@ -1445,9 +1412,7 @@ mod tests {
     fn test_status_set_terminal_busy() {
         let mut word = StatusWord::from_data(WORD_EMPTY);
         word.set_terminal_busy(TerminalBusy::Busy);
-        assert!(word
-            .terminal_busy()
-            .is_busy());
+        assert!(word.terminal_busy().is_busy());
         assert!(word.is_busy());
     }
 
@@ -1476,9 +1441,7 @@ mod tests {
     #[test]
     fn test_status_get_message_error() {
         let word = StatusWord::from_data(WORD_EMPTY);
-        assert!(word
-            .message_error()
-            .is_none());
+        assert!(word.message_error().is_none());
 
         let word = StatusWord::from_data(STATUS_MESSAGE_ERROR);
         assert!(word
