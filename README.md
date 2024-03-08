@@ -16,29 +16,85 @@ or military projects that can't have virally licensed dependencies.
 * Has no dependencies.
 * MIT licensed.
 
-## Usage
+## Basic usage
 
 ### Creating a message
 
+A message can be built using the constructor methods of [Message], [CommandWord], 
+[StatusWord], and [DataWord]. 
+
 ```rust
-# use mil_std_1553b::*;
-# fn try_main() -> Result<()> {
+    use mil_std_1553b::*;
+
     let message = Message::new()
         .with_command(CommandWord::new()
             .with_address(12)
             .with_subaddress(5)
             .with_word_count(2)
-            .build()?
-        )?
-        .with_data(DataWord::new())?
-        .with_data(DataWord::new())?;
+            .build().unwrap()
+        ).unwrap()
+        .with_data(DataWord::new()).unwrap()
+        .with_data(DataWord::new()).unwrap();
 
-    assert!(message.is_full());
     assert_eq!(message.word_count(),3);
-    assert_eq!(message.data_count(),2);
-    assert_eq!(message.data_expected(),2);
-# Ok(())
-# }
+```
+
+### Parsing a message
+
+#### Command messages
+
+Messages can be parsed as command messages, and the leading command word will determine
+how many data words will be parsed from the buffer. See [Message] for more information.
+
+```rust
+    use mil_std_1553b::*;
+
+    let message = Message::parse_command(&[
+        0b10000011, 
+        0b00001100, 
+        0b00100010, 
+        0b11010000, 
+        0b11010010
+    ])
+    .unwrap();
+
+    assert_eq!(message.word_count(),2);
+```
+
+#### Status messages
+
+See [Message] for more information.
+
+```rust
+    use mil_std_1553b::*;
+
+    let message = Message::parse_status(&[
+        0b10000011, 
+        0b00001100, 
+        0b01000010, 
+        0b11010000, 
+        0b11010010
+    ])
+    .unwrap();
+
+    assert_eq!(message.word_count(), 2);
+```
+
+### Parsing a word
+
+Words can be parsed from two-byte byte arrays or u16s. Data words can also be created 
+from strings. See [WordType] for more information.
+
+```rust
+    use mil_std_1553b::*;
+
+    let word = DataWord::new()
+        .with_bytes([0b01001000, 0b01001001])
+        .with_calculated_parity()
+        .build()
+        .unwrap();
+
+    assert_eq!(word.as_string(),Ok("HI"));
 ```
 
 ## Roadmap
