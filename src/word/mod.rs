@@ -3,5 +3,5 @@
 mod enums;
 mod words;
 
-pub use enums::{Sync, Type};
+pub use enums::WordType;
 pub use words::{CommandWord, DataWord, StatusWord};

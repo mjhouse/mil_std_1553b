@@ -710,7 +710,7 @@ impl StatusWord {
 
     /// Check if the message error flag is set
     ///
-    /// See [MessageError](crate::errors::MessageError) for more
+    /// See [MessageError] for more
     /// information.
     pub fn message_error(&self) -> MessageError {
         MessageError::from(STATUS_MESSAGE_ERROR_FIELD.get(self.data))
@@ -1039,7 +1039,9 @@ mod tests {
     fn test_data_with_bytes() {
         let word = DataWord::new()
             .with_bytes([0b01001000, 0b01001001])
-            .with_calculated_parity();
+            .with_calculated_parity()
+            .build()
+            .unwrap();
 
         assert_eq!(word.as_bytes(), &[0b01001000, 0b01001001]);
         assert_eq!(word.to_u16(), 0b0100100001001001u16);
