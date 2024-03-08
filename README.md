@@ -2,6 +2,7 @@
 
 [![tests passing](https://github.com/mjhouse/mil_std_1553b/actions/workflows/testing.yaml/badge.svg)](https://github.com/mjhouse/mil_std_1553b/actions)
 [![docs passing](https://github.com/mjhouse/mil_std_1553b/actions/workflows/documentation.yaml/badge.svg)](https://mjhouse.github.io/mil_std_1553b/)
+[![crates.io](https://img.shields.io/crates/v/mil_std_1553b.svg)](https://crates.io/crates/mil_std_1553b)
 
 This library implements a complete set of Rust structs for parsing or constructing messages that comply with
 the MIL STD 1553B communication protocal.
@@ -20,8 +21,8 @@ or military projects that can't have virally licensed dependencies.
 
 ### Creating a message
 
-A message can be built using the constructor methods of [Message], [CommandWord], 
-[StatusWord], and [DataWord]. 
+A message can be built using the constructor methods of Message, CommandWord, 
+StatusWord, and DataWord. 
 
 ```rust
     use mil_std_1553b::*;
@@ -44,7 +45,7 @@ A message can be built using the constructor methods of [Message], [CommandWord]
 #### Command messages
 
 Messages can be parsed as command messages, and the leading command word will determine
-how many data words will be parsed from the buffer. See [Message] for more information.
+how many data words will be parsed from the buffer.
 
 ```rust
     use mil_std_1553b::*;
@@ -62,8 +63,6 @@ how many data words will be parsed from the buffer. See [Message] for more infor
 ```
 
 #### Status messages
-
-See [Message] for more information.
 
 ```rust
     use mil_std_1553b::*;
@@ -83,7 +82,7 @@ See [Message] for more information.
 ### Parsing a word
 
 Words can be parsed from two-byte byte arrays or u16s. Data words can also be created 
-from strings. See [WordType] for more information.
+from strings.
 
 ```rust
     use mil_std_1553b::*;
