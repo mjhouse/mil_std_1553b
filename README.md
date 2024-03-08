@@ -16,7 +16,7 @@ or military projects that can't have virally licensed dependencies.
 * Has no dependencies.
 * MIT licensed.
 
-## Usage
+## Basic usage
 
 ### Creating a message
 
