@@ -45,11 +45,11 @@ mod word;
 
 pub(crate) mod fields;
 
-pub use crate::message::{MessageDirection, MessageSide, MessageType, Message, Packet};
+pub use crate::message::{Message, MessageDirection, MessageSide, MessageType, Packet};
 
-pub use crate::errors::{MessageError, SystemError, SubsystemError,  TerminalError, Error, Result};
+pub use crate::errors::{Error, MessageError, Result, SubsystemError, SystemError, TerminalError};
 
-pub use crate::word::{WordType, CommandWord, DataWord, StatusWord};
+pub use crate::word::{CommandWord, DataWord, StatusWord, WordType};
 
 pub use crate::flags::{
     Address, BroadcastCommand, BusControlAccept, Instrumentation, ModeCode, Reserved,
