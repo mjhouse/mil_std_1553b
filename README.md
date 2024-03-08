@@ -55,8 +55,8 @@ or military projects that can't have virally licensed dependencies.
 - [ ] Messages implemented
     - [x] Message struct is created
     - [x] Messages can be constructed from words
-    - [ ] Messages can be parsed from binary
-    - [ ] Messages have parsing tests
+    - [x] Messages can be parsed from binary
+    - [x] Messages have parsing tests
     - [ ] Messages have conversion tests
     - [x] Documentation exists for messages
 - [ ] Integration tests implemented
