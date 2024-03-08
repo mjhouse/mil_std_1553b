@@ -21,24 +21,112 @@ or military projects that can't have virally licensed dependencies.
 ### Creating a message
 
 ```rust
-# use mil_std_1553b::*;
-# fn try_main() -> Result<()> {
+    use mil_std_1553b::*;
+
     let message = Message::new()
         .with_command(CommandWord::new()
             .with_address(12)
             .with_subaddress(5)
             .with_word_count(2)
-            .build()?
-        )?
-        .with_data(DataWord::new())?
-        .with_data(DataWord::new())?;
+            .build().unwrap()
+        ).unwrap()
+        .with_data(DataWord::new()).unwrap()
+        .with_data(DataWord::new()).unwrap();
 
     assert!(message.is_full());
     assert_eq!(message.word_count(),3);
     assert_eq!(message.data_count(),2);
     assert_eq!(message.data_expected(),2);
-# Ok(())
-# }
+```
+
+### Parsing a message
+
+#### Command messages
+
+Messages can be parsed as command messages, and the leading command word will determine
+how many data words will be parsed from the buffer.
+
+```rust
+    use mil_std_1553b::*;
+
+    let message1 = Message::parse_command(&[
+        0b10000011, 
+        0b00001100, 
+        0b01110010, 
+        0b11010000, 
+        0b11010010, 
+        0b00101111, 
+        0b00101101,
+        0b11100010, 
+        0b11001110, 
+        0b11011110,
+    ])
+    .unwrap();
+
+    assert!(message.is_full());
+    assert!(message.has_command());
+    assert_eq!(message.word_count(),4);
+    assert_eq!(message.data_count(),3);
+```
+
+#### Status messages
+
+Status messages, when parsed, will attempt to parse data words to the end of the buffer. 
+If this isn't desireable, pass a slice of the data that only contains the status word (the first 3 bytes).
+
+```rust
+    use mil_std_1553b::*;
+
+    let message = Message::parse_status(&[
+        0b10000011, 
+        0b00001100, 
+        0b01000010, 
+        0b11010000, 
+        0b11010010, 
+        0b00101111, 
+        0b00101101,
+        0b11100000
+    ])
+    .unwrap();
+
+    assert!(!message.is_full());
+    assert!(message.has_status());
+    assert_eq!(message.word_count(), 3);
+    assert_eq!(message.data_count(), 2);
+```
+
+### Parsing a word
+
+Words can be parsed from two-byte byte arrays or u16s. Data words can also be created 
+from strings.
+
+```rust
+    use mil_std_1553b::*;
+
+    let word1 = DataWord::new()
+        .with_bytes([0b01001000, 0b01001001])
+        .with_calculated_parity()
+        .build()
+        .unwrap();
+
+    let word2 = DataWord::new()
+        .with_data(0b0100100001001001)
+        .with_calculated_parity()
+        .build()
+        .unwrap();
+
+    let word3 = DataWord::new()
+        .with_string("HI")
+        .unwrap()
+        .with_calculated_parity()
+        .build()
+        .unwrap();
+
+    assert_eq!(word1,word2);
+    assert_eq!(word2,word3);
+    assert_eq!(word1.as_string(),Ok("HI"));
+    assert_eq!(word2.as_string(),Ok("HI"));
+    assert_eq!(word3.as_string(),Ok("HI"));
 ```
 
 ## Roadmap
