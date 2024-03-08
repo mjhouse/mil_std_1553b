@@ -2,19 +2,16 @@ use crate::word::Type as Word;
 use crate::word::{CommandWord, DataWord, StatusWord};
 use crate::{errors::*, Packet};
 
-/// a message can only contain 32 words
-const MAX_WORDS: usize = 33;
-
 /// A message sent between two terminals on the bus
 ///
-/// The Message object does very minimal message validation
+/// The Message struct does very minimal message validation
 /// for the message structure:
 ///
 /// * Command or status words are always the first word.
 /// * Data words are limited based on the command word count.
-/// * Messages can't exceed max message size.
+/// * Messages can't exceed [max message size][Message::MAX_WORDS].
 ///
-/// It does not validate larger messaging formats that
+/// Messages do not validate larger messaging patterns that
 /// require context about previous messages or terminal type.
 ///
 /// ## Example
@@ -43,15 +40,25 @@ const MAX_WORDS: usize = 33;
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct Message {
     count: usize,
-    words: [Word; MAX_WORDS],
+    words: [Word; Self::MAX_WORDS],
 }
 
 impl Message {
+    /// The maximum number of words that a message can hold
+    ///
+    /// For messages which begin with a [StatusWord], this value
+    /// is equal to **one more than** the number of [DataWords][DataWord]
+    /// that the message will accept before it is full. For messages
+    /// which begin with a [CommandWord], this value is the maximum
+    /// number of words which may be returned by the
+    /// [word_count][CommandWord::word_count] method.
+    pub const MAX_WORDS: usize = 33;
+
     /// Create a new message struct
     pub fn new() -> Self {
         Self {
             count: 0,
-            words: [Word::None; MAX_WORDS],
+            words: [Word::None; Self::MAX_WORDS],
         }
     }
 
@@ -59,17 +66,16 @@ impl Message {
     ///
     /// This method interpretes the byte array as a series
     /// of 20-bit long words, beginning with a command word.
-    /// The word count of the parsed command word will
-    /// determine how many data words are parsed.
+    /// The word count of the parsed command will determine
+    /// how many data words are parsed.
     ///
     /// Each word is a triplet containing 3-bit sync, 16-bit word,
     /// and 1-bit parity. It is assumed that the message
-    /// being parsed is aligned to the beginning of the slice:
-    ///  
-    /// aligned:
-    ///      | 11111111 | 11111111 | 11110000 |
-    /// unaligned:
-    ///      | 00001111 | 11111111 | 11111111 |
+    /// being parsed is aligned to the beginning of the slice.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - A slice of bytes to parse
     ///
     /// ## Example
     ///
@@ -121,7 +127,14 @@ impl Message {
     /// of 20-bit long words, starting with a status word.
     /// Because status words do not have a word count field,
     /// this method will parse data words to the end of the
-    /// byte array.
+    /// byte array. Slice the input data to avoid parsing
+    /// any unwanted words.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - A slice of bytes to parse
+    ///
+    /// See [parse_command][Message::parse_command] for more information.
     ///
     /// ## Example
     ///
@@ -145,8 +158,6 @@ impl Message {
     /// # Ok(())
     /// # }
     /// ```
-    ///
-    /// See [Message::parse_command] for more information.
     pub fn parse_status(data: &[u8]) -> Result<Self> {
         // get the first word as a status word
         let mut message = Self::new().with_status(Packet::parse(data, 0)?.to_status()?)?;
@@ -164,11 +175,6 @@ impl Message {
             // get a trimmed slice to parse
             let bytes = &data[index..];
 
-            println!("{}:", index);
-            for b in bytes {
-                println!("{:08b}", b);
-            }
-
             // parse as a data word and add
             message.add_data(Packet::parse(bytes, offset)?.to_data()?)?;
         }
@@ -177,6 +183,10 @@ impl Message {
     }
 
     /// Check if the message is full
+    ///
+    /// This method will return false for status messages
+    /// until the [maximum number of data words][Message::MAX_WORDS]
+    /// has been added.
     #[must_use = "Returned value is not used"]
     pub fn is_full(&self) -> bool {
         if self.has_command() {
@@ -195,7 +205,7 @@ impl Message {
     /// Clear all words from the message
     pub fn clear(&mut self) {
         self.count = 0;
-        self.words = [Word::None; MAX_WORDS];
+        self.words = [Word::None; Self::MAX_WORDS];
     }
 
     /// Get the last word in the message
@@ -264,6 +274,11 @@ impl Message {
     }
 
     /// Add a word to the message, returning size on success
+    ///
+    /// # Arguments
+    ///
+    /// * `word` - A word to add
+    ///
     pub fn add<T: Into<Word>>(&mut self, word: T) -> Result<usize> {
         match word.into() {
             Word::Data(v) => self.add_data(v),
@@ -277,6 +292,11 @@ impl Message {
     ///
     /// An index of 0 will return the first *data word*, not
     /// the leading command or status word.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - An index
+    ///
     pub fn get(&self, index: usize) -> Option<&DataWord> {
         if let Some(Word::Data(w)) = &self.words.get(index + 1) {
             Some(w)
@@ -286,12 +306,22 @@ impl Message {
     }
 
     /// Constructor method to add a word to the message
+    ///
+    /// # Arguments
+    ///
+    /// * `word` - A word to add
+    ///
     pub fn with_word<T: Into<Word>>(mut self, word: T) -> Result<Self> {
         self.add(word)?;
         Ok(self)
     }
 
     /// Add a data word, returning the size of the message on success
+    ///
+    /// # Arguments
+    ///
+    /// * `word` - A word to add
+    ///
     pub fn add_data(&mut self, word: DataWord) -> Result<usize> {
         if self.is_full() && self.has_command() {
             Err(Error::MessageIsFull)
@@ -305,12 +335,22 @@ impl Message {
     }
 
     /// Constructor method to add a data word to the message
+    ///
+    /// # Arguments
+    ///
+    /// * `word` - A word to add
+    ///
     pub fn with_data<T: Into<DataWord>>(mut self, word: T) -> Result<Self> {
         self.add_data(word.into())?;
         Ok(self)
     }
 
     /// Add a status word, returning the size of the message on success
+    ///
+    /// # Arguments
+    ///
+    /// * `word` - A word to add
+    ///
     pub fn add_status(&mut self, word: StatusWord) -> Result<usize> {
         if !self.is_empty() {
             Err(Error::StatusWordNotFirst)
@@ -324,12 +364,22 @@ impl Message {
     }
 
     /// Constructor method to add a status word to the message
+    ///
+    /// # Arguments
+    ///
+    /// * `word` - A word to add
+    ///
     pub fn with_status<T: Into<StatusWord>>(mut self, word: T) -> Result<Self> {
         self.add_status(word.into())?;
         Ok(self)
     }
 
     /// Add a command word, returning the size of the message on success
+    ///
+    /// # Arguments
+    ///
+    /// * `word` - A word to add
+    ///
     pub fn add_command(&mut self, word: CommandWord) -> Result<usize> {
         if !self.is_empty() {
             Err(Error::CommandWordNotFirst)
@@ -343,6 +393,11 @@ impl Message {
     }
 
     /// Constructor method to add a command word to the message
+    ///
+    /// # Arguments
+    ///
+    /// * `word` - A word to add
+    ///
     pub fn with_command<T: Into<CommandWord>>(mut self, word: T) -> Result<Self> {
         self.add_command(word.into())?;
         Ok(self)

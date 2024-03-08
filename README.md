@@ -20,6 +20,9 @@ or military projects that can't have virally licensed dependencies.
 
 ### Creating a message
 
+A message can be built using the constructor methods of [Message], [CommandWord], 
+[StatusWord], and [DataWord]. 
+
 ```rust
     use mil_std_1553b::*;
 
@@ -33,10 +36,7 @@ or military projects that can't have virally licensed dependencies.
         .with_data(DataWord::new()).unwrap()
         .with_data(DataWord::new()).unwrap();
 
-    assert!(message.is_full());
     assert_eq!(message.word_count(),3);
-    assert_eq!(message.data_count(),2);
-    assert_eq!(message.data_expected(),2);
 ```
 
 ### Parsing a message
@@ -44,35 +44,26 @@ or military projects that can't have virally licensed dependencies.
 #### Command messages
 
 Messages can be parsed as command messages, and the leading command word will determine
-how many data words will be parsed from the buffer.
+how many data words will be parsed from the buffer. See [Message] for more information.
 
 ```rust
     use mil_std_1553b::*;
 
-    let message1 = Message::parse_command(&[
+    let message = Message::parse_command(&[
         0b10000011, 
         0b00001100, 
-        0b01110010, 
+        0b00100010, 
         0b11010000, 
-        0b11010010, 
-        0b00101111, 
-        0b00101101,
-        0b11100010, 
-        0b11001110, 
-        0b11011110,
+        0b11010010
     ])
     .unwrap();
 
-    assert!(message.is_full());
-    assert!(message.has_command());
-    assert_eq!(message.word_count(),4);
-    assert_eq!(message.data_count(),3);
+    assert_eq!(message.word_count(),2);
 ```
 
 #### Status messages
 
-Status messages, when parsed, will attempt to parse data words to the end of the buffer. 
-If this isn't desireable, pass a slice of the data that only contains the status word (the first 3 bytes).
+See [Message] for more information.
 
 ```rust
     use mil_std_1553b::*;
@@ -82,51 +73,28 @@ If this isn't desireable, pass a slice of the data that only contains the status
         0b00001100, 
         0b01000010, 
         0b11010000, 
-        0b11010010, 
-        0b00101111, 
-        0b00101101,
-        0b11100000
+        0b11010010
     ])
     .unwrap();
 
-    assert!(!message.is_full());
-    assert!(message.has_status());
-    assert_eq!(message.word_count(), 3);
-    assert_eq!(message.data_count(), 2);
+    assert_eq!(message.word_count(), 2);
 ```
 
 ### Parsing a word
 
 Words can be parsed from two-byte byte arrays or u16s. Data words can also be created 
-from strings.
+from strings. See [Type][crate::word::Type] for more information.
 
 ```rust
     use mil_std_1553b::*;
 
-    let word1 = DataWord::new()
+    let word = DataWord::new()
         .with_bytes([0b01001000, 0b01001001])
         .with_calculated_parity()
         .build()
         .unwrap();
 
-    let word2 = DataWord::new()
-        .with_data(0b0100100001001001)
-        .with_calculated_parity()
-        .build()
-        .unwrap();
-
-    let word3 = DataWord::new()
-        .with_string("HI")
-        .unwrap()
-        .with_calculated_parity()
-        .build()
-        .unwrap();
-
-    assert_eq!(word1,word2);
-    assert_eq!(word2,word3);
-    assert_eq!(word1.as_string(),Ok("HI"));
-    assert_eq!(word2.as_string(),Ok("HI"));
-    assert_eq!(word3.as_string(),Ok("HI"));
+    assert_eq!(word.as_string(),Ok("HI"));
 ```
 
 ## Roadmap
