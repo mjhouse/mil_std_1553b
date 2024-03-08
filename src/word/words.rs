@@ -146,12 +146,16 @@ impl CommandWord {
 
     /// Create a word from a given u16 value
     pub const fn from_data(data: u16) -> Self {
-        Self::new().with_data(data).with_calculated_parity()
+        Self::new()
+            .with_data(data)
+            .with_calculated_parity()
     }
 
     /// Create a word from a given byte array
     pub const fn from_bytes(data: [u8; 2]) -> Self {
-        Self::new().with_bytes(data).with_calculated_parity()
+        Self::new()
+            .with_bytes(data)
+            .with_calculated_parity()
     }
 
     /// Get the internal data as a u16
@@ -349,7 +353,8 @@ impl CommandWord {
     /// See [CommandWord::mode_code]
     /// for more information.
     pub fn is_mode_code(&self) -> bool {
-        self.subaddress().is_mode_code()
+        self.subaddress()
+            .is_mode_code()
     }
 
     /// Check if this word is being transmitted to a terminal
@@ -358,7 +363,8 @@ impl CommandWord {
     /// for more information.
     #[must_use = "Returned value is not used"]
     pub fn is_transmit(&self) -> bool {
-        self.transmit_receive().is_transmit()
+        self.transmit_receive()
+            .is_transmit()
     }
 
     /// Check if this word is being received by a terminal
@@ -367,7 +373,8 @@ impl CommandWord {
     /// for more information.
     #[must_use = "Returned value is not used"]
     pub fn is_receive(&self) -> bool {
-        self.transmit_receive().is_receive()
+        self.transmit_receive()
+            .is_receive()
     }
 
     /// Get the word count or 0 if word is a mode code command
@@ -442,12 +449,16 @@ impl StatusWord {
 
     /// Create a word from a given u16 value
     pub const fn from_data(data: u16) -> Self {
-        Self::new().with_data(data).with_calculated_parity()
+        Self::new()
+            .with_data(data)
+            .with_calculated_parity()
     }
 
     /// Create a word from a given byte array
     pub const fn from_bytes(data: [u8; 2]) -> Self {
-        Self::new().with_bytes(data).with_calculated_parity()
+        Self::new()
+            .with_bytes(data)
+            .with_calculated_parity()
     }
 
     /// Get the internal data as a u16
@@ -801,9 +812,14 @@ impl StatusWord {
     /// See [StatusWord::message_error], [StatusWord::subsystem_error],
     /// or [StatusWord::terminal_error] for more information.
     pub fn is_error(&self) -> bool {
-        self.message_error().is_error()
-            || self.subsystem_error().is_error()
-            || self.terminal_error().is_error()
+        self.message_error()
+            .is_error()
+            || self
+                .subsystem_error()
+                .is_error()
+            || self
+                .terminal_error()
+                .is_error()
     }
 
     /// Check if the terminal is currently busy
@@ -894,17 +910,23 @@ impl DataWord {
     /// Fails if the given &str is not two
     /// bytes in length.
     pub fn from_string(data: &str) -> Result<Self> {
-        Ok(Self::new().with_string(data)?.with_calculated_parity())
+        Ok(Self::new()
+            .with_string(data)?
+            .with_calculated_parity())
     }
 
     /// Create a word from a given u16 value
     pub const fn from_data(data: u16) -> Self {
-        Self::new().with_data(data).with_calculated_parity()
+        Self::new()
+            .with_data(data)
+            .with_calculated_parity()
     }
 
     /// Create a word from a given byte array
     pub const fn from_bytes(data: [u8; 2]) -> Self {
-        Self::new().with_bytes(data).with_calculated_parity()
+        Self::new()
+            .with_bytes(data)
+            .with_calculated_parity()
     }
 
     /// Get the internal data as a byte array
@@ -1164,7 +1186,9 @@ mod tests {
     #[test]
     fn test_command_get_subaddress() {
         let word = CommandWord::from_data(COMMAND_SUBADDRESS);
-        assert!(word.subaddress().is_mode_code());
+        assert!(word
+            .subaddress()
+            .is_mode_code());
     }
 
     #[test]
@@ -1177,17 +1201,23 @@ mod tests {
     #[test]
     fn test_command_get_transmit_receive() {
         let word = CommandWord::from_data(WORD_EMPTY);
-        assert!(word.transmit_receive().is_receive());
+        assert!(word
+            .transmit_receive()
+            .is_receive());
 
         let word = CommandWord::from_data(COMMAND_TRANSMIT_RECEIVE);
-        assert!(word.transmit_receive().is_transmit());
+        assert!(word
+            .transmit_receive()
+            .is_transmit());
     }
 
     #[test]
     fn test_command_set_transmit_receive() {
         let mut word = CommandWord::from_data(WORD_EMPTY);
         word.set_transmit_receive(TransmitReceive::Transmit);
-        assert!(word.transmit_receive().is_transmit());
+        assert!(word
+            .transmit_receive()
+            .is_transmit());
     }
 
     #[test]
@@ -1287,33 +1317,45 @@ mod tests {
     #[test]
     fn test_status_get_instrumentation() {
         let word = StatusWord::from_data(WORD_EMPTY);
-        assert!(word.instrumentation().is_status());
+        assert!(word
+            .instrumentation()
+            .is_status());
 
         let word = StatusWord::from_data(STATUS_INSTRUMENTATION);
-        assert!(word.instrumentation().is_command());
+        assert!(word
+            .instrumentation()
+            .is_command());
     }
 
     #[test]
     fn test_status_set_instrumentation() {
         let mut word = StatusWord::from_data(WORD_EMPTY);
         word.set_instrumentation(Instrumentation::Command);
-        assert!(word.instrumentation().is_command());
+        assert!(word
+            .instrumentation()
+            .is_command());
     }
 
     #[test]
     fn test_status_get_service_request() {
         let word = StatusWord::from_data(WORD_EMPTY);
-        assert!(word.service_request().is_noservice());
+        assert!(word
+            .service_request()
+            .is_noservice());
 
         let word = StatusWord::from_data(STATUS_SERVICE_REQUEST);
-        assert!(word.service_request().is_service());
+        assert!(word
+            .service_request()
+            .is_service());
     }
 
     #[test]
     fn test_status_set_service_request() {
         let mut word = StatusWord::from_data(WORD_EMPTY);
         word.set_service_request(ServiceRequest::Service);
-        assert!(word.service_request().is_service());
+        assert!(word
+            .service_request()
+            .is_service());
     }
 
     #[test]
@@ -1335,23 +1377,31 @@ mod tests {
     #[test]
     fn test_status_get_broadcast_received() {
         let word = StatusWord::from_data(WORD_EMPTY);
-        assert!(word.broadcast_received().is_notreceived());
+        assert!(word
+            .broadcast_received()
+            .is_notreceived());
 
         let word = StatusWord::from_data(STATUS_BROADCAST_RECEIVED);
-        assert!(word.broadcast_received().is_received());
+        assert!(word
+            .broadcast_received()
+            .is_received());
     }
 
     #[test]
     fn test_status_set_broadcast_received() {
         let mut word = StatusWord::from_data(WORD_EMPTY);
         word.set_broadcast_received(BroadcastCommand::Received);
-        assert!(word.broadcast_received().is_received());
+        assert!(word
+            .broadcast_received()
+            .is_received());
     }
 
     #[test]
     fn test_status_get_terminal_busy() {
         let word = StatusWord::from_data(WORD_EMPTY);
-        assert!(word.terminal_busy().is_notbusy());
+        assert!(word
+            .terminal_busy()
+            .is_notbusy());
 
         let word = StatusWord::from_data(STATUS_TERMINAL_BUSY);
         assert!(word.terminal_busy().is_busy());
@@ -1369,17 +1419,23 @@ mod tests {
     #[test]
     fn test_status_get_dynamic_bus_acceptance() {
         let word = StatusWord::from_data(WORD_EMPTY);
-        assert!(word.dynamic_bus_acceptance().is_notaccepted());
+        assert!(word
+            .dynamic_bus_acceptance()
+            .is_notaccepted());
 
         let word = StatusWord::from_data(STATUS_DYNAMIC_BUS_ACCEPT);
-        assert!(word.dynamic_bus_acceptance().is_accepted());
+        assert!(word
+            .dynamic_bus_acceptance()
+            .is_accepted());
     }
 
     #[test]
     fn test_status_set_dynamic_bus_acceptance() {
         let mut word = StatusWord::from_data(WORD_EMPTY);
         word.set_dynamic_bus_acceptance(BusControlAccept::Accepted);
-        assert!(word.dynamic_bus_acceptance().is_accepted());
+        assert!(word
+            .dynamic_bus_acceptance()
+            .is_accepted());
     }
 
     #[test]
@@ -1388,7 +1444,9 @@ mod tests {
         assert!(word.message_error().is_none());
 
         let word = StatusWord::from_data(STATUS_MESSAGE_ERROR);
-        assert!(word.message_error().is_error());
+        assert!(word
+            .message_error()
+            .is_error());
         assert!(word.is_error());
     }
 
@@ -1396,17 +1454,23 @@ mod tests {
     fn test_status_set_message_error() {
         let mut word = StatusWord::from_data(WORD_EMPTY);
         word.set_message_error(MessageError::Error);
-        assert!(word.message_error().is_error());
+        assert!(word
+            .message_error()
+            .is_error());
         assert!(word.is_error());
     }
 
     #[test]
     fn test_status_get_subsystem_error() {
         let word = StatusWord::from_data(WORD_EMPTY);
-        assert!(word.subsystem_error().is_none());
+        assert!(word
+            .subsystem_error()
+            .is_none());
 
         let word = StatusWord::from_data(STATUS_SUBSYSTEM_FLAG);
-        assert!(word.subsystem_error().is_error());
+        assert!(word
+            .subsystem_error()
+            .is_error());
         assert!(word.is_error());
     }
 
@@ -1414,17 +1478,23 @@ mod tests {
     fn test_status_set_subsystem_error() {
         let mut word = StatusWord::from_data(WORD_EMPTY);
         word.set_subsystem_error(SubsystemError::Error);
-        assert!(word.subsystem_error().is_error());
+        assert!(word
+            .subsystem_error()
+            .is_error());
         assert!(word.is_error());
     }
 
     #[test]
     fn test_status_get_terminal_error() {
         let word = StatusWord::from_data(WORD_EMPTY);
-        assert!(word.terminal_error().is_none());
+        assert!(word
+            .terminal_error()
+            .is_none());
 
         let word = StatusWord::from_data(STATUS_TERMINAL_FLAG);
-        assert!(word.terminal_error().is_error());
+        assert!(word
+            .terminal_error()
+            .is_error());
         assert!(word.is_error());
     }
 
@@ -1432,7 +1502,9 @@ mod tests {
     fn test_status_set_terminal_error() {
         let mut word = StatusWord::from_data(WORD_EMPTY);
         word.set_terminal_error(TerminalError::Error);
-        assert!(word.terminal_error().is_error());
+        assert!(word
+            .terminal_error()
+            .is_error());
         assert!(word.is_error());
     }
 
