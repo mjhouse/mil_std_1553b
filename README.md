@@ -83,7 +83,7 @@ See [Message] for more information.
 ### Parsing a word
 
 Words can be parsed from two-byte byte arrays or u16s. Data words can also be created 
-from strings. See [Type][crate::word::Type] for more information.
+from strings. See [WordType] for more information.
 
 ```rust
     use mil_std_1553b::*;

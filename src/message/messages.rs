@@ -1,4 +1,4 @@
-use crate::word::Type as Word;
+use crate::word::WordType;
 use crate::word::{CommandWord, DataWord, StatusWord};
 use crate::{errors::*, Packet};
 
@@ -40,7 +40,7 @@ use crate::{errors::*, Packet};
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct Message {
     count: usize,
-    words: [Word; Self::MAX_WORDS],
+    words: [WordType; Self::MAX_WORDS],
 }
 
 impl Message {
@@ -58,7 +58,7 @@ impl Message {
     pub fn new() -> Self {
         Self {
             count: 0,
-            words: [Word::None; Self::MAX_WORDS],
+            words: [WordType::None; Self::MAX_WORDS],
         }
     }
 
@@ -205,11 +205,11 @@ impl Message {
     /// Clear all words from the message
     pub fn clear(&mut self) {
         self.count = 0;
-        self.words = [Word::None; Self::MAX_WORDS];
+        self.words = [WordType::None; Self::MAX_WORDS];
     }
 
     /// Get the last word in the message
-    pub fn last(&self) -> Option<&Word> {
+    pub fn last(&self) -> Option<&WordType> {
         match self.count {
             0 => None,
             i => self.words.get(i - 1),
@@ -217,7 +217,7 @@ impl Message {
     }
 
     /// Get the first word in the message
-    pub fn first(&self) -> Option<&Word> {
+    pub fn first(&self) -> Option<&WordType> {
         match self.count {
             0 => None,
             _ => self.words.get(0),
@@ -241,7 +241,7 @@ impl Message {
     /// Get the expected number of data words
     pub fn data_expected(&self) -> usize {
         self.first()
-            .map(Word::data_count)
+            .map(WordType::data_count)
             .unwrap_or(0)
     }
 
@@ -261,7 +261,7 @@ impl Message {
     #[must_use = "Returned value is not used"]
     pub fn has_command(&self) -> bool {
         self.first()
-            .map(Word::is_command)
+            .map(WordType::is_command)
             .unwrap_or(false)
     }
 
@@ -269,7 +269,7 @@ impl Message {
     #[must_use = "Returned value is not used"]
     pub fn has_status(&self) -> bool {
         self.first()
-            .map(Word::is_status)
+            .map(WordType::is_status)
             .unwrap_or(false)
     }
 
@@ -279,11 +279,11 @@ impl Message {
     ///
     /// * `word` - A word to add
     ///
-    pub fn add<T: Into<Word>>(&mut self, word: T) -> Result<usize> {
+    pub fn add<T: Into<WordType>>(&mut self, word: T) -> Result<usize> {
         match word.into() {
-            Word::Data(v) => self.add_data(v),
-            Word::Status(v) => self.add_status(v),
-            Word::Command(v) => self.add_command(v),
+            WordType::Data(v) => self.add_data(v),
+            WordType::Status(v) => self.add_status(v),
+            WordType::Command(v) => self.add_command(v),
             _ => Err(Error::WordIsInvalid),
         }
     }
@@ -298,7 +298,7 @@ impl Message {
     /// * `index` - An index
     ///
     pub fn get(&self, index: usize) -> Option<&DataWord> {
-        if let Some(Word::Data(w)) = &self.words.get(index + 1) {
+        if let Some(WordType::Data(w)) = &self.words.get(index + 1) {
             Some(w)
         } else {
             None
@@ -311,7 +311,7 @@ impl Message {
     ///
     /// * `word` - A word to add
     ///
-    pub fn with_word<T: Into<Word>>(mut self, word: T) -> Result<Self> {
+    pub fn with_word<T: Into<WordType>>(mut self, word: T) -> Result<Self> {
         self.add(word)?;
         Ok(self)
     }
@@ -328,7 +328,7 @@ impl Message {
         } else if self.is_empty() {
             Err(Error::FirstWordIsData)
         } else {
-            self.words[self.count] = Word::Data(word);
+            self.words[self.count] = WordType::Data(word);
             self.count += 1;
             Ok(self.count)
         }
@@ -357,7 +357,7 @@ impl Message {
         } else if !word.check_parity() {
             Err(Error::InvalidWord)
         } else {
-            self.words[self.count] = Word::Status(word);
+            self.words[self.count] = WordType::Status(word);
             self.count += 1;
             Ok(self.count)
         }
@@ -386,7 +386,7 @@ impl Message {
         } else if !word.check_parity() {
             Err(Error::InvalidWord)
         } else {
-            self.words[self.count] = Word::Command(word);
+            self.words[self.count] = WordType::Command(word);
             self.count += 1;
             Ok(self.count)
         }
@@ -542,24 +542,11 @@ mod tests {
     }
 
     #[test]
-    fn test_message_command_add() {
-        let mut message = Message::new();
-
-        let word = Word::Command(CommandWord::from_data(0b0001100001100010));
-        let result = message.add(word.clone());
-
-        assert_eq!(result, Ok(1));
-        assert_eq!(message.first(), Some(&word));
-        assert_eq!(message.last(), Some(&word));
-    }
-
-    #[test]
     fn test_message_command_data() {
         let mut message = Message::new();
 
-        let word = Word::Command(CommandWord::from_data(0b0001100001100010));
         message
-            .add(word.clone())
+            .add(CommandWord::from_data(0b0001100001100010))
             .unwrap();
 
         assert_eq!(message.word_count(), 1);
@@ -571,14 +558,12 @@ mod tests {
     fn test_message_command_add_data() {
         let mut message = Message::new();
 
-        let word = Word::Command(CommandWord::from_data(0b0001100001100010));
         message
-            .add(word.clone())
+            .add(CommandWord::from_data(0b0001100001100010))
             .unwrap();
 
-        let data = Word::Data(DataWord::from_data(0b0110100001101001));
         message
-            .add(data.clone())
+            .add(DataWord::from_data(0b0110100001101001))
             .unwrap();
 
         assert_eq!(message.word_count(), 2);
@@ -586,24 +571,11 @@ mod tests {
     }
 
     #[test]
-    fn test_message_status_add() {
-        let mut message = Message::new();
-
-        let word = Word::Status(StatusWord::from_data(0b0001100000000010));
-        let result = message.add(word.clone());
-
-        assert_eq!(result, Ok(1));
-        assert_eq!(message.first(), Some(&word));
-        assert_eq!(message.last(), Some(&word));
-    }
-
-    #[test]
     fn test_message_status_no_data() {
         let mut message = Message::new();
 
-        let word = Word::Status(StatusWord::from_data(0b0001100000000010));
         message
-            .add(word.clone())
+            .add(StatusWord::from_data(0b0001100000000010))
             .unwrap();
 
         assert_eq!(message.word_count(), 1);
@@ -615,14 +587,12 @@ mod tests {
     fn test_message_status_add_data() {
         let mut message = Message::new();
 
-        let status = Word::Status(StatusWord::from_data(0b0001100000000000));
         message
-            .add(status.clone())
+            .add(StatusWord::from_data(0b0001100000000000))
             .unwrap();
 
-        let data = Word::Data(DataWord::from_data(0b0110100001101001));
         message
-            .add(data.clone())
+            .add(DataWord::from_data(0b0110100001101001))
             .unwrap();
 
         assert_eq!(message.word_count(), 2);

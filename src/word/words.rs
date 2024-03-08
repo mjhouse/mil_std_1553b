@@ -710,7 +710,7 @@ impl StatusWord {
 
     /// Check if the message error flag is set
     ///
-    /// See [MessageError](crate::errors::MessageError) for more
+    /// See [MessageError] for more
     /// information.
     pub fn message_error(&self) -> MessageError {
         MessageError::from(STATUS_MESSAGE_ERROR_FIELD.get(self.data))

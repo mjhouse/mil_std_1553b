@@ -2,7 +2,7 @@ use super::{CommandWord, DataWord, StatusWord};
 
 /// Container enum for the different kinds of words
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum Type {
+pub enum WordType {
     /// No contained word
     None,
 
@@ -16,7 +16,7 @@ pub enum Type {
     Data(DataWord),
 }
 
-impl Type {
+impl WordType {
     /// Check if contained word is command
     #[must_use = "Returned value is not used"]
     pub fn is_command(&self) -> bool {
@@ -56,20 +56,20 @@ impl Type {
     }
 }
 
-impl From<CommandWord> for Type {
+impl From<CommandWord> for WordType {
     fn from(value: CommandWord) -> Self {
-        Type::Command(value)
+        WordType::Command(value)
     }
 }
 
-impl From<StatusWord> for Type {
+impl From<StatusWord> for WordType {
     fn from(value: StatusWord) -> Self {
-        Type::Status(value)
+        WordType::Status(value)
     }
 }
 
-impl From<DataWord> for Type {
+impl From<DataWord> for WordType {
     fn from(value: DataWord) -> Self {
-        Type::Data(value)
+        WordType::Data(value)
     }
 }

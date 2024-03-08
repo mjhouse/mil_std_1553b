@@ -38,19 +38,20 @@
 )]
 #![doc = include_str!("../README.md")]
 
-pub mod errors;
-pub mod fields;
-pub mod flags;
-pub mod message;
-pub mod word;
+mod errors;
+mod flags;
+mod message;
+mod word;
 
-pub use message::{Message, Packet};
+pub(crate) mod fields;
 
-pub use errors::{Error, Result};
+pub use crate::message::{MessageDirection, MessageSide, MessageType, Message, Packet};
 
-pub use word::{CommandWord, DataWord, StatusWord};
+pub use crate::errors::{MessageError, SystemError, SubsystemError,  TerminalError, Error, Result};
 
-pub use flags::{
+pub use crate::word::{WordType, CommandWord, DataWord, StatusWord};
+
+pub use crate::flags::{
     Address, BroadcastCommand, BusControlAccept, Instrumentation, ModeCode, Reserved,
     ServiceRequest, SubAddress, TerminalBusy, TransmitReceive,
 };
