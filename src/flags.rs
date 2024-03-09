@@ -2,7 +2,7 @@
 
 macro_rules! fit {
     ( $v: expr, $p: expr ) => {
-        ($v & $p) > 0
+        $v <= $p
     };
 }
 
@@ -759,5 +759,24 @@ impl From<BusControlAccept> for u8 {
             BusControlAccept::Accepted => 1,
             BusControlAccept::NotAccepted => 0,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_address_unknown() {
+        let num = 0b11111111;
+
+        let flag: Address = num.into();
+        assert_eq!(flag, Address::Unknown(num));
+
+        let value: u8 = flag.into();
+        assert_eq!(value, num);
+
+        let flag: Address = value.into();
+        assert_eq!(flag, Address::Unknown(num))
     }
 }

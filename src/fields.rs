@@ -34,10 +34,6 @@ impl Field {
     }
 }
 
-/// Mask for an empty field
-#[cfg(test)]
-pub(crate) const WORD_EMPTY: u16 = 0b0000000000000000;
-
 /// Mask for parsing the terminal address of a command word.
 pub(crate) const COMMAND_TERMINAL_ADDRESS: u16 = 0b1111100000000000;
 

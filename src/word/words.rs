@@ -14,14 +14,14 @@ use crate::flags::*;
 /// # fn try_main() -> Result<()> {
 /// let word = CommandWord::new()
 ///     .with_address(16)
-///     .with_subaddress(8)
+///     .with_subaddress(0) // mode code value
 ///     .with_transmit_receive(TransmitReceive::Receive)
-///     .with_mode_code(ModeCode::TransmitterShutdown) // will reset subaddress
+///     .with_mode_code(ModeCode::TransmitterShutdown)
 ///     .with_calculated_parity()
 ///     .build()?;
 ///
 /// assert_eq!(word.subaddress(),SubAddress::ModeCode(0));
-/// assert_eq!(word.mode_code(),Some(ModeCode::TransmitterShutdown));
+/// assert_eq!(word.mode_code(),ModeCode::TransmitterShutdown);
 /// # Ok(())
 /// # }
 /// ```
@@ -272,29 +272,23 @@ impl CommandWord {
 
     /// Get the mode code of this word
     ///
-    /// This field is `None` if the subaddress isn't set to the ModeCode value.
-    /// See [ModeCode](crate::flags::ModeCode) for more information about
-    /// this field, or [SubAddress](crate::flags::SubAddress) for details about
-    /// the ModeCode setting of the subaddress.
-    pub fn mode_code(&self) -> Option<ModeCode> {
-        if self.is_mode_code() {
-            Some(ModeCode::from(COMMAND_MODE_CODE_FIELD.get(self.data)))
-        } else {
-            None
-        }
+    /// This field should not be used if the subaddress isn't set to
+    /// a ModeCode value. See [ModeCode](crate::flags::ModeCode) for
+    /// more information about this field, or [SubAddress](crate::flags::SubAddress)
+    /// for details about the ModeCode setting of the subaddress.
+    pub fn mode_code(&self) -> ModeCode {
+        ModeCode::from(COMMAND_MODE_CODE_FIELD.get(self.data))
     }
 
     /// Set the mode code of this word
     ///
-    /// This method will do nothing if the subaddress is not set to the ModeCode
-    /// value. See [CommandWord::mode_code] for more information.
+    /// This method sets the same bits that are used by the word count field.
+    /// In order to be valid, users must also set the subaddress to a valid
+    /// mode code value. See [CommandWord::mode_code] for more information.
     pub fn set_mode_code<T>(&mut self, value: T)
     where
         T: Into<ModeCode>,
     {
-        if !self.is_mode_code() {
-            self.set_subaddress(0);
-        }
         let field = value.into();
         self.data = COMMAND_MODE_CODE_FIELD.set(self.data, field.into());
         self.parity = parity(self.data);
@@ -317,14 +311,10 @@ impl CommandWord {
     /// This field is `None` if the subaddress is set to the ModeCode value.
     /// See [SubAddress](crate::flags::SubAddress) for details about
     /// the ModeCode setting of the subaddress.
-    pub fn word_count(&self) -> Option<u8> {
-        if !self.is_mode_code() {
-            match COMMAND_WORD_COUNT_FIELD.get(self.data) {
-                0 => Some(32),
-                k => Some(k),
-            }
-        } else {
-            None
+    pub fn word_count(&self) -> u8 {
+        match COMMAND_WORD_COUNT_FIELD.get(self.data) {
+            0 => 32,
+            k => k,
         }
     }
 
@@ -333,10 +323,8 @@ impl CommandWord {
     /// This method will do nothing if the subaddress is set to the ModeCode
     /// value. See [CommandWord::word_count] for more information.
     pub fn set_word_count(&mut self, value: u8) {
-        if !self.is_mode_code() {
-            self.data = COMMAND_WORD_COUNT_FIELD.set(self.data, value);
-            self.parity = parity(self.data);
-        }
+        self.data = COMMAND_WORD_COUNT_FIELD.set(self.data, value);
+        self.parity = parity(self.data);
     }
 
     /// Constructor method to set the number of data words
@@ -353,8 +341,7 @@ impl CommandWord {
     /// See [CommandWord::mode_code]
     /// for more information.
     pub fn is_mode_code(&self) -> bool {
-        self.subaddress()
-            .is_mode_code()
+        self.subaddress().is_mode_code()
     }
 
     /// Check if this word is being transmitted to a terminal
@@ -363,8 +350,7 @@ impl CommandWord {
     /// for more information.
     #[must_use = "Returned value is not used"]
     pub fn is_transmit(&self) -> bool {
-        self.transmit_receive()
-            .is_transmit()
+        self.transmit_receive().is_transmit()
     }
 
     /// Check if this word is being received by a terminal
@@ -373,13 +359,12 @@ impl CommandWord {
     /// for more information.
     #[must_use = "Returned value is not used"]
     pub fn is_receive(&self) -> bool {
-        self.transmit_receive()
-            .is_receive()
+        self.transmit_receive().is_receive()
     }
 
     /// Get the word count or 0 if word is a mode code command
     pub fn count(&self) -> usize {
-        self.word_count().unwrap_or(0) as usize
+        self.word_count() as usize
     }
 
     /// Get a the number of ones in the word
@@ -812,14 +797,9 @@ impl StatusWord {
     /// See [StatusWord::message_error], [StatusWord::subsystem_error],
     /// or [StatusWord::terminal_error] for more information.
     pub fn is_error(&self) -> bool {
-        self.message_error()
-            .is_error()
-            || self
-                .subsystem_error()
-                .is_error()
-            || self
-                .terminal_error()
-                .is_error()
+        self.message_error().is_error()
+            || self.subsystem_error().is_error()
+            || self.terminal_error().is_error()
     }
 
     /// Check if the terminal is currently busy
@@ -1103,7 +1083,7 @@ mod tests {
             .unwrap();
 
         assert!(!word.is_mode_code());
-        assert_eq!(word.word_count(), Some(3));
+        assert_eq!(word.word_count(), 3);
         assert_eq!(word.address(), Address::Value(4));
         assert_eq!(word.subaddress(), SubAddress::Value(2));
         assert_eq!(word.transmit_receive(), TransmitReceive::Transmit);
@@ -1114,7 +1094,7 @@ mod tests {
         let mut word = CommandWord::from_data(0b0000000000101010);
         assert_eq!(word.parity, 0);
 
-        word.set_address(Address::Value(0b00000001));
+        word.set_address(0b00000001);
         assert_eq!(word.parity, 1);
     }
 
@@ -1123,7 +1103,7 @@ mod tests {
         let mut word = StatusWord::from_data(0b0000000010101010);
         assert_eq!(word.parity, 1);
 
-        word.set_address(Address::Value(0b00000001));
+        word.set_address(0b00000001);
         assert_eq!(word.parity, 0);
     }
 
@@ -1167,120 +1147,81 @@ mod tests {
 
     #[test]
     fn test_command_get_address() {
-        let word = CommandWord::from_data(COMMAND_TERMINAL_ADDRESS);
+        let word = CommandWord::new().with_address(0b11111);
         assert!(word.address().is_broadcast());
     }
 
     #[test]
     fn test_command_set_address() {
-        let mut word = CommandWord::from_data(WORD_EMPTY);
-        word.set_address(Address::Value(0b10101));
+        let mut word = CommandWord::new();
+        word.set_address(0b10101);
         assert_eq!(word.to_data(), 0b1010100000000000);
     }
 
     #[test]
     fn test_command_set_broadcast_address() {
-        let mut word = CommandWord::from_data(WORD_EMPTY);
-        word.set_address(Address::Value(0b11111));
+        let word = CommandWord::new().with_address(0b11111);
         assert!(word.address().is_broadcast());
     }
 
     #[test]
-    fn test_command_get_subaddress() {
-        let word = CommandWord::from_data(COMMAND_SUBADDRESS);
-        assert!(word
-            .subaddress()
-            .is_mode_code());
+    fn test_command_get_subaddress_ones() {
+        let word = CommandWord::new().with_subaddress(0b11111);
+        assert!(word.subaddress().is_mode_code());
+    }
+
+    #[test]
+    fn test_command_get_subaddress_zeroes() {
+        let word = CommandWord::new().with_subaddress(0b00000);
+        assert!(word.subaddress().is_mode_code());
     }
 
     #[test]
     fn test_command_set_subaddress() {
-        let mut word = CommandWord::from_data(WORD_EMPTY);
-        word.set_subaddress(SubAddress::Value(0b10101));
+        let mut word = CommandWord::new();
+        word.set_subaddress(0b10101);
         assert_eq!(word.to_data(), 0b0000001010100000);
     }
 
     #[test]
-    fn test_command_get_transmit_receive() {
-        let word = CommandWord::from_data(WORD_EMPTY);
-        assert!(word
-            .transmit_receive()
-            .is_receive());
+    fn test_command_get_set_transmit_receive() {
+        let mut word = CommandWord::new();
+        assert!(word.transmit_receive().is_receive());
 
-        let word = CommandWord::from_data(COMMAND_TRANSMIT_RECEIVE);
-        assert!(word
-            .transmit_receive()
-            .is_transmit());
-    }
-
-    #[test]
-    fn test_command_set_transmit_receive() {
-        let mut word = CommandWord::from_data(WORD_EMPTY);
         word.set_transmit_receive(TransmitReceive::Transmit);
-        assert!(word
-            .transmit_receive()
-            .is_transmit());
+        assert!(word.transmit_receive().is_transmit());
     }
 
     #[test]
-    fn test_command_get_mode_code() {
-        let word = CommandWord::from_data(WORD_EMPTY);
-        assert_eq!(word.mode_code(), Some(ModeCode::DynamicBusControl));
+    fn test_command_get_set_mode_code() {
+        let mut word = CommandWord::new();
+        assert_eq!(word.mode_code(), ModeCode::DynamicBusControl);
 
-        let word = CommandWord::from_data(COMMAND_MODE_CODE);
-        assert_eq!(word.mode_code(), Some(ModeCode::UnknownModeCode(0b11111)));
+        word.set_mode_code(ModeCode::InitiateSelfTest);
+        assert_eq!(word.mode_code(), ModeCode::InitiateSelfTest);
     }
 
     #[test]
-    fn test_command_set_mode_code() {
-        let mut word = CommandWord::from_data(WORD_EMPTY);
-        word.set_mode_code(ModeCode::OverrideTransmitterShutdown);
-        assert_eq!(
-            word.mode_code(),
-            Some(ModeCode::OverrideTransmitterShutdown)
-        );
+    fn test_command_get_set_word_count() {
+        let mut word = CommandWord::new();
+        assert_eq!(word.word_count(), 32);
 
-        word.set_subaddress(SubAddress::Value(0b01010));
-        assert!(word.mode_code().is_none());
-    }
-
-    #[test]
-    fn test_command_get_word_count() {
-        let address = SubAddress::Value(0b01010);
-
-        // word count is none because subaddress is ModeCode
-        let mut word = CommandWord::from_data(COMMAND_WORD_COUNT);
-        assert!(word.word_count().is_none());
-
-        // word count is 32 after subaddress changed
-        word.set_subaddress(address);
-        assert!(word.word_count().is_some());
-        assert_eq!(word.word_count(), Some(31));
-    }
-
-    #[test]
-    fn test_command_set_word_count() {
-        let mut word = CommandWord::from_data(WORD_EMPTY);
-        word.set_subaddress(SubAddress::Value(0b01010));
-
-        word.set_word_count(0b10101);
-        assert_eq!(word.word_count(), Some(0b10101));
+        word.set_word_count(5);
+        assert_eq!(word.word_count(), 5);
     }
 
     #[test]
     fn test_command_is_mode_code() {
-        let address = SubAddress::Value(0b01010);
-
-        let mut word = CommandWord::from_data(WORD_EMPTY);
+        let mut word = CommandWord::new();
         assert!(word.is_mode_code());
 
-        word.set_subaddress(address);
+        word.set_subaddress(0b01010);
         assert!(!word.is_mode_code());
     }
 
     #[test]
     fn test_command_is_transmit() {
-        let mut word = CommandWord::from_data(WORD_EMPTY);
+        let mut word = CommandWord::new();
         assert!(!word.is_transmit());
 
         word.set_transmit_receive(TransmitReceive::Transmit);
@@ -1289,7 +1230,7 @@ mod tests {
 
     #[test]
     fn test_command_is_receive() {
-        let mut word = CommandWord::from_data(WORD_EMPTY);
+        let mut word = CommandWord::new();
         assert!(word.is_receive());
 
         word.set_transmit_receive(TransmitReceive::Transmit);
@@ -1298,216 +1239,101 @@ mod tests {
 
     #[test]
     fn test_status_get_address() {
-        let word = StatusWord::from_data(STATUS_TERMINAL_ADDRESS);
+        let word = StatusWord::new().with_address(0b11111);
         assert!(word.address().is_broadcast());
     }
 
     #[test]
-    fn test_status_set_address() {
-        let mut word = StatusWord::from_data(WORD_EMPTY);
-        word.set_address(Address::Value(0b10101));
-        assert_eq!(word.to_data(), 0b1010100000000000);
+    fn test_status_get_set_address() {
+        let mut word = StatusWord::new();
+        assert_eq!(word.address(), Address::Value(0));
+
+        word.set_address(0b10101);
+        assert_eq!(word.address(), Address::Value(0b10101));
+
+        word.set_address(0b11111);
+        assert_eq!(word.address(), Address::Broadcast(0b11111));
     }
 
     #[test]
-    fn test_status_set_broadcast_address() {
-        let mut word = StatusWord::from_data(WORD_EMPTY);
-        word.set_address(Address::Value(0b11111));
-        assert!(word.address().is_broadcast());
-    }
+    fn test_status_get_set_instrumentation() {
+        let mut word = StatusWord::new();
+        assert!(word.instrumentation().is_status());
 
-    #[test]
-    fn test_status_get_instrumentation() {
-        let word = StatusWord::from_data(WORD_EMPTY);
-        assert!(word
-            .instrumentation()
-            .is_status());
-
-        let word = StatusWord::from_data(STATUS_INSTRUMENTATION);
-        assert!(word
-            .instrumentation()
-            .is_command());
-    }
-
-    #[test]
-    fn test_status_set_instrumentation() {
-        let mut word = StatusWord::from_data(WORD_EMPTY);
         word.set_instrumentation(Instrumentation::Command);
-        assert!(word
-            .instrumentation()
-            .is_command());
+        assert!(word.instrumentation().is_command());
     }
 
     #[test]
-    fn test_status_get_service_request() {
-        let word = StatusWord::from_data(WORD_EMPTY);
-        assert!(word
-            .service_request()
-            .is_noservice());
+    fn test_status_get_set_service_request() {
+        let mut word = StatusWord::new();
+        assert!(word.service_request().is_noservice());
 
-        let word = StatusWord::from_data(STATUS_SERVICE_REQUEST);
-        assert!(word
-            .service_request()
-            .is_service());
-    }
-
-    #[test]
-    fn test_status_set_service_request() {
-        let mut word = StatusWord::from_data(WORD_EMPTY);
         word.set_service_request(ServiceRequest::Service);
-        assert!(word
-            .service_request()
-            .is_service());
+        assert!(word.service_request().is_service());
     }
 
     #[test]
-    fn test_status_get_reserved() {
-        let word = StatusWord::from_data(WORD_EMPTY);
+    fn test_status_get_set_reserved() {
+        let mut word = StatusWord::new();
         assert!(word.reserved().is_none());
 
-        let word = StatusWord::from_data(STATUS_RESERVED_BITS);
-        assert!(word.reserved().is_value());
-    }
-
-    #[test]
-    fn test_status_set_reserved() {
-        let mut word = StatusWord::from_data(WORD_EMPTY);
         word.set_reserved(Reserved::Value(0b111));
         assert!(word.reserved().is_value());
     }
 
     #[test]
-    fn test_status_get_broadcast_received() {
-        let word = StatusWord::from_data(WORD_EMPTY);
-        assert!(word
-            .broadcast_received()
-            .is_notreceived());
+    fn test_status_get_set_broadcast_received() {
+        let mut word = StatusWord::new();
+        assert_eq!(word.broadcast_received(), BroadcastCommand::NotReceived);
 
-        let word = StatusWord::from_data(STATUS_BROADCAST_RECEIVED);
-        assert!(word
-            .broadcast_received()
-            .is_received());
-    }
-
-    #[test]
-    fn test_status_set_broadcast_received() {
-        let mut word = StatusWord::from_data(WORD_EMPTY);
         word.set_broadcast_received(BroadcastCommand::Received);
-        assert!(word
-            .broadcast_received()
-            .is_received());
+        assert_eq!(word.broadcast_received(), BroadcastCommand::Received);
     }
 
     #[test]
-    fn test_status_get_terminal_busy() {
-        let word = StatusWord::from_data(WORD_EMPTY);
-        assert!(word
-            .terminal_busy()
-            .is_notbusy());
+    fn test_status_get_set_terminal_busy() {
+        let mut word = StatusWord::new();
+        assert_eq!(word.terminal_busy(), TerminalBusy::NotBusy);
 
-        let word = StatusWord::from_data(STATUS_TERMINAL_BUSY);
-        assert!(word.terminal_busy().is_busy());
-        assert!(word.is_busy());
-    }
-
-    #[test]
-    fn test_status_set_terminal_busy() {
-        let mut word = StatusWord::from_data(WORD_EMPTY);
         word.set_terminal_busy(TerminalBusy::Busy);
-        assert!(word.terminal_busy().is_busy());
-        assert!(word.is_busy());
+        assert_eq!(word.terminal_busy(), TerminalBusy::Busy);
     }
 
     #[test]
-    fn test_status_get_dynamic_bus_acceptance() {
-        let word = StatusWord::from_data(WORD_EMPTY);
-        assert!(word
-            .dynamic_bus_acceptance()
-            .is_notaccepted());
+    fn test_status_get_set_dynamic_bus_acceptance() {
+        let mut word = StatusWord::new();
+        assert_eq!(word.dynamic_bus_acceptance(), BusControlAccept::NotAccepted);
 
-        let word = StatusWord::from_data(STATUS_DYNAMIC_BUS_ACCEPT);
-        assert!(word
-            .dynamic_bus_acceptance()
-            .is_accepted());
-    }
-
-    #[test]
-    fn test_status_set_dynamic_bus_acceptance() {
-        let mut word = StatusWord::from_data(WORD_EMPTY);
         word.set_dynamic_bus_acceptance(BusControlAccept::Accepted);
-        assert!(word
-            .dynamic_bus_acceptance()
-            .is_accepted());
+        assert_eq!(word.dynamic_bus_acceptance(), BusControlAccept::Accepted);
     }
 
     #[test]
-    fn test_status_get_message_error() {
-        let word = StatusWord::from_data(WORD_EMPTY);
-        assert!(word.message_error().is_none());
+    fn test_status_get_set_message_error() {
+        let mut word = StatusWord::new();
+        assert_eq!(word.message_error(), MessageError::None);
 
-        let word = StatusWord::from_data(STATUS_MESSAGE_ERROR);
-        assert!(word
-            .message_error()
-            .is_error());
-        assert!(word.is_error());
-    }
-
-    #[test]
-    fn test_status_set_message_error() {
-        let mut word = StatusWord::from_data(WORD_EMPTY);
         word.set_message_error(MessageError::Error);
-        assert!(word
-            .message_error()
-            .is_error());
-        assert!(word.is_error());
+        assert_eq!(word.message_error(), MessageError::Error);
     }
 
     #[test]
-    fn test_status_get_subsystem_error() {
-        let word = StatusWord::from_data(WORD_EMPTY);
-        assert!(word
-            .subsystem_error()
-            .is_none());
+    fn test_status_get_set_subsystem_error() {
+        let mut word = StatusWord::new();
+        assert_eq!(word.subsystem_error(), SubsystemError::None);
 
-        let word = StatusWord::from_data(STATUS_SUBSYSTEM_FLAG);
-        assert!(word
-            .subsystem_error()
-            .is_error());
-        assert!(word.is_error());
-    }
-
-    #[test]
-    fn test_status_set_subsystem_error() {
-        let mut word = StatusWord::from_data(WORD_EMPTY);
         word.set_subsystem_error(SubsystemError::Error);
-        assert!(word
-            .subsystem_error()
-            .is_error());
-        assert!(word.is_error());
+        assert_eq!(word.subsystem_error(), SubsystemError::Error);
     }
 
     #[test]
-    fn test_status_get_terminal_error() {
-        let word = StatusWord::from_data(WORD_EMPTY);
-        assert!(word
-            .terminal_error()
-            .is_none());
+    fn test_status_get_set_terminal_error() {
+        let mut word = StatusWord::new();
+        assert_eq!(word.terminal_error(), TerminalError::None);
 
-        let word = StatusWord::from_data(STATUS_TERMINAL_FLAG);
-        assert!(word
-            .terminal_error()
-            .is_error());
-        assert!(word.is_error());
-    }
-
-    #[test]
-    fn test_status_set_terminal_error() {
-        let mut word = StatusWord::from_data(WORD_EMPTY);
         word.set_terminal_error(TerminalError::Error);
-        assert!(word
-            .terminal_error()
-            .is_error());
-        assert!(word.is_error());
+        assert_eq!(word.terminal_error(), TerminalError::Error);
     }
 
     #[test]

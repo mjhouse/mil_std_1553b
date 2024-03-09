@@ -106,18 +106,12 @@ impl Packet {
         buffer[2] |= bytes[2] << l;
 
         if l > 0 {
-            buffer[0] |= bytes[1]
-                .checked_shr(r)
-                .unwrap_or(0);
-            buffer[1] |= bytes[2]
-                .checked_shr(r)
-                .unwrap_or(0);
+            buffer[0] |= bytes[1].checked_shr(r).unwrap_or(0);
+            buffer[1] |= bytes[2].checked_shr(r).unwrap_or(0);
         }
 
         if l > 4 {
-            buffer[2] |= bytes[3]
-                .checked_shr(r)
-                .unwrap_or(0);
+            buffer[2] |= bytes[3].checked_shr(r).unwrap_or(0);
         }
 
         let mut sync: u8 = 0;
@@ -362,7 +356,7 @@ mod tests {
         assert_eq!(word.subaddress(), SubAddress::new(3));
 
         assert!(!word.is_mode_code());
-        assert_eq!(word.word_count(), Some(2));
+        assert_eq!(word.word_count(), 2);
     }
 
     #[test]
