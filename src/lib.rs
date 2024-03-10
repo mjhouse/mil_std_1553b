@@ -49,7 +49,7 @@ pub use crate::message::{Message, MessageDirection, MessageSide, MessageType, Pa
 
 pub use crate::errors::{Error, MessageError, Result, SubsystemError, SystemError, TerminalError};
 
-pub use crate::word::{CommandWord, DataWord, StatusWord, WordType, Word};
+pub use crate::word::{CommandWord, DataWord, StatusWord, Word, WordType};
 
 pub use crate::flags::{
     Address, BroadcastReceived, DynamicBusAcceptance, Instrumentation, ModeCode, Reserved,

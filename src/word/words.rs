@@ -3,7 +3,10 @@ use crate::fields::*;
 use crate::flags::*;
 
 /// Common functionality for all words
-pub trait Word where Self: Sized{
+pub trait Word
+where
+    Self: Sized,
+{
     /// Create an empty word
     fn new() -> Self;
 
@@ -35,7 +38,7 @@ pub trait Word where Self: Sized{
     fn as_value(&self) -> u16;
 
     /// Set the internal data as a slice
-    fn set_bytes(&mut self, data: [u8;2]);
+    fn set_bytes(&mut self, data: [u8; 2]);
 
     /// Set the internal data as u16
     fn set_value(&mut self, data: u16);
@@ -67,8 +70,8 @@ pub trait Word where Self: Sized{
 /// # use mil_std_1553b::*;
 /// # fn try_main() -> Result<()> {
 /// let word = CommandWord::new()
-///     .with_address(16)
-///     .with_subaddress(0) // mode code value
+///     .with_address(Address::Value(16))
+///     .with_subaddress(SubAddress::ModeCode(0))
 ///     .with_transmit_receive(TransmitReceive::Receive)
 ///     .with_mode_code(ModeCode::TransmitterShutdown)
 ///     .with_calculated_parity()
@@ -84,7 +87,7 @@ pub trait Word where Self: Sized{
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct CommandWord {
     /// Data of the word
-    data: [u8;2],
+    data: [u8; 2],
 
     /// Parity of the word
     parity: u8,
@@ -102,7 +105,7 @@ pub struct CommandWord {
 /// # use mil_std_1553b::*;
 /// # fn try_main() -> Result<()> {
 /// let word = StatusWord::new()
-///     .with_address(16)
+///     .with_address(Address::Value(16))
 ///     .with_service_request(ServiceRequest::Service)
 ///     .with_broadcast_received(BroadcastReceived::Received)
 ///     .with_calculated_parity()
@@ -118,7 +121,7 @@ pub struct CommandWord {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct StatusWord {
     /// Data of the word
-    data: [u8;2],
+    data: [u8; 2],
 
     /// Parity of the word
     parity: u8,
@@ -157,7 +160,6 @@ pub struct DataWord {
 }
 
 impl CommandWord {
-
     /// Get the terminal address of this word
     ///
     /// See [Address](crate::flags::Address) for more information
@@ -170,32 +172,25 @@ impl CommandWord {
     ///
     /// See [CommandWord::address] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - An [Address] to set
     ///
-    pub fn set_address<T>(&mut self, value: T)
-    where
-        T: Into<Address>,
-    {
-        let field = value.into();
-        COMMAND_ADDRESS_FIELD.set(self, field.into());
+    pub fn set_address(&mut self, value: Address) {
+        COMMAND_ADDRESS_FIELD.set(self, value.into());
     }
 
     /// Constructor method to set the terminal address
     ///
     /// See [CommandWord::address] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - An [Address] to set
     ///
-    pub fn with_address<T>(mut self, value: T) -> Self
-    where
-        T: Into<Address>,
-    {
+    pub fn with_address(mut self, value: Address) -> Self {
         self.set_address(value);
         self
     }
@@ -215,32 +210,25 @@ impl CommandWord {
     ///
     /// See [CommandWord::subaddress] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [SubAddress] to set
     ///
-    pub fn set_subaddress<T>(&mut self, value: T)
-    where
-        T: Into<SubAddress>,
-    {
-        let field = value.into();
-        COMMAND_SUBADDRESS_FIELD.set(self, field.into());
+    pub fn set_subaddress(&mut self, value: SubAddress) {
+        COMMAND_SUBADDRESS_FIELD.set(self, value.into());
     }
 
     /// Constructor method to set the subaddress
     ///
     /// See [CommandWord::subaddress] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [SubAddress] to set
     ///
-    pub fn with_subaddress<T>(mut self, value: T) -> Self
-    where
-        T: Into<SubAddress>,
-    {
+    pub fn with_subaddress(mut self, value: SubAddress) -> Self {
         self.set_subaddress(value);
         self
     }
@@ -257,32 +245,25 @@ impl CommandWord {
     ///
     /// See [TransmitReceive](crate::flags::TransmitReceive) enum for
     /// more information about this field.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [TransmitReceive] flag to set
     ///
-    pub fn set_transmit_receive<T>(&mut self, value: T)
-    where
-        T: Into<TransmitReceive>,
-    {
-        let field = value.into();
-        COMMAND_TRANSMIT_RECEIVE_FIELD.set(self, field.into());
+    pub fn set_transmit_receive(&mut self, value: TransmitReceive) {
+        COMMAND_TRANSMIT_RECEIVE_FIELD.set(self, value.into());
     }
 
     /// Constructor method to set the direction of transmission
     ///
     /// See [TransmitReceive](crate::flags::TransmitReceive) enum for
     /// more information about this field.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [TransmitReceive] flag to set
     ///
-    pub fn with_transmit_receive<T>(mut self, value: T) -> Self
-    where
-        T: Into<TransmitReceive>,
-    {
+    pub fn with_transmit_receive(mut self, value: TransmitReceive) -> Self {
         self.set_transmit_receive(value);
         self
     }
@@ -302,17 +283,13 @@ impl CommandWord {
     /// This method sets the same bits that are used by the word count field.
     /// In order to be valid, users must also set the subaddress to a valid
     /// mode code value. See [CommandWord::mode_code] for more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [ModeCode] flag to set
     ///
-    pub fn set_mode_code<T>(&mut self, value: T)
-    where
-        T: Into<ModeCode>,
-    {
-        let field = value.into();
-        COMMAND_MODE_CODE_FIELD.set(self, field.into());
+    pub fn set_mode_code(&mut self, value: ModeCode) {
+        COMMAND_MODE_CODE_FIELD.set(self, value.into());
     }
 
     /// Constructor method to set the mode code
@@ -320,15 +297,12 @@ impl CommandWord {
     /// This method sets the same bits that are used by the word count field.
     /// In order to be valid, users must also set the subaddress to a valid
     /// mode code value. See [CommandWord::mode_code] for more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [ModeCode] flag to set
     ///
-    pub fn with_mode_code<T>(mut self, value: T) -> Self
-    where
-        T: Into<ModeCode>,
-    {
+    pub fn with_mode_code(mut self, value: ModeCode) -> Self {
         self.set_mode_code(value);
         self
     }
@@ -349,7 +323,7 @@ impl CommandWord {
     ///
     /// This method will do nothing if the subaddress is set to the ModeCode
     /// value. See [CommandWord::word_count] for more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A word count to set
@@ -362,7 +336,7 @@ impl CommandWord {
     ///
     /// This method will do nothing if the subaddress is set to the ModeCode
     /// value. See [CommandWord::word_count] for more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A word count to set
@@ -407,7 +381,6 @@ impl CommandWord {
 }
 
 impl StatusWord {
-
     /// Get the terminal address of this word
     ///
     /// See [Address](crate::flags::Address) for more information
@@ -420,32 +393,25 @@ impl StatusWord {
     ///
     /// See [StatusWord::address] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - An [Address] to set
     ///
-    pub fn set_address<T>(&mut self, value: T)
-    where
-        T: Into<Address>,
-    {
-        let field = value.into();
-        STATUS_ADDRESS_FIELD.set(self, field.into());
+    pub fn set_address(&mut self, value: Address) {
+        STATUS_ADDRESS_FIELD.set(self, value.into());
     }
 
     /// Constructor method to set the terminal address
     ///
     /// See [StatusWord::address] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - An [Address] to set
     ///
-    pub fn with_address<T>(mut self, value: T) -> Self
-    where
-        T: Into<Address>,
-    {
+    pub fn with_address(mut self, value: Address) -> Self {
         self.set_address(value);
         self
     }
@@ -465,32 +431,25 @@ impl StatusWord {
     ///
     /// See [StatusWord::instrumentation] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - An [Instrumentation] flag to set
     ///
-    pub fn set_instrumentation<T>(&mut self, value: T)
-    where
-        T: Into<Instrumentation>,
-    {
-        let field = value.into();
-        STATUS_INSTRUMENTATION_FIELD.set(self, field.into());
+    pub fn set_instrumentation(&mut self, value: Instrumentation) {
+        STATUS_INSTRUMENTATION_FIELD.set(self, value.into());
     }
 
     /// Constructor metho to set Instrumentation flag
     ///
     /// See [StatusWord::instrumentation] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - An [Instrumentation] flag to set
     ///
-    pub fn with_instrumentation<T>(mut self, value: T) -> Self
-    where
-        T: Into<Instrumentation>,
-    {
+    pub fn with_instrumentation(mut self, value: Instrumentation) -> Self {
         self.set_instrumentation(value);
         self
     }
@@ -507,32 +466,25 @@ impl StatusWord {
     ///
     /// See [StatusWord::service_request] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [ServiceRequest] flag to set
     ///
-    pub fn set_service_request<T>(&mut self, value: T)
-    where
-        T: Into<ServiceRequest>,
-    {
-        let field = value.into();
-        STATUS_SERVICE_REQUEST_FIELD.set(self, field.into());
+    pub fn set_service_request(&mut self, value: ServiceRequest) {
+        STATUS_SERVICE_REQUEST_FIELD.set(self, value.into());
     }
 
     /// Constructor method to set the Service Request flag
     ///
     /// See [StatusWord::service_request] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [ServiceRequest] flag to set
     ///
-    pub fn with_service_request<T>(mut self, value: T) -> Self
-    where
-        T: Into<ServiceRequest>,
-    {
+    pub fn with_service_request(mut self, value: ServiceRequest) -> Self {
         self.set_service_request(value);
         self
     }
@@ -549,32 +501,25 @@ impl StatusWord {
     ///
     /// See [StatusWord::reserved] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [Reserved] value to set
     ///
-    pub fn set_reserved<T>(&mut self, value: T)
-    where
-        T: Into<Reserved>,
-    {
-        let field = value.into();
-        STATUS_RESERVED_FIELD.set(self, field.into());
+    pub fn set_reserved(&mut self, value: Reserved) {
+        STATUS_RESERVED_FIELD.set(self, value.into());
     }
 
     /// Constructor method to set the value of the reserved field
     ///
     /// See [StatusWord::reserved] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [Reserved] value to set
     ///
-    pub fn with_reserved<T>(mut self, value: T) -> Self
-    where
-        T: Into<Reserved>,
-    {
+    pub fn with_reserved(mut self, value: Reserved) -> Self {
         self.set_reserved(value);
         self
     }
@@ -592,32 +537,25 @@ impl StatusWord {
     ///
     /// See [StatusWord::broadcast_received] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [BroadcastReceived] flag to set
     ///
-    pub fn set_broadcast_received<T>(&mut self, value: T)
-    where
-        T: Into<BroadcastReceived>,
-    {
-        let field = value.into();
-        STATUS_BROADCAST_RECEIVED_FIELD.set(self, field.into());
+    pub fn set_broadcast_received(&mut self, value: BroadcastReceived) {
+        STATUS_BROADCAST_RECEIVED_FIELD.set(self, value.into());
     }
 
     /// Constructor method to set the Broadcast Command flag
     ///
     /// See [StatusWord::broadcast_received] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [BroadcastReceived] flag to set
     ///
-    pub fn with_broadcast_received<T>(mut self, value: T) -> Self
-    where
-        T: Into<BroadcastReceived>,
-    {
+    pub fn with_broadcast_received(mut self, value: BroadcastReceived) -> Self {
         self.set_broadcast_received(value);
         self
     }
@@ -635,32 +573,25 @@ impl StatusWord {
     ///
     /// See [StatusWord::terminal_busy] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [TerminalBusy] flag to set
     ///
-    pub fn set_terminal_busy<T>(&mut self, value: T)
-    where
-        T: Into<TerminalBusy>,
-    {
-        let field = value.into();
-        STATUS_TERMINAL_BUSY_FIELD.set(self, field.into());
+    pub fn set_terminal_busy(&mut self, value: TerminalBusy) {
+        STATUS_TERMINAL_BUSY_FIELD.set(self, value.into());
     }
 
     /// Constructor method to set the Busy flag
     ///
     /// See [StatusWord::terminal_busy] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [TerminalBusy] flag to set
     ///
-    pub fn with_terminal_busy<T>(mut self, value: T) -> Self
-    where
-        T: Into<TerminalBusy>,
-    {
+    pub fn with_terminal_busy(mut self, value: TerminalBusy) -> Self {
         self.set_terminal_busy(value);
         self
     }
@@ -678,32 +609,25 @@ impl StatusWord {
     ///
     /// See [StatusWord::dynamic_bus_acceptance] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [DynamicBusAcceptance] flag to set
     ///
-    pub fn set_dynamic_bus_acceptance<T>(&mut self, value: T)
-    where
-        T: Into<DynamicBusAcceptance>,
-    {
-        let field = value.into();
-        STATUS_DYNAMIC_BUS_ACCEPTANCE_FIELD.set(self, field.into());
+    pub fn set_dynamic_bus_acceptance(&mut self, value: DynamicBusAcceptance) {
+        STATUS_DYNAMIC_BUS_ACCEPTANCE_FIELD.set(self, value.into());
     }
 
     /// Constructor method to set the Dynamic Bus Control Acceptance flag
     ///
     /// See [StatusWord::dynamic_bus_acceptance] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [DynamicBusAcceptance] flag to set
     ///
-    pub fn with_dynamic_bus_acceptance<T>(mut self, value: T) -> Self
-    where
-        T: Into<DynamicBusAcceptance>,
-    {
+    pub fn with_dynamic_bus_acceptance(mut self, value: DynamicBusAcceptance) -> Self {
         self.set_dynamic_bus_acceptance(value);
         self
     }
@@ -720,32 +644,25 @@ impl StatusWord {
     ///
     /// See [StatusWord::message_error] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [MessageError] flag to set
     ///
-    pub fn set_message_error<T>(&mut self, value: T)
-    where
-        T: Into<MessageError>,
-    {
-        let field = value.into();
-        STATUS_MESSAGE_ERROR_FIELD.set(self, field.into());
+    pub fn set_message_error(&mut self, value: MessageError) {
+        STATUS_MESSAGE_ERROR_FIELD.set(self, value.into());
     }
 
     /// Constructor method to set the message error flag
     ///
     /// See [StatusWord::message_error] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [MessageError] flag to set
     ///
-    pub fn with_message_error<T>(mut self, value: T) -> Self
-    where
-        T: Into<MessageError>,
-    {
+    pub fn with_message_error(mut self, value: MessageError) -> Self {
         self.set_message_error(value);
         self
     }
@@ -762,32 +679,25 @@ impl StatusWord {
     ///
     /// See [StatusWord::subsystem_error] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [SubsystemError] flag to set
     ///
-    pub fn set_subsystem_error<T>(&mut self, value: T)
-    where
-        T: Into<SubsystemError>,
-    {
-        let field = value.into();
-        STATUS_SUBSYSTEM_ERROR_FIELD.set(self, field.into());
+    pub fn set_subsystem_error(&mut self, value: SubsystemError) {
+        STATUS_SUBSYSTEM_ERROR_FIELD.set(self, value.into());
     }
 
     /// Constructor method to set the subsystem error flag
     ///
     /// See [StatusWord::subsystem_error] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [SubsystemError] flag to set
     ///
-    pub fn with_subsystem_error<T>(mut self, value: T) -> Self
-    where
-        T: Into<SubsystemError>,
-    {
+    pub fn with_subsystem_error(mut self, value: SubsystemError) -> Self {
         self.set_subsystem_error(value);
         self
     }
@@ -804,32 +714,25 @@ impl StatusWord {
     ///
     /// See [`StatusWord::terminal_error`][StatusWord::terminal_error] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [TerminalError] flag to set
     ///
-    pub fn set_terminal_error<T>(&mut self, value: T)
-    where
-        T: Into<TerminalError>,
-    {
-        let field = value.into();
-        STATUS_TERMINAL_ERROR_FIELD.set(self, field.into());
+    pub fn set_terminal_error(&mut self, value: TerminalError) {
+        STATUS_TERMINAL_ERROR_FIELD.set(self, value.into());
     }
 
     /// Constructor set the terminal error flag
     ///
     /// See [`StatusWord::terminal_error`][StatusWord::terminal_error] for
     /// more information.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A [TerminalError] flag to set
     ///
-    pub fn with_terminal_error<T>(mut self, value: T) -> Self
-    where
-        T: Into<TerminalError>,
-    {
+    pub fn with_terminal_error(mut self, value: TerminalError) -> Self {
         self.set_terminal_error(value);
         self
     }
@@ -853,16 +756,14 @@ impl StatusWord {
     pub fn is_busy(&self) -> bool {
         self.terminal_busy().is_busy()
     }
-
 }
 
 impl DataWord {
-
     /// Constructor method to set the word from a string
     ///
-    /// Fails if the given string is more than two 
+    /// Fails if the given string is more than two
     /// bytes long.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `data` - A &str to set as data
@@ -874,9 +775,9 @@ impl DataWord {
 
     /// Set the word from a string
     ///
-    /// Fails if the given string is more than two 
+    /// Fails if the given string is more than two
     /// bytes long.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `data` - A &str to set as data
@@ -892,11 +793,9 @@ impl DataWord {
     pub fn as_string(&self) -> Result<&str> {
         self.try_into()
     }
-
 }
 
 impl Word for CommandWord {
-
     fn new() -> Self {
         Self {
             data: [0, 0],
@@ -933,9 +832,7 @@ impl Word for CommandWord {
     }
 
     fn from_value(data: u16) -> Self {
-        Self::new()
-            .with_value(data)
-            .with_calculated_parity()
+        Self::new().with_value(data).with_calculated_parity()
     }
 
     fn from_bytes(data: [u8; 2]) -> Self {
@@ -950,12 +847,12 @@ impl Word for CommandWord {
         self.into()
     }
 
-    fn set_value(&mut self, data: u16){
+    fn set_value(&mut self, data: u16) {
         self.data = data.to_be_bytes();
         self.parity = self.calculate_parity();
     }
 
-    fn set_bytes(&mut self, data: [u8; 2]){
+    fn set_bytes(&mut self, data: [u8; 2]) {
         self.data = data;
         self.parity = self.calculate_parity();
     }
@@ -982,7 +879,6 @@ impl Word for CommandWord {
 }
 
 impl Word for StatusWord {
-
     fn new() -> Self {
         Self {
             data: [0, 0],
@@ -1034,12 +930,12 @@ impl Word for StatusWord {
         self.into()
     }
 
-    fn set_value(&mut self, data: u16){
+    fn set_value(&mut self, data: u16) {
         self.data = data.to_be_bytes();
         self.parity = self.calculate_parity();
     }
 
-    fn set_bytes(&mut self, data: [u8; 2]){
+    fn set_bytes(&mut self, data: [u8; 2]) {
         self.data = data;
         self.parity = self.calculate_parity();
     }
@@ -1066,7 +962,6 @@ impl Word for StatusWord {
 }
 
 impl Word for DataWord {
-
     fn new() -> Self {
         Self {
             data: [0, 0],
@@ -1118,12 +1013,12 @@ impl Word for DataWord {
         self.into()
     }
 
-    fn set_value(&mut self, data: u16){
+    fn set_value(&mut self, data: u16) {
         self.data = data.to_be_bytes();
         self.parity = self.calculate_parity();
     }
 
-    fn set_bytes(&mut self, data: [u8; 2]){
+    fn set_bytes(&mut self, data: [u8; 2]) {
         self.data = data;
         self.parity = self.calculate_parity();
     }
@@ -1181,8 +1076,7 @@ impl<'a> TryFrom<&'a DataWord> for &'a str {
     type Error = Error;
 
     fn try_from(value: &'a DataWord) -> Result<Self> {
-        core::str::from_utf8(&value.data)
-            .or(Err(Error::StringIsInvalid))
+        core::str::from_utf8(&value.data).or(Err(Error::StringIsInvalid))
     }
 }
 
@@ -1204,20 +1098,20 @@ impl From<u16> for DataWord {
     }
 }
 
-impl From<[u8;2]> for CommandWord {
-    fn from(value: [u8;2]) -> Self {
+impl From<[u8; 2]> for CommandWord {
+    fn from(value: [u8; 2]) -> Self {
         Self::from_bytes(value)
     }
 }
 
-impl From<[u8;2]> for StatusWord {
-    fn from(value: [u8;2]) -> Self {
+impl From<[u8; 2]> for StatusWord {
+    fn from(value: [u8; 2]) -> Self {
         Self::from_bytes(value)
     }
 }
 
-impl From<[u8;2]> for DataWord {
-    fn from(value: [u8;2]) -> Self {
+impl From<[u8; 2]> for DataWord {
+    fn from(value: [u8; 2]) -> Self {
         Self::from_bytes(value)
     }
 }
@@ -1406,11 +1300,11 @@ mod tests {
     #[test]
     fn test_status_with_methods() {
         let word = StatusWord::new()
-            .with_address(4)
-            .with_terminal_busy(1)
-            .with_message_error(1)
-            .with_terminal_error(1)
-            .with_subsystem_error(1)
+            .with_address(Address::Value(4))
+            .with_terminal_busy(TerminalBusy::Busy)
+            .with_message_error(MessageError::Error)
+            .with_terminal_error(TerminalError::Error)
+            .with_subsystem_error(SubsystemError::Error)
             .build()
             .unwrap();
 
@@ -1424,9 +1318,9 @@ mod tests {
     #[test]
     fn test_command_with_methods() {
         let word = CommandWord::new()
-            .with_address(4)
-            .with_subaddress(2)
-            .with_transmit_receive(1)
+            .with_address(Address::Value(4))
+            .with_subaddress(SubAddress::Value(2))
+            .with_transmit_receive(TransmitReceive::Transmit)
             .with_word_count(3)
             .build()
             .unwrap();
@@ -1443,7 +1337,7 @@ mod tests {
         let mut word = CommandWord::from_value(0b0000000000101010);
         assert_eq!(word.parity, 0);
 
-        word.set_address(0b00000001);
+        word.set_address(Address::Value(0b00000001));
         assert_eq!(word.parity, 1);
     }
 
@@ -1452,7 +1346,7 @@ mod tests {
         let mut word = StatusWord::from_value(0b0000000010101010);
         assert_eq!(word.parity, 1);
 
-        word.set_address(0b00000001);
+        word.set_address(Address::Value(0b00000001));
         assert_eq!(word.parity, 0);
     }
 
@@ -1496,39 +1390,39 @@ mod tests {
 
     #[test]
     fn test_command_get_address() {
-        let word = CommandWord::new().with_address(0b11111);
+        let word = CommandWord::new().with_address(Address::Value(0b11111));
         assert!(word.address().is_broadcast());
     }
 
     #[test]
     fn test_command_set_address() {
         let mut word = CommandWord::new();
-        word.set_address(0b10101);
+        word.set_address(Address::Value(0b10101));
         assert_eq!(word.as_value(), 0b1010100000000000);
     }
 
     #[test]
     fn test_command_set_broadcast_address() {
-        let word = CommandWord::new().with_address(0b11111);
+        let word = CommandWord::new().with_address(Address::Value(0b11111));
         assert!(word.address().is_broadcast());
     }
 
     #[test]
     fn test_command_get_subaddress_ones() {
-        let word = CommandWord::new().with_subaddress(0b11111);
+        let word = CommandWord::new().with_subaddress(SubAddress::Value(0b11111));
         assert!(word.subaddress().is_mode_code());
     }
 
     #[test]
     fn test_command_get_subaddress_zeroes() {
-        let word = CommandWord::new().with_subaddress(0b00000);
+        let word = CommandWord::new().with_subaddress(SubAddress::Value(0b00000));
         assert!(word.subaddress().is_mode_code());
     }
 
     #[test]
     fn test_command_set_subaddress() {
         let mut word = CommandWord::new();
-        word.set_subaddress(0b10101);
+        word.set_subaddress(SubAddress::Value(0b10101));
         assert_eq!(word.as_value(), 0b0000001010100000);
     }
 
@@ -1564,7 +1458,7 @@ mod tests {
         let mut word = CommandWord::new();
         assert!(word.is_mode_code());
 
-        word.set_subaddress(0b01010);
+        word.set_subaddress(SubAddress::Value(0b01010));
         assert!(!word.is_mode_code());
     }
 
@@ -1588,7 +1482,7 @@ mod tests {
 
     #[test]
     fn test_status_get_address() {
-        let word = StatusWord::new().with_address(0b11111);
+        let word = StatusWord::new().with_address(Address::Value(0b11111));
         assert!(word.address().is_broadcast());
     }
 
@@ -1597,10 +1491,10 @@ mod tests {
         let mut word = StatusWord::new();
         assert_eq!(word.address(), Address::Value(0));
 
-        word.set_address(0b10101);
+        word.set_address(Address::Value(0b10101));
         assert_eq!(word.address(), Address::Value(0b10101));
 
-        word.set_address(0b11111);
+        word.set_address(Address::Value(0b11111));
         assert_eq!(word.address(), Address::Broadcast(0b11111));
     }
 
@@ -1652,10 +1546,16 @@ mod tests {
     #[test]
     fn test_status_get_set_dynamic_bus_acceptance() {
         let mut word = StatusWord::new();
-        assert_eq!(word.dynamic_bus_acceptance(), DynamicBusAcceptance::NotAccepted);
+        assert_eq!(
+            word.dynamic_bus_acceptance(),
+            DynamicBusAcceptance::NotAccepted
+        );
 
         word.set_dynamic_bus_acceptance(DynamicBusAcceptance::Accepted);
-        assert_eq!(word.dynamic_bus_acceptance(), DynamicBusAcceptance::Accepted);
+        assert_eq!(
+            word.dynamic_bus_acceptance(),
+            DynamicBusAcceptance::Accepted
+        );
     }
 
     #[test]
@@ -1688,7 +1588,7 @@ mod tests {
     #[test]
     fn test_data_bytes() {
         let word = DataWord::from(0b0110100001101001);
-        let data: [u8;2] = word.into();
+        let data: [u8; 2] = word.into();
         assert_eq!(data, [0b01101000, 0b01101001]);
     }
 

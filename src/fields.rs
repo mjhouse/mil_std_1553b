@@ -143,7 +143,8 @@ pub(crate) const STATUS_SUBSYSTEM_ERROR_FIELD: Field = Field::from(STATUS_SUBSYS
 pub(crate) const STATUS_DYNAMIC_BUS_ACCEPTANCE: u16 = 0b0000000000000010;
 
 /// Field definition for the bus control accept flag of the status word.
-pub(crate) const STATUS_DYNAMIC_BUS_ACCEPTANCE_FIELD: Field = Field::from(STATUS_DYNAMIC_BUS_ACCEPTANCE);
+pub(crate) const STATUS_DYNAMIC_BUS_ACCEPTANCE_FIELD: Field =
+    Field::from(STATUS_DYNAMIC_BUS_ACCEPTANCE);
 
 /// Mask for parsing the terminal flag of the status word.
 pub(crate) const STATUS_TERMINAL_ERROR: u16 = 0b0000000000000001;

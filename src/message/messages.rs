@@ -21,8 +21,8 @@ use crate::{errors::*, Packet, Word};
 /// # fn try_main() -> Result<()> {
 ///     let message = Message::new()
 ///         .with_command(CommandWord::new()
-///             .with_subaddress(12)
-///             .with_subaddress(5)
+///             .with_address(Address::Value(12))
+///             .with_subaddress(SubAddress::Value(5))
 ///             .with_word_count(2)
 ///             .build()?
 ///         )?
@@ -240,9 +240,7 @@ impl Message {
 
     /// Get the expected number of data words
     pub fn data_expected(&self) -> usize {
-        self.first()
-            .map(WordType::data_count)
-            .unwrap_or(0)
+        self.first().map(WordType::data_count).unwrap_or(0)
     }
 
     /// Check if message has data words
@@ -260,17 +258,13 @@ impl Message {
     /// Check if message starts with a command word
     #[must_use = "Returned value is not used"]
     pub fn has_command(&self) -> bool {
-        self.first()
-            .map(WordType::is_command)
-            .unwrap_or(false)
+        self.first().map(WordType::is_command).unwrap_or(false)
     }
 
     /// Check if message starts with a status word
     #[must_use = "Returned value is not used"]
     pub fn has_status(&self) -> bool {
-        self.first()
-            .map(WordType::is_status)
-            .unwrap_or(false)
+        self.first().map(WordType::is_status).unwrap_or(false)
     }
 
     /// Add a word to the message, returning size on success
@@ -562,9 +556,7 @@ mod tests {
             .add(CommandWord::from_value(0b0001100001100010))
             .unwrap();
 
-        message
-            .add(DataWord::from(0b0110100001101001))
-            .unwrap();
+        message.add(DataWord::from(0b0110100001101001)).unwrap();
 
         assert_eq!(message.word_count(), 2);
         assert_eq!(message.data_count(), 1);
@@ -591,9 +583,7 @@ mod tests {
             .add(StatusWord::from_value(0b0001100000000000))
             .unwrap();
 
-        message
-            .add(DataWord::from(0b0110100001101001))
-            .unwrap();
+        message.add(DataWord::from(0b0110100001101001)).unwrap();
 
         assert_eq!(message.word_count(), 2);
         assert_eq!(message.data_count(), 1);
