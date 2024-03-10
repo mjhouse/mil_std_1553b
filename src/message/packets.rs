@@ -1,5 +1,5 @@
 use crate::errors::{parity, Error, Result};
-use crate::word::{CommandWord, DataWord, StatusWord};
+use crate::word::{CommandWord, DataWord, StatusWord, Word};
 
 /// A packet of data parsed from binary
 ///
@@ -230,7 +230,7 @@ impl Packet {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::flags::{Address, BroadcastCommand, SubAddress};
+    use crate::flags::{Address, BroadcastReceived, SubAddress};
 
     #[test]
     fn test_packet_parse_offset_14() {
@@ -365,7 +365,7 @@ mod tests {
         let word = packet.to_status().unwrap();
 
         assert_eq!(word.address(), Address::new(3));
-        assert_eq!(word.broadcast_received(), BroadcastCommand::Received);
+        assert_eq!(word.broadcast_received(), BroadcastReceived::Received);
     }
 
     #[test]

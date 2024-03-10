@@ -1,4 +1,4 @@
-// #![no_std]
+#![no_std]
 #![forbid(
     arithmetic_overflow,
     absolute_paths_not_starting_with_crate,
@@ -32,7 +32,7 @@
     unused_lifetimes,
     unused_macro_rules,
     unused_qualifications,
-    // unused_results,
+    unused_results,
     unused_tuple_struct_fields,
     variant_size_differences
 )]
@@ -49,9 +49,9 @@ pub use crate::message::{Message, MessageDirection, MessageSide, MessageType, Pa
 
 pub use crate::errors::{Error, MessageError, Result, SubsystemError, SystemError, TerminalError};
 
-pub use crate::word::{CommandWord, DataWord, StatusWord, WordType};
+pub use crate::word::{CommandWord, DataWord, StatusWord, WordType, Word};
 
 pub use crate::flags::{
-    Address, BroadcastCommand, BusControlAccept, Instrumentation, ModeCode, Reserved,
+    Address, BroadcastReceived, DynamicBusAcceptance, Instrumentation, ModeCode, Reserved,
     ServiceRequest, SubAddress, TerminalBusy, TransmitReceive,
 };

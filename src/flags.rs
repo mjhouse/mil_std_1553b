@@ -615,7 +615,7 @@ impl From<Reserved> for u8 {
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[repr(u8)]
-pub enum BroadcastCommand {
+pub enum BroadcastReceived {
     /// This terminal has not received a broadcast command
     NotReceived = 0,
 
@@ -623,7 +623,7 @@ pub enum BroadcastCommand {
     Received = 1,
 }
 
-impl BroadcastCommand {
+impl BroadcastReceived {
     /// Check if enum is the NotReceived variant
     #[must_use = "Returned value is not used"]
     pub const fn is_notreceived(&self) -> bool {
@@ -637,7 +637,7 @@ impl BroadcastCommand {
     }
 }
 
-impl From<u8> for BroadcastCommand {
+impl From<u8> for BroadcastReceived {
     fn from(value: u8) -> Self {
         match value {
             1 => Self::Received,
@@ -646,11 +646,11 @@ impl From<u8> for BroadcastCommand {
     }
 }
 
-impl From<BroadcastCommand> for u8 {
-    fn from(value: BroadcastCommand) -> Self {
+impl From<BroadcastReceived> for u8 {
+    fn from(value: BroadcastReceived) -> Self {
         match value {
-            BroadcastCommand::Received => 1,
-            BroadcastCommand::NotReceived => 0,
+            BroadcastReceived::Received => 1,
+            BroadcastReceived::NotReceived => 0,
         }
     }
 }
@@ -722,7 +722,7 @@ impl From<TerminalBusy> for u8 {
 /// [^1]: [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[repr(u8)]
-pub enum BusControlAccept {
+pub enum DynamicBusAcceptance {
     /// This terminal has refused control of the bus
     NotAccepted = 0,
 
@@ -730,7 +730,7 @@ pub enum BusControlAccept {
     Accepted = 1,
 }
 
-impl BusControlAccept {
+impl DynamicBusAcceptance {
     /// Check if the enum is the NotAccepted variant
     #[must_use = "Returned value is not used"]
     pub const fn is_notaccepted(&self) -> bool {
@@ -744,7 +744,7 @@ impl BusControlAccept {
     }
 }
 
-impl From<u8> for BusControlAccept {
+impl From<u8> for DynamicBusAcceptance {
     fn from(value: u8) -> Self {
         match value {
             1 => Self::Accepted,
@@ -753,11 +753,11 @@ impl From<u8> for BusControlAccept {
     }
 }
 
-impl From<BusControlAccept> for u8 {
-    fn from(value: BusControlAccept) -> Self {
+impl From<DynamicBusAcceptance> for u8 {
+    fn from(value: DynamicBusAcceptance) -> Self {
         match value {
-            BusControlAccept::Accepted => 1,
-            BusControlAccept::NotAccepted => 0,
+            DynamicBusAcceptance::Accepted => 1,
+            DynamicBusAcceptance::NotAccepted => 0,
         }
     }
 }
