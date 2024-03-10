@@ -1,5 +1,5 @@
 use crate::errors::{parity, Error, Result};
-use crate::word::{CommandWord, DataWord, StatusWord};
+use crate::word::{CommandWord, DataWord, StatusWord, Word};
 
 /// A packet of data parsed from binary
 ///
@@ -106,18 +106,12 @@ impl Packet {
         buffer[2] |= bytes[2] << l;
 
         if l > 0 {
-            buffer[0] |= bytes[1]
-                .checked_shr(r)
-                .unwrap_or(0);
-            buffer[1] |= bytes[2]
-                .checked_shr(r)
-                .unwrap_or(0);
+            buffer[0] |= bytes[1].checked_shr(r).unwrap_or(0);
+            buffer[1] |= bytes[2].checked_shr(r).unwrap_or(0);
         }
 
         if l > 4 {
-            buffer[2] |= bytes[3]
-                .checked_shr(r)
-                .unwrap_or(0);
+            buffer[2] |= bytes[3].checked_shr(r).unwrap_or(0);
         }
 
         let mut sync: u8 = 0;
@@ -236,7 +230,7 @@ impl Packet {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::flags::{Address, BroadcastCommand, SubAddress};
+    use crate::flags::{Address, BroadcastReceived, SubAddress};
 
     #[test]
     fn test_packet_parse_offset_14() {
@@ -362,7 +356,7 @@ mod tests {
         assert_eq!(word.subaddress(), SubAddress::new(3));
 
         assert!(!word.is_mode_code());
-        assert_eq!(word.word_count(), Some(2));
+        assert_eq!(word.word_count(), 2);
     }
 
     #[test]
@@ -371,7 +365,7 @@ mod tests {
         let word = packet.to_status().unwrap();
 
         assert_eq!(word.address(), Address::new(3));
-        assert_eq!(word.broadcast_received(), BroadcastCommand::Received);
+        assert_eq!(word.broadcast_received(), BroadcastReceived::Received);
     }
 
     #[test]

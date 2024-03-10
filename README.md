@@ -29,8 +29,8 @@ StatusWord, and DataWord.
 
     let message = Message::new()
         .with_command(CommandWord::new()
-            .with_address(12)
-            .with_subaddress(5)
+            .with_address(Address::Value(12))
+            .with_subaddress(SubAddress::Value(5))
             .with_word_count(2)
             .build().unwrap()
         ).unwrap()

@@ -1,6 +1,6 @@
 //! Error enums and flags
 
-use core::array::TryFromSliceError;
+use core::{array::TryFromSliceError, str::Utf8Error};
 
 /// A result type which uses the [Error] enum as the error type.
 pub type Result<T> = core::result::Result<T, Error>;
@@ -79,6 +79,12 @@ pub enum Error {
 
 impl From<TryFromSliceError> for Error {
     fn from(_: TryFromSliceError) -> Self {
+        Self::FromSliceError
+    }
+}
+
+impl From<Utf8Error> for Error {
+    fn from(_: Utf8Error) -> Self {
         Self::FromSliceError
     }
 }
