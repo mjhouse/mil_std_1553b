@@ -32,7 +32,7 @@ where
     fn from_bytes(data: [u8; 2]) -> Self;
 
     /// Get the internal data as a slice
-    fn as_bytes(&self) -> &[u8];
+    fn as_bytes(&self) -> [u8;2];
 
     /// Get the internal data as u16
     fn as_value(&self) -> u16;
@@ -839,8 +839,8 @@ impl Word for CommandWord {
         Self::new().with_bytes(data)
     }
 
-    fn as_bytes(&self) -> &[u8] {
-        &self.data
+    fn as_bytes(&self) -> [u8;2] {
+        self.data
     }
 
     fn as_value(&self) -> u16 {
@@ -922,8 +922,8 @@ impl Word for StatusWord {
         Self::new().with_bytes(data)
     }
 
-    fn as_bytes(&self) -> &[u8] {
-        &self.data
+    fn as_bytes(&self) -> [u8;2] {
+        self.data
     }
 
     fn as_value(&self) -> u16 {
@@ -1005,8 +1005,8 @@ impl Word for DataWord {
         Self::new().with_bytes(data)
     }
 
-    fn as_bytes(&self) -> &[u8] {
-        &self.data
+    fn as_bytes(&self) -> [u8;2] {
+        self.data
     }
 
     fn as_value(&self) -> u16 {
@@ -1266,7 +1266,7 @@ mod tests {
             .build()
             .unwrap();
 
-        assert_eq!(word.as_bytes(), &[0b01001000, 0b01001001]);
+        assert_eq!(word.as_bytes(), [0b01001000, 0b01001001]);
         assert_eq!(word.as_value(), 0b0100100001001001u16);
         assert_eq!(word.as_string(), Ok("HI"));
         assert_eq!(word.parity(), 0);
@@ -1278,7 +1278,7 @@ mod tests {
             .with_value(0b0100100001001001u16)
             .with_calculated_parity();
 
-        assert_eq!(word.as_bytes(), &[0b01001000, 0b01001001]);
+        assert_eq!(word.as_bytes(), [0b01001000, 0b01001001]);
         assert_eq!(word.as_value(), 0b0100100001001001u16);
         assert_eq!(word.as_string(), Ok("HI"));
         assert_eq!(word.parity(), 0);
@@ -1291,7 +1291,7 @@ mod tests {
             .unwrap()
             .with_calculated_parity();
 
-        assert_eq!(word.as_bytes(), &[0b01001000, 0b01001001]);
+        assert_eq!(word.as_bytes(), [0b01001000, 0b01001001]);
         assert_eq!(word.as_value(), 0b0100100001001001u16);
         assert_eq!(word.as_string(), Ok("HI"));
         assert_eq!(word.parity(), 0);
