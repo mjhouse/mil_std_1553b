@@ -1,11 +1,11 @@
 use crate::errors::{parity, Error, MessageError, Result, SubsystemError, TerminalError};
-use crate::fields::*;
+use crate::{fields::*, WordType};
 use crate::flags::*;
 
 /// Common functionality for all words
 pub trait Word
 where
-    Self: Sized,
+    Self: Sized + Into<WordType>,
 {
     /// Create an empty word
     fn new() -> Self;
