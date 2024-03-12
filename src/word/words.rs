@@ -1614,6 +1614,19 @@ mod tests {
     }
 
     #[test]
+    fn test_data_roundtrip() {
+        let word1 = DataWord::from_value(0b0110100001101001);
+        let data1 = word1.as_bytes();
+
+        let word2 = DataWord::from_bytes(data1);
+        let data2 = word2.as_bytes();
+
+        assert_eq!(data1, [0b01101000, 0b01101001]);
+        assert_eq!(data2, [0b01101000, 0b01101001]);
+        assert_eq!(word1, word2);
+    }
+
+    #[test]
     fn test_command_bytes() {
         let word = CommandWord::from_value(0b0110100001101001);
         let data = word.as_bytes();
@@ -1621,9 +1634,35 @@ mod tests {
     }
 
     #[test]
+    fn test_command_roundtrip() {
+        let word1 = CommandWord::from_value(0b0110100001101001);
+        let data1 = word1.as_bytes();
+
+        let word2 = CommandWord::from_bytes(data1);
+        let data2 = word2.as_bytes();
+
+        assert_eq!(data1, [0b01101000, 0b01101001]);
+        assert_eq!(data2, [0b01101000, 0b01101001]);
+        assert_eq!(word1, word2);
+    }
+
+    #[test]
     fn test_status_bytes() {
         let word = StatusWord::from_value(0b0110100001101001);
         let data = word.as_bytes();
         assert_eq!(data, [0b01101000, 0b01101001]);
+    }
+
+    #[test]
+    fn test_status_roundtrip() {
+        let word1 = StatusWord::from_value(0b0110100001101001);
+        let data1 = word1.as_bytes();
+
+        let word2 = StatusWord::from_bytes(data1);
+        let data2 = word2.as_bytes();
+
+        assert_eq!(data1, [0b01101000, 0b01101001]);
+        assert_eq!(data2, [0b01101000, 0b01101001]);
+        assert_eq!(word1, word2);
     }
 }

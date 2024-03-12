@@ -112,11 +112,11 @@ from strings.
     - [x] Messages can be constructed from words
     - [x] Messages can be parsed from binary
     - [x] Messages have parsing tests
-    - [ ] Messages have conversion tests
+    - [x] Messages have conversion tests
     - [x] Documentation exists for messages
 - [ ] Integration tests implemented
-    - [ ] Round-trip tests (binary -> struct -> binary) exist for messages
-    - [ ] Round-trip tests (binary -> struct -> binary) exist for words
+    - [x] Round-trip tests (binary -> struct -> binary) exist for messages
+    - [x] Round-trip tests (binary -> struct -> binary) exist for words
     - [ ] Configuration tests (JSON) exist for words
     - [ ] Configuration tests (JSON) exist for messages
 

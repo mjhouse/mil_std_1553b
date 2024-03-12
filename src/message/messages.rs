@@ -9,7 +9,6 @@ use crate::{errors::*, Header, Packet, Word};
 ///
 /// * Command or status words are always the first word.
 /// * Data words are limited based on the command word count.
-/// * Messages can't exceed [max message size][Message::MAX_WORDS].
 ///
 /// Messages do not validate larger messaging patterns that
 /// require context about previous messages or terminal type.
