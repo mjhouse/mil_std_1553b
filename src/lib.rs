@@ -1,4 +1,4 @@
-// #![no_std]
+#![no_std]
 #![forbid(
     arithmetic_overflow,
     absolute_paths_not_starting_with_crate,
@@ -49,7 +49,7 @@ pub use crate::message::{Message, MessageDirection, MessageSide, MessageType, Pa
 
 pub use crate::errors::{Error, MessageError, Result, SubsystemError, SystemError, TerminalError};
 
-pub use crate::word::{CommandWord, DataWord, StatusWord, Header, Word, WordType};
+pub use crate::word::{CommandWord, DataWord, Header, StatusWord, Word, WordType};
 
 pub use crate::flags::{
     Address, BroadcastReceived, DynamicBusAcceptance, Instrumentation, ModeCode, Reserved,

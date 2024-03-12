@@ -381,9 +381,7 @@ impl<const WORDS: usize> Message<WORDS> {
 
         // get the number of expected words or an
         // estimate if the header is a status word.
-        let count = word
-            .count()
-            .unwrap_or(estimate);
+        let count = word.count().unwrap_or(estimate);
 
         // create a new message with the header word
         let mut message: Self = Self::new().with_word(word)?;
@@ -398,29 +396,27 @@ impl<const WORDS: usize> Message<WORDS> {
 
         // return error if data is too small
         if data.len() < expected {
-            return Err(Error::InvalidMessage)
+            return Err(Error::InvalidMessage);
         }
 
-        let start = 1;         // skip the service word
-        let end = count + 1;   // adjust for service word
+        let start = 1; // skip the service word
+        let end = count + 1; // adjust for service word
 
         for index in start..end {
             let b = index * 20; // offset in bits
-            let i = b / 8;      // byte offset (whole)
-            let o = b % 8;      // byte offset (fraction)
+            let i = b / 8; // byte offset (whole)
+            let o = b % 8; // byte offset (fraction)
             let bytes = &data[i..];
-
-            println!("b: {}, i: {}, o:{}",b,i,o);
 
             // use a packet to parse the bytes and convert to a word
             message.add_data(Packet::read(bytes, o)?.try_into()?)?;
         }
-        
+
         Ok(message)
     }
 
     /// Get the message as a byte array
-    pub fn write(&self, bytes: &mut [u8]) -> Result<()> {        
+    pub fn write(&self, bytes: &mut [u8]) -> Result<()> {
         let count = ((self.length() * 20) + 7) / 8;
 
         if bytes.len() < count {
@@ -429,7 +425,7 @@ impl<const WORDS: usize> Message<WORDS> {
 
         // TODO: rewrite this to bring it in line with parse naming
 
-        for (i,word) in self.words.iter().enumerate() {
+        for (i, word) in self.words.iter().enumerate() {
             let index = (i * 20) / 8;
             let offset = (i * 20) % 8;
 
@@ -460,11 +456,11 @@ mod tests {
 
         let message: Message<4> = Message::read_command(&data).unwrap();
 
-        let mut buffer: [u8;10] = [0;10];
+        let mut buffer: [u8; 10] = [0; 10];
         let result = message.write(&mut buffer);
 
         assert!(result.is_ok());
-        assert_eq!(buffer,data);
+        assert_eq!(buffer, data);
     }
 
     #[test]

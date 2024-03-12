@@ -25,7 +25,6 @@ use crate::WordType;
 ///
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub struct Packet {
-
     /// The 3-bit sync pattern of a word
     pub sync: u8,
 
@@ -34,7 +33,6 @@ pub struct Packet {
 
     /// The 1-bit parity of a word
     pub parity: u8,
-
 }
 
 impl Packet {
@@ -185,11 +183,11 @@ impl TryFrom<&WordType> for Packet {
             _ => Ok(Self::new(
                 match word.is_data() {
                     true => Self::DATA_SYNC,
-                    false => Self::SERV_SYNC
+                    false => Self::SERV_SYNC,
                 },
-                word.bytes(), 
-                word.parity()
-            ))
+                word.bytes(),
+                word.parity(),
+            )),
         }
     }
 }
