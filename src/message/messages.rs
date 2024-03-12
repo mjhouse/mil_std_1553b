@@ -1,6 +1,6 @@
 use crate::word::WordType;
 use crate::word::{CommandWord, DataWord, StatusWord};
-use crate::{errors::*, Packet, Word};
+use crate::{errors::*, Header, Packet, Word};
 
 /// A message sent between two terminals on the bus
 ///
@@ -43,7 +43,6 @@ pub struct Message<const WORDS: usize = 33> {
 }
 
 impl<const WORDS: usize> Message<WORDS> {
-
     /// Create a new message struct
     pub fn new() -> Self {
         Self {
@@ -116,7 +115,7 @@ impl<const WORDS: usize> Message<WORDS> {
     /// ```rust
     /// # use mil_std_1553b::*;
     /// # fn try_main() -> Result<()> {
-    ///     let message: Message = Message::parse_command(&[
+    ///     let message: Message = Message::read_command(&[
     ///         0b10000011,
     ///         0b00001100,
     ///         0b01010110,
@@ -130,38 +129,8 @@ impl<const WORDS: usize> Message<WORDS> {
     ///     assert_eq!(message.count(),1);
     /// # Ok(())
     /// # }
-    pub fn parse_command(data: &[u8]) -> Result<Self> {
-        // get the first word as a command word
-        let command = Packet::parse(data, 0)?.to_command()?;
-
-        // get the number of data words expected
-        let count = command.word_count() as usize;
-
-        let sbit = 20; // starting data bit
-        let ebit = 20 * (count + 1); // ending data bit
-
-        // create a new message to build
-        let mut message: Self = Self::new().with_command(command)?;
-
-        // iterate chunks of 20 bits for each word
-        for bit in (sbit..ebit).step_by(20) {
-            let index = bit / 8; // byte index in the slice
-            let offset = bit % 8; // bit index in the last byte
-
-            // early return if the buffer doesn't contain 
-            // the number of bytes we need
-            if index >= data.len() {
-                return Err(Error::OutOfBounds);
-            }
-
-            // get a trimmed slice to parse
-            let bytes = &data[index..];
-
-            // parse as a data word and add
-            message.add_data(Packet::parse(bytes, offset)?.to_data()?)?;
-        }
-
-        Ok(message)
+    pub fn read_command(data: &[u8]) -> Result<Self> {
+        Self::read::<CommandWord>(data)
     }
 
     /// Parse a slice of bytes into a status message
@@ -177,14 +146,14 @@ impl<const WORDS: usize> Message<WORDS> {
     ///
     /// * `data` - A slice of bytes to parse
     ///
-    /// See [parse_command][Message::parse_command] for more information.
+    /// See [read_command][Message::read_command] for more information.
     ///
     /// ## Example
     ///
     /// ```rust
     /// # use mil_std_1553b::*;
     /// # fn try_main() -> Result<()> {
-    ///     let message: Message = Message::parse_status(&[
+    ///     let message: Message = Message::read_status(&[
     ///         0b10000011,
     ///         0b00001100,
     ///         0b01010110,
@@ -201,40 +170,13 @@ impl<const WORDS: usize> Message<WORDS> {
     /// # Ok(())
     /// # }
     /// ```
-    pub fn parse_status(data: &[u8]) -> Result<Self> {
-        // create a new message
-        let status = Packet::parse(data, 0)?.to_status()?;
-        let mut message: Self = Self::new().with_status(status)?;
-
-        let bits = data.len() * 8;
-        let step = 20;
-        let sbit = step;
-        let ebit = (bits / step) * step;
-
-        // iterate chunks of 20 bits for each word
-        for bit in (sbit..ebit).step_by(step) {
-            let index = bit / 8; // byte index in the slice
-            let offset = bit % 8; // offset into a byte
-
-            // early return if the buffer doesn't contain 
-            // the number of bytes we need
-            if index >= data.len() {
-                return Err(Error::OutOfBounds);
-            }
-
-            // get a trimmed slice to parse
-            let bytes = &data[index..];
-
-            // parse as a data word and add
-            message.add_data(Packet::parse(bytes, offset)?.to_data()?)?;
-        }
-
-        Ok(message)
+    pub fn read_status(data: &[u8]) -> Result<Self> {
+        Self::read::<StatusWord>(data)
     }
 
     /// Get the command word from the message
     ///
-    /// Returns `None` if this message doesn't 
+    /// Returns `None` if this message doesn't
     /// have a command word.
     ///
     /// # Arguments
@@ -251,7 +193,7 @@ impl<const WORDS: usize> Message<WORDS> {
 
     /// Get the status word from the message
     ///
-    /// Returns `None` if this message doesn't 
+    /// Returns `None` if this message doesn't
     /// have a status word.
     ///
     /// # Arguments
@@ -301,13 +243,13 @@ impl<const WORDS: usize> Message<WORDS> {
     /// Add a data word
     ///
     /// Performs basic checks for message validity before
-    /// Adding the data word. This method will return an error 
-    /// if the status word- 
-    /// 
+    /// Adding the data word. This method will return an error
+    /// if the status word-
+    ///
     /// * Is the first word in the message.
     /// * If the message is full.
     /// * If the parity bit on the word is wrong.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `word` - A word to add
@@ -329,13 +271,13 @@ impl<const WORDS: usize> Message<WORDS> {
     /// Add a status word
     ///
     /// Performs basic checks for message validity before
-    /// Adding the status word. This method will return an error 
-    /// if the status word- 
-    /// 
+    /// Adding the status word. This method will return an error
+    /// if the status word-
+    ///
     /// * Is not the first word in the message.
     /// * If the message is full.
     /// * If the parity bit on the word is wrong.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `word` - A word to add
@@ -357,13 +299,13 @@ impl<const WORDS: usize> Message<WORDS> {
     /// Add a command word
     ///
     /// Performs basic checks for message validity before
-    /// Adding the command word. This method will return an error 
-    /// if the command word- 
-    /// 
+    /// Adding the command word. This method will return an error
+    /// if the command word-
+    ///
     /// * Is not the first word in the message.
     /// * If the message is full.
     /// * If the parity bit on the word is wrong.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `word` - A word to add
@@ -424,11 +366,79 @@ impl<const WORDS: usize> Message<WORDS> {
         self.words.iter().filter(|w| w.is_data()).count()
     }
 
-    /// Get the length of the message
+    /// Get the total number of words
     pub fn length(&self) -> usize {
         self.words.iter().filter(|w| w.is_some()).count()
     }
 
+    /// Read bytes as a message
+    pub fn read<T: Word + Header>(data: &[u8]) -> Result<Self> {
+        // estimate word count from given data
+        let estimate = ((data.len() * 8) / 20) - 1;
+
+        // parse the specified header word
+        let word = Packet::read(data, 0)?.as_word::<T>()?;
+
+        // get the number of expected words or an
+        // estimate if the header is a status word.
+        let count = word
+            .count()
+            .unwrap_or(estimate);
+
+        // create a new message with the header word
+        let mut message: Self = Self::new().with_word(word)?;
+
+        // return if no data words
+        if count == 0 {
+            return Ok(message);
+        }
+
+        // the expected number of bytes to parse
+        let expected = ((count * 20) + 7) / 8;
+
+        // return error if data is too small
+        if data.len() < expected {
+            return Err(Error::InvalidMessage)
+        }
+
+        let start = 1;         // skip the service word
+        let end = count + 1;   // adjust for service word
+
+        for index in start..end {
+            let b = index * 20; // offset in bits
+            let i = b / 8;      // byte offset (whole)
+            let o = b % 8;      // byte offset (fraction)
+            let bytes = &data[i..];
+
+            println!("b: {}, i: {}, o:{}",b,i,o);
+
+            // use a packet to parse the bytes and convert to a word
+            message.add_data(Packet::read(bytes, o)?.try_into()?)?;
+        }
+        
+        Ok(message)
+    }
+
+    /// Get the message as a byte array
+    pub fn write(&self, bytes: &mut [u8]) -> Result<()> {        
+        let count = ((self.length() * 20) + 7) / 8;
+
+        if bytes.len() < count {
+            return Err(Error::OutOfBounds);
+        }
+
+        // TODO: rewrite this to bring it in line with parse naming
+
+        for (i,word) in self.words.iter().enumerate() {
+            let index = (i * 20) / 8;
+            let offset = (i * 20) % 8;
+
+            let packet = Packet::try_from(word)?;
+            packet.write(&mut bytes[index..], offset)?;
+        }
+
+        Ok(())
+    }
 }
 
 impl Default for Message {
@@ -442,18 +452,34 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_message_write_bytes() {
+        let data = [
+            0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
+            0b11100010, 0b11001110, 0b11011110,
+        ];
+
+        let message: Message<4> = Message::read_command(&data).unwrap();
+
+        let mut buffer: [u8;10] = [0;10];
+        let result = message.write(&mut buffer);
+
+        assert!(result.is_ok());
+        assert_eq!(buffer,data);
+    }
+
+    #[test]
     fn test_parse_words_wrong_word_size() {
-        let result: Result<Message<3>> = Message::parse_command(&[
+        let result: Result<Message<3>> = Message::read_command(&[
             0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
             0b11100010, 0b11001110, 0b11011110,
         ]);
 
-        assert_eq!(result,Err(Error::MessageIsFull));
+        assert_eq!(result, Err(Error::MessageIsFull));
     }
 
     #[test]
     fn test_parse_words_right_word_size() {
-        let result: Result<Message<4>> = Message::parse_command(&[
+        let result: Result<Message<4>> = Message::read_command(&[
             0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
             0b11100010, 0b11001110, 0b11011110,
         ]);
@@ -463,17 +489,17 @@ mod tests {
 
     #[test]
     fn test_parse_words_wrong_byte_size() {
-        let result: Result<Message<4>> = Message::parse_command(&[
+        let result: Result<Message<2>> = Message::read_command(&[
             0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
             0b11100010, 0b11001110,
         ]);
 
-        assert_eq!(result,Err(Error::OutOfBounds));
+        assert_eq!(result, Err(Error::MessageIsFull));
     }
 
     #[test]
-    fn test_parse_command_three_data_words() {
-        let message: Message<4> = Message::parse_command(&[
+    fn test_read_command_three_data_words() {
+        let message: Message<4> = Message::read_command(&[
             0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
             0b11100010, 0b11001110, 0b11011110,
         ])
@@ -503,8 +529,8 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_command_two_data_words() {
-        let message: Message<3> = Message::parse_command(&[
+    fn test_read_command_two_data_words() {
+        let message: Message<3> = Message::read_command(&[
             0b10000011, 0b00001100, 0b01000010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
             0b11100000,
         ])
@@ -517,9 +543,9 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_command_one_data_word() {
+    fn test_read_command_one_data_word() {
         let message: Message =
-            Message::parse_command(&[0b10000011, 0b00001100, 0b00100010, 0b11010000, 0b11010010])
+            Message::read_command(&[0b10000011, 0b00001100, 0b00100010, 0b11010000, 0b11010010])
                 .unwrap();
 
         assert!(message.is_full());
@@ -529,8 +555,8 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_status_three_data_words() {
-        let message: Message = Message::parse_status(&[
+    fn test_read_status_three_data_words() {
+        let message: Message = Message::read_status(&[
             0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
             0b11100010, 0b11001110, 0b11011110,
         ])
@@ -560,8 +586,8 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_status_two_data_words() {
-        let message: Message = Message::parse_status(&[
+    fn test_read_status_two_data_words() {
+        let message: Message = Message::read_status(&[
             0b10000011, 0b00001100, 0b01000010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
             0b11100000,
         ])
@@ -574,9 +600,9 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_status_one_data_word() {
+    fn test_read_status_one_data_word() {
         let message: Message =
-            Message::parse_status(&[0b10000011, 0b00001100, 0b00100010, 0b11010000, 0b11010010])
+            Message::read_status(&[0b10000011, 0b00001100, 0b00100010, 0b11010000, 0b11010010])
                 .unwrap();
 
         assert!(!message.is_full());

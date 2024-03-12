@@ -1,3 +1,5 @@
+use crate::Word;
+
 use super::{CommandWord, DataWord, StatusWord};
 
 /// Container enum for the different kinds of words
@@ -47,10 +49,22 @@ impl WordType {
         matches!(self, Self::None)
     }
 
-    /// Get the number of associated data words
-    pub fn data_count(&self) -> usize {
+    /// Get the word as a byte array
+    pub fn bytes(&self) -> [u8; 2] {
         match self {
-            Self::Command(c) => c.count(),
+            Self::Command(w) => w.into(),
+            Self::Status(w) => w.into(),
+            Self::Data(w) => w.into(),
+            _ => [0, 0],
+        }
+    }
+
+    /// Get the parity bit of the word
+    pub fn parity(&self) -> u8 {
+        match self {
+            Self::Command(w) => w.parity(),
+            Self::Status(w) => w.parity(),
+            Self::Data(w) => w.parity(),
             _ => 0,
         }
     }

@@ -50,7 +50,7 @@ how many data words will be parsed from the buffer.
 ```rust
     use mil_std_1553b::*;
 
-    let message: Message = Message::parse_command(&[
+    let message: Message = Message::read_command(&[
         0b10000011, 
         0b00001100, 
         0b00100010, 
@@ -67,7 +67,7 @@ how many data words will be parsed from the buffer.
 ```rust
     use mil_std_1553b::*;
 
-    let message: Message = Message::parse_status(&[
+    let message: Message = Message::read_status(&[
         0b10000011, 
         0b00001100, 
         0b01000010, 

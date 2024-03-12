@@ -1,6 +1,15 @@
 use crate::errors::{parity, Error, MessageError, Result, SubsystemError, TerminalError};
-use crate::{fields::*, WordType};
 use crate::flags::*;
+use crate::{fields::*, WordType};
+
+/// Common functionality for service words
+pub trait Header
+where
+    Self: Sized + Into<WordType>,
+{
+    /// The number of data words expected
+    fn count(&self) -> Option<usize>;
+}
 
 /// Common functionality for all words
 pub trait Word
@@ -32,7 +41,7 @@ where
     fn from_bytes(data: [u8; 2]) -> Self;
 
     /// Get the internal data as a slice
-    fn as_bytes(&self) -> [u8;2];
+    fn as_bytes(&self) -> [u8; 2];
 
     /// Get the internal data as u16
     fn as_value(&self) -> u16;
@@ -795,6 +804,18 @@ impl DataWord {
     }
 }
 
+impl Header for CommandWord {
+    fn count(&self) -> Option<usize> {
+        Some(self.word_count() as usize)
+    }
+}
+
+impl Header for StatusWord {
+    fn count(&self) -> Option<usize> {
+        None
+    }
+}
+
 impl Word for CommandWord {
     fn new() -> Self {
         Self {
@@ -839,7 +860,7 @@ impl Word for CommandWord {
         Self::new().with_bytes(data)
     }
 
-    fn as_bytes(&self) -> [u8;2] {
+    fn as_bytes(&self) -> [u8; 2] {
         self.data
     }
 
@@ -922,7 +943,7 @@ impl Word for StatusWord {
         Self::new().with_bytes(data)
     }
 
-    fn as_bytes(&self) -> [u8;2] {
+    fn as_bytes(&self) -> [u8; 2] {
         self.data
     }
 
@@ -1005,7 +1026,7 @@ impl Word for DataWord {
         Self::new().with_bytes(data)
     }
 
-    fn as_bytes(&self) -> [u8;2] {
+    fn as_bytes(&self) -> [u8; 2] {
         self.data
     }
 
