@@ -423,14 +423,13 @@ impl<const WORDS: usize> Message<WORDS> {
             return Err(Error::OutOfBounds);
         }
 
-        // TODO: rewrite this to bring it in line with parse naming
-
-        for (i, word) in self.words.iter().enumerate() {
-            let index = (i * 20) / 8;
-            let offset = (i * 20) % 8;
+        for (index, word) in self.words.iter().take_while(|w| w.is_some()).enumerate() {
+            let b = index * 20;
+            let i = b / 8;
+            let o = b % 8;
 
             let packet = Packet::try_from(word)?;
-            packet.write(&mut bytes[index..], offset)?;
+            packet.write(&mut bytes[i..], o)?;
         }
 
         Ok(())
@@ -448,7 +447,20 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_message_write_bytes() {
+    fn test_message_write_bytes_buffer_5() {
+        let data = [0b10000011, 0b00001100, 0b00100010, 0b11010000, 0b11010010];
+
+        let message: Message<2> = Message::read_command(&data).unwrap();
+
+        let mut buffer: [u8; 5] = [0; 5];
+        let result = message.write(&mut buffer);
+
+        assert!(result.is_ok());
+        assert_eq!(buffer, data);
+    }
+
+    #[test]
+    fn test_message_write_bytes_10() {
         let data = [
             0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
             0b11100010, 0b11001110, 0b11011110,
@@ -461,6 +473,21 @@ mod tests {
 
         assert!(result.is_ok());
         assert_eq!(buffer, data);
+    }
+
+    #[test]
+    fn test_message_write_bytes_buffer_too_small() {
+        let data = [
+            0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
+            0b11100010, 0b11001110, 0b11011110,
+        ];
+
+        let message: Message<4> = Message::read_command(&data).unwrap();
+
+        let mut buffer: [u8; 9] = [0; 9];
+        let result = message.write(&mut buffer);
+
+        assert!(result.is_err());
     }
 
     #[test]
