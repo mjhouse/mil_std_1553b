@@ -107,7 +107,7 @@ from strings.
     - [x] Words have parsing tests
     - [x] Words have conversion tests
     - [x] Documentation exists for words
-- [ ] Messages implemented
+- [x] Messages implemented
     - [x] Message struct is created
     - [x] Messages can be constructed from words
     - [x] Messages can be parsed from binary

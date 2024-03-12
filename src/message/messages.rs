@@ -9,6 +9,7 @@ use crate::{errors::*, Header, Packet, Word};
 ///
 /// * Command or status words are always the first word.
 /// * Data words are limited based on the command word count.
+/// * For status words, data words are parsed to the end of the buffer
 ///
 /// Messages do not validate larger messaging patterns that
 /// require context about previous messages or terminal type.
@@ -103,7 +104,9 @@ impl<const WORDS: usize> Message<WORDS> {
     ///
     /// Each word is a triplet containing 3-bit sync, 16-bit word,
     /// and 1-bit parity. It is assumed that the message
-    /// being parsed is aligned to the beginning of the slice.
+    /// being parsed is aligned to the beginning of the slice
+    /// (the leftmost three bits of the first byte are the sync
+    /// field of the command word).
     ///
     /// # Arguments
     ///
@@ -140,6 +143,10 @@ impl<const WORDS: usize> Message<WORDS> {
     /// this method will parse data words to the end of the
     /// byte array. Slice the input data to avoid parsing
     /// any unwanted words.
+    ///
+    /// It is assumed that the message being parsed is aligned
+    /// to the beginning of the slice (the leftmost three bits
+    /// of the first byte are the sync field of the status word).
     ///
     /// # Arguments
     ///

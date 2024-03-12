@@ -266,7 +266,21 @@ mod tests {
     use crate::flags::{Address, BroadcastReceived, SubAddress};
 
     #[test]
-    fn test_packet_parse_offset_13() {
+    fn test_packet_command_bad_sync() {
+        let result1: Result<CommandWord> = Packet::read(&[0b10000000, 0b00000000, 0b00010000], 0)
+            .unwrap()
+            .try_into();
+
+        let result2: Result<CommandWord> = Packet::read(&[0b00100000, 0b00000000, 0b00010000], 0)
+            .unwrap()
+            .try_into();
+
+        assert!(result1.is_ok());
+        assert_eq!(result2, Err(Error::PacketIsInvalid));
+    }
+
+    #[test]
+    fn test_packet_read_offset_13() {
         let result = Packet::read(
             &[0b00000000, 0b00000111, 0b10000000, 0b00000001, 0b10000000],
             13,
@@ -276,7 +290,7 @@ mod tests {
     }
 
     #[test]
-    fn test_packet_parse_offset_12() {
+    fn test_packet_read_offset_12() {
         let packet = Packet::read(&[0b00000000, 0b00001111, 0b00000000, 0b00000011], 12).unwrap();
 
         assert_eq!(packet.sync, 0b00000111);
@@ -285,7 +299,7 @@ mod tests {
     }
 
     #[test]
-    fn test_packet_parse_offset_6() {
+    fn test_packet_read_offset_6() {
         let packet = Packet::read(&[0b00000011, 0b11000000, 0b00000000, 0b11000000], 6).unwrap();
 
         assert_eq!(packet.sync, 0b00000111);
@@ -294,7 +308,7 @@ mod tests {
     }
 
     #[test]
-    fn test_packet_parse_offset_4() {
+    fn test_packet_read_offset_4() {
         let packet = Packet::read(&[0b00001111, 0b00000000, 0b00000011], 4).unwrap();
 
         assert_eq!(packet.sync, 0b00000111);
@@ -303,7 +317,7 @@ mod tests {
     }
 
     #[test]
-    fn test_packet_parse_offset_0() {
+    fn test_packet_read_offset_0() {
         let packet = Packet::read(&[0b11110000, 0b00000000, 0b00110000], 0).unwrap();
 
         assert_eq!(packet.sync, 0b00000111);
@@ -456,7 +470,7 @@ mod tests {
     }
 
     #[test]
-    fn test_packet_parse_word_alternate() {
+    fn test_packet_read_word_alternate() {
         let packet = Packet::read(&[0b00010101, 0b01010101, 0b01000000], 0).unwrap();
 
         assert_eq!(packet.sync, 0b00000000);
@@ -465,7 +479,7 @@ mod tests {
     }
 
     #[test]
-    fn test_packet_parse_word_ones() {
+    fn test_packet_read_word_ones() {
         let packet = Packet::read(&[0b00011111, 0b11111111, 0b11100000], 0).unwrap();
 
         assert_eq!(packet.sync, 0b00000000);
@@ -474,7 +488,7 @@ mod tests {
     }
 
     #[test]
-    fn test_packet_parse_word_zeroes() {
+    fn test_packet_read_word_zeroes() {
         let packet = Packet::read(&[0b11100000, 0b00000000, 0b00010000], 0).unwrap();
 
         assert_eq!(packet.sync, 0b00000111);
@@ -483,7 +497,7 @@ mod tests {
     }
 
     #[test]
-    fn test_packet_parse_sync_zeroes() {
+    fn test_packet_read_sync_zeroes() {
         let packet = Packet::read(&[0b00011111, 0b11111111, 0b11111111], 0).unwrap();
 
         assert_eq!(packet.sync, 0b00000000);
@@ -492,7 +506,7 @@ mod tests {
     }
 
     #[test]
-    fn test_packet_parse_sync_ones() {
+    fn test_packet_read_sync_ones() {
         let packet = Packet::read(&[0b11100000, 0b00000000, 0b00000000], 0).unwrap();
 
         assert_eq!(packet.sync, 0b00000111);
@@ -501,7 +515,7 @@ mod tests {
     }
 
     #[test]
-    fn test_packet_parse_parity_one() {
+    fn test_packet_read_parity_one() {
         let packet = Packet::read(
             &[
                 0b00000000, 0b00000000, 0b00010000, // 20th
@@ -516,7 +530,7 @@ mod tests {
     }
 
     #[test]
-    fn test_packet_parse_parity_one_right() {
+    fn test_packet_read_parity_one_right() {
         let packet = Packet::read(
             &[
                 0b00000000, 0b00000000, 0b00001000, // 21st
@@ -531,7 +545,7 @@ mod tests {
     }
 
     #[test]
-    fn test_packet_parse_parity_one_left() {
+    fn test_packet_read_parity_one_left() {
         let packet = Packet::read(
             &[
                 0b00000000, 0b00000000, 0b00100000, // 19th
@@ -546,7 +560,7 @@ mod tests {
     }
 
     #[test]
-    fn test_packet_parse_parity_zero() {
+    fn test_packet_read_parity_zero() {
         let packet = Packet::read(
             &[
                 0b11111111, 0b11111111, 0b11101111, // 20th
