@@ -27,7 +27,7 @@ StatusWord, and DataWord.
 ```rust
     use mil_std_1553b::*;
 
-    let message = Message::new()
+    let message: Message = Message::new()
         .with_command(CommandWord::new()
             .with_address(Address::Value(12))
             .with_subaddress(SubAddress::Value(5))
@@ -37,7 +37,7 @@ StatusWord, and DataWord.
         .with_data(DataWord::new()).unwrap()
         .with_data(DataWord::new()).unwrap();
 
-    assert_eq!(message.word_count(),3);
+    assert_eq!(message.length(),3);
 ```
 
 ### Parsing a message
@@ -50,7 +50,7 @@ how many data words will be parsed from the buffer.
 ```rust
     use mil_std_1553b::*;
 
-    let message = Message::parse_command(&[
+    let message: Message = Message::read_command(&[
         0b10000011, 
         0b00001100, 
         0b00100010, 
@@ -59,7 +59,7 @@ how many data words will be parsed from the buffer.
     ])
     .unwrap();
 
-    assert_eq!(message.word_count(),2);
+    assert_eq!(message.length(),2);
 ```
 
 #### Status messages
@@ -67,7 +67,7 @@ how many data words will be parsed from the buffer.
 ```rust
     use mil_std_1553b::*;
 
-    let message = Message::parse_status(&[
+    let message: Message = Message::read_status(&[
         0b10000011, 
         0b00001100, 
         0b01000010, 
@@ -76,7 +76,7 @@ how many data words will be parsed from the buffer.
     ])
     .unwrap();
 
-    assert_eq!(message.word_count(), 2);
+    assert_eq!(message.length(), 2);
 ```
 
 ### Parsing a word
@@ -107,16 +107,16 @@ from strings.
     - [x] Words have parsing tests
     - [x] Words have conversion tests
     - [x] Documentation exists for words
-- [ ] Messages implemented
+- [x] Messages implemented
     - [x] Message struct is created
     - [x] Messages can be constructed from words
     - [x] Messages can be parsed from binary
     - [x] Messages have parsing tests
-    - [ ] Messages have conversion tests
+    - [x] Messages have conversion tests
     - [x] Documentation exists for messages
 - [ ] Integration tests implemented
-    - [ ] Round-trip tests (binary -> struct -> binary) exist for messages
-    - [ ] Round-trip tests (binary -> struct -> binary) exist for words
+    - [x] Round-trip tests (binary -> struct -> binary) exist for messages
+    - [x] Round-trip tests (binary -> struct -> binary) exist for words
     - [ ] Configuration tests (JSON) exist for words
     - [ ] Configuration tests (JSON) exist for messages
 

@@ -1,11 +1,20 @@
 use crate::errors::{parity, Error, MessageError, Result, SubsystemError, TerminalError};
-use crate::fields::*;
 use crate::flags::*;
+use crate::{fields::*, WordType};
+
+/// Common functionality for service words
+pub trait Header
+where
+    Self: Sized + Into<WordType>,
+{
+    /// The number of data words expected
+    fn count(&self) -> Option<usize>;
+}
 
 /// Common functionality for all words
 pub trait Word
 where
-    Self: Sized,
+    Self: Sized + Into<WordType>,
 {
     /// Create an empty word
     fn new() -> Self;
@@ -32,7 +41,7 @@ where
     fn from_bytes(data: [u8; 2]) -> Self;
 
     /// Get the internal data as a slice
-    fn as_bytes(&self) -> &[u8];
+    fn as_bytes(&self) -> [u8; 2];
 
     /// Get the internal data as u16
     fn as_value(&self) -> u16;
@@ -795,6 +804,18 @@ impl DataWord {
     }
 }
 
+impl Header for CommandWord {
+    fn count(&self) -> Option<usize> {
+        Some(self.word_count() as usize)
+    }
+}
+
+impl Header for StatusWord {
+    fn count(&self) -> Option<usize> {
+        None
+    }
+}
+
 impl Word for CommandWord {
     fn new() -> Self {
         Self {
@@ -839,8 +860,8 @@ impl Word for CommandWord {
         Self::new().with_bytes(data)
     }
 
-    fn as_bytes(&self) -> &[u8] {
-        &self.data
+    fn as_bytes(&self) -> [u8; 2] {
+        self.data
     }
 
     fn as_value(&self) -> u16 {
@@ -922,8 +943,8 @@ impl Word for StatusWord {
         Self::new().with_bytes(data)
     }
 
-    fn as_bytes(&self) -> &[u8] {
-        &self.data
+    fn as_bytes(&self) -> [u8; 2] {
+        self.data
     }
 
     fn as_value(&self) -> u16 {
@@ -1005,8 +1026,8 @@ impl Word for DataWord {
         Self::new().with_bytes(data)
     }
 
-    fn as_bytes(&self) -> &[u8] {
-        &self.data
+    fn as_bytes(&self) -> [u8; 2] {
+        self.data
     }
 
     fn as_value(&self) -> u16 {
@@ -1266,7 +1287,7 @@ mod tests {
             .build()
             .unwrap();
 
-        assert_eq!(word.as_bytes(), &[0b01001000, 0b01001001]);
+        assert_eq!(word.as_bytes(), [0b01001000, 0b01001001]);
         assert_eq!(word.as_value(), 0b0100100001001001u16);
         assert_eq!(word.as_string(), Ok("HI"));
         assert_eq!(word.parity(), 0);
@@ -1278,7 +1299,7 @@ mod tests {
             .with_value(0b0100100001001001u16)
             .with_calculated_parity();
 
-        assert_eq!(word.as_bytes(), &[0b01001000, 0b01001001]);
+        assert_eq!(word.as_bytes(), [0b01001000, 0b01001001]);
         assert_eq!(word.as_value(), 0b0100100001001001u16);
         assert_eq!(word.as_string(), Ok("HI"));
         assert_eq!(word.parity(), 0);
@@ -1291,7 +1312,7 @@ mod tests {
             .unwrap()
             .with_calculated_parity();
 
-        assert_eq!(word.as_bytes(), &[0b01001000, 0b01001001]);
+        assert_eq!(word.as_bytes(), [0b01001000, 0b01001001]);
         assert_eq!(word.as_value(), 0b0100100001001001u16);
         assert_eq!(word.as_string(), Ok("HI"));
         assert_eq!(word.parity(), 0);
@@ -1593,6 +1614,19 @@ mod tests {
     }
 
     #[test]
+    fn test_data_roundtrip() {
+        let word1 = DataWord::from_value(0b0110100001101001);
+        let data1 = word1.as_bytes();
+
+        let word2 = DataWord::from_bytes(data1);
+        let data2 = word2.as_bytes();
+
+        assert_eq!(data1, [0b01101000, 0b01101001]);
+        assert_eq!(data2, [0b01101000, 0b01101001]);
+        assert_eq!(word1, word2);
+    }
+
+    #[test]
     fn test_command_bytes() {
         let word = CommandWord::from_value(0b0110100001101001);
         let data = word.as_bytes();
@@ -1600,9 +1634,35 @@ mod tests {
     }
 
     #[test]
+    fn test_command_roundtrip() {
+        let word1 = CommandWord::from_value(0b0110100001101001);
+        let data1 = word1.as_bytes();
+
+        let word2 = CommandWord::from_bytes(data1);
+        let data2 = word2.as_bytes();
+
+        assert_eq!(data1, [0b01101000, 0b01101001]);
+        assert_eq!(data2, [0b01101000, 0b01101001]);
+        assert_eq!(word1, word2);
+    }
+
+    #[test]
     fn test_status_bytes() {
         let word = StatusWord::from_value(0b0110100001101001);
         let data = word.as_bytes();
         assert_eq!(data, [0b01101000, 0b01101001]);
+    }
+
+    #[test]
+    fn test_status_roundtrip() {
+        let word1 = StatusWord::from_value(0b0110100001101001);
+        let data1 = word1.as_bytes();
+
+        let word2 = StatusWord::from_bytes(data1);
+        let data2 = word2.as_bytes();
+
+        assert_eq!(data1, [0b01101000, 0b01101001]);
+        assert_eq!(data2, [0b01101000, 0b01101001]);
+        assert_eq!(word1, word2);
     }
 }
