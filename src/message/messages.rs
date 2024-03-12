@@ -1,6 +1,6 @@
 use crate::word::WordType;
 use crate::word::{CommandWord, DataWord, StatusWord};
-use crate::{errors::*, Packet, Word};
+use crate::{errors::*, Header, Packet, Word};
 
 /// A message sent between two terminals on the bus
 ///
@@ -9,7 +9,7 @@ use crate::{errors::*, Packet, Word};
 ///
 /// * Command or status words are always the first word.
 /// * Data words are limited based on the command word count.
-/// * Messages can't exceed [max message size][Message::MAX_WORDS].
+/// * For status words, data words are parsed to the end of the buffer
 ///
 /// Messages do not validate larger messaging patterns that
 /// require context about previous messages or terminal type.
@@ -19,7 +19,7 @@ use crate::{errors::*, Packet, Word};
 /// ```rust
 /// # use mil_std_1553b::*;
 /// # fn try_main() -> Result<()> {
-///     let message = Message::new()
+///     let message: Message = Message::new()
 ///         .with_command(CommandWord::new()
 ///             .with_address(Address::Value(12))
 ///             .with_subaddress(SubAddress::Value(5))
@@ -30,36 +30,69 @@ use crate::{errors::*, Packet, Word};
 ///         .with_data(DataWord::new())?;
 ///
 ///     assert!(message.is_full());
-///     assert_eq!(message.word_count(),3);
-///     assert_eq!(message.data_count(),2);
-///     assert_eq!(message.data_expected(),2);
+///     assert_eq!(message.length(),3);
+///     assert_eq!(message.count(),2);
 /// # Ok(())
 /// # }
 /// ```
 ///
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
-pub struct Message {
+pub struct Message<const WORDS: usize = 33> {
     count: usize,
-    words: [WordType; Self::MAX_WORDS],
+    words: [WordType; WORDS],
 }
 
-impl Message {
-    /// The maximum number of words that a message can hold
-    ///
-    /// For messages which begin with a [StatusWord], this value
-    /// is equal to **one more than** the number of [DataWords][DataWord]
-    /// that the message will accept before it is full. For messages
-    /// which begin with a [CommandWord], this value is the maximum
-    /// number of words which may be returned by the
-    /// [word_count][CommandWord::word_count] method.
-    pub const MAX_WORDS: usize = 33;
-
+impl<const WORDS: usize> Message<WORDS> {
     /// Create a new message struct
     pub fn new() -> Self {
         Self {
             count: 0,
-            words: [WordType::None; Self::MAX_WORDS],
+            words: [WordType::None; WORDS],
         }
+    }
+
+    /// Constructor method to add a command word to the message
+    ///
+    /// # Arguments
+    ///
+    /// * `word` - A word to add
+    ///
+    pub fn with_command<T: Into<CommandWord>>(mut self, word: T) -> Result<Self> {
+        self.add_command(word.into())?;
+        Ok(self)
+    }
+
+    /// Constructor method to add a status word to the message
+    ///
+    /// # Arguments
+    ///
+    /// * `word` - A word to add
+    ///
+    pub fn with_status<T: Into<StatusWord>>(mut self, word: T) -> Result<Self> {
+        self.add_status(word.into())?;
+        Ok(self)
+    }
+
+    /// Constructor method to add a data word to the message
+    ///
+    /// # Arguments
+    ///
+    /// * `word` - A word to add
+    ///
+    pub fn with_data<T: Into<DataWord>>(mut self, word: T) -> Result<Self> {
+        self.add_data(word.into())?;
+        Ok(self)
+    }
+
+    /// Constructor method to add a word to the message
+    ///
+    /// # Arguments
+    ///
+    /// * `word` - A word to add
+    ///
+    pub fn with_word<T: Word>(mut self, word: T) -> Result<Self> {
+        self.add(word)?;
+        Ok(self)
     }
 
     /// Parse a slice of bytes into a command message
@@ -71,7 +104,9 @@ impl Message {
     ///
     /// Each word is a triplet containing 3-bit sync, 16-bit word,
     /// and 1-bit parity. It is assumed that the message
-    /// being parsed is aligned to the beginning of the slice.
+    /// being parsed is aligned to the beginning of the slice
+    /// (the leftmost three bits of the first byte are the sync
+    /// field of the command word).
     ///
     /// # Arguments
     ///
@@ -82,7 +117,7 @@ impl Message {
     /// ```rust
     /// # use mil_std_1553b::*;
     /// # fn try_main() -> Result<()> {
-    ///     let message = Message::parse_command(&[
+    ///     let message: Message = Message::read_command(&[
     ///         0b10000011,
     ///         0b00001100,
     ///         0b01010110,
@@ -91,34 +126,13 @@ impl Message {
     ///     ])?;
     ///
     ///     assert!(message.is_full());
-    ///     assert!(message.has_command());
-    ///     assert_eq!(message.word_count(),2);
-    ///     assert_eq!(message.data_count(),1);
+    ///     assert!(message.is_command());
+    ///     assert_eq!(message.length(),2);
+    ///     assert_eq!(message.count(),1);
     /// # Ok(())
     /// # }
-    pub fn parse_command(data: &[u8]) -> Result<Self> {
-        // get the first word as a command word
-        let mut message = Self::new().with_command(Packet::parse(data, 0)?.to_command()?)?;
-
-        // get the number of data words expected
-        let num = message.data_expected();
-
-        let sbit = 20; // starting data bit
-        let ebit = 20 * (num + 1); // ending data bit
-
-        // iterate chunks of 20 bits for each word
-        for bit in (sbit..ebit).step_by(20) {
-            let index = bit / 8; // byte index in the slice
-            let offset = bit % 8; // bit index in the last byte
-
-            // get a trimmed slice to parse
-            let bytes = &data[index..];
-
-            // parse as a data word and add
-            message.add_data(Packet::parse(bytes, offset)?.to_data()?)?;
-        }
-
-        Ok(message)
+    pub fn read_command(data: &[u8]) -> Result<Self> {
+        Self::read::<CommandWord>(data)
     }
 
     /// Parse a slice of bytes into a status message
@@ -130,18 +144,22 @@ impl Message {
     /// byte array. Slice the input data to avoid parsing
     /// any unwanted words.
     ///
+    /// It is assumed that the message being parsed is aligned
+    /// to the beginning of the slice (the leftmost three bits
+    /// of the first byte are the sync field of the status word).
+    ///
     /// # Arguments
     ///
     /// * `data` - A slice of bytes to parse
     ///
-    /// See [parse_command][Message::parse_command] for more information.
+    /// See [read_command][Message::read_command] for more information.
     ///
     /// ## Example
     ///
     /// ```rust
     /// # use mil_std_1553b::*;
     /// # fn try_main() -> Result<()> {
-    ///     let message = Message::parse_status(&[
+    ///     let message: Message = Message::read_status(&[
     ///         0b10000011,
     ///         0b00001100,
     ///         0b01010110,
@@ -152,133 +170,47 @@ impl Message {
     ///     // the message is not full because we haven't hit
     ///     // the maximum number of words.
     ///     assert!(!message.is_full());
-    ///     assert!(message.has_status());
-    ///     assert_eq!(message.word_count(),2);
-    ///     assert_eq!(message.data_count(),1);
+    ///     assert!(message.is_status());
+    ///     assert_eq!(message.length(),2);
+    ///     assert_eq!(message.count(),1);
     /// # Ok(())
     /// # }
     /// ```
-    pub fn parse_status(data: &[u8]) -> Result<Self> {
-        // get the first word as a status word
-        let mut message = Self::new().with_status(Packet::parse(data, 0)?.to_status()?)?;
-
-        let bits = data.len() * 8;
-        let step = 20;
-        let sbit = step;
-        let ebit = (bits / step) * step;
-
-        // iterate chunks of 20 bits for each word
-        for bit in (sbit..ebit).step_by(step) {
-            let index = bit / 8; // byte index in the slice
-            let offset = bit % 8; // offset into a byte
-
-            // get a trimmed slice to parse
-            let bytes = &data[index..];
-
-            // parse as a data word and add
-            message.add_data(Packet::parse(bytes, offset)?.to_data()?)?;
-        }
-
-        Ok(message)
+    pub fn read_status(data: &[u8]) -> Result<Self> {
+        Self::read::<StatusWord>(data)
     }
 
-    /// Check if the message is full
+    /// Get the command word from the message
     ///
-    /// This method will return false for status messages
-    /// until the [maximum number of data words][Message::MAX_WORDS]
-    /// has been added.
-    #[must_use = "Returned value is not used"]
-    pub fn is_full(&self) -> bool {
-        if self.has_command() {
-            self.data_count() == self.data_expected()
-        } else {
-            self.count == self.words.len()
-        }
-    }
-
-    /// Check if the message is empty
-    #[must_use = "Returned value is not used"]
-    pub fn is_empty(&self) -> bool {
-        self.count == 0
-    }
-
-    /// Clear all words from the message
-    pub fn clear(&mut self) {
-        self.count = 0;
-        self.words = [WordType::None; Self::MAX_WORDS];
-    }
-
-    /// Get the last word in the message
-    pub fn last(&self) -> Option<&WordType> {
-        match self.count {
-            0 => None,
-            i => self.words.get(i - 1),
-        }
-    }
-
-    /// Get the first word in the message
-    pub fn first(&self) -> Option<&WordType> {
-        match self.count {
-            0 => None,
-            _ => self.words.get(0),
-        }
-    }
-
-    /// Get the number of words
-    pub fn word_count(&self) -> usize {
-        self.count
-    }
-
-    /// Get the number of data words
-    pub fn data_count(&self) -> usize {
-        self.words
-            .iter()
-            .take_while(|w| w.is_some())
-            .filter(|w| w.is_data())
-            .count()
-    }
-
-    /// Get the expected number of data words
-    pub fn data_expected(&self) -> usize {
-        self.first().map(WordType::data_count).unwrap_or(0)
-    }
-
-    /// Check if message has data words
-    #[must_use = "Returned value is not used"]
-    pub fn has_data(&self) -> bool {
-        self.data_count() > 0
-    }
-
-    /// Check if message can contain more data words
-    #[must_use = "Returned value is not used"]
-    pub fn has_space(&self) -> bool {
-        self.data_count() < self.data_expected()
-    }
-
-    /// Check if message starts with a command word
-    #[must_use = "Returned value is not used"]
-    pub fn has_command(&self) -> bool {
-        self.first().map(WordType::is_command).unwrap_or(false)
-    }
-
-    /// Check if message starts with a status word
-    #[must_use = "Returned value is not used"]
-    pub fn has_status(&self) -> bool {
-        self.first().map(WordType::is_status).unwrap_or(false)
-    }
-
-    /// Add a word to the message, returning size on success
+    /// Returns `None` if this message doesn't
+    /// have a command word.
     ///
     /// # Arguments
     ///
-    /// * `word` - A word to add
+    /// * `index` - An index
     ///
-    pub fn add<T: Into<WordType>>(&mut self, word: T) -> Result<()> {
-        match word.into() {
-            WordType::Data(v) => self.add_data(v),
-            WordType::Status(v) => self.add_status(v),
-            WordType::Command(v) => self.add_command(v),
-            _ => Err(Error::WordIsInvalid),
+    pub fn command(&self) -> Option<&CommandWord> {
+        if let Some(WordType::Command(w)) = &self.words.get(0) {
+            Some(w)
+        } else {
+            None
+        }
+    }
+
+    /// Get the status word from the message
+    ///
+    /// Returns `None` if this message doesn't
+    /// have a status word.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - An index
+    ///
+    pub fn status(&self) -> Option<&StatusWord> {
+        if let Some(WordType::Status(w)) = &self.words.get(0) {
+            Some(w)
+        } else {
+            None
         }
     }
 
@@ -299,102 +231,214 @@ impl Message {
         }
     }
 
-    /// Constructor method to add a word to the message
+    /// Add a word to the message
     ///
     /// # Arguments
     ///
     /// * `word` - A word to add
     ///
-    pub fn with_word<T: Into<WordType>>(mut self, word: T) -> Result<Self> {
-        self.add(word)?;
-        Ok(self)
+    pub fn add<T: Word>(&mut self, word: T) -> Result<()> {
+        match word.into() {
+            WordType::Data(v) => self.add_data(v),
+            WordType::Status(v) => self.add_status(v),
+            WordType::Command(v) => self.add_command(v),
+            _ => Err(Error::WordIsInvalid),
+        }
     }
 
-    /// Add a data word, returning the size of the message on success
+    /// Add a data word
+    ///
+    /// Performs basic checks for message validity before
+    /// Adding the data word. This method will return an error
+    /// if the status word-
+    ///
+    /// * Is the first word in the message.
+    /// * If the message is full.
+    /// * If the parity bit on the word is wrong.
     ///
     /// # Arguments
     ///
     /// * `word` - A word to add
     ///
-    pub fn add_data(&mut self, word: DataWord) -> Result<()> {
-        if self.is_full() && self.has_command() {
+    fn add_data(&mut self, word: DataWord) -> Result<()> {
+        if self.is_full() && self.is_command() {
             Err(Error::MessageIsFull)
         } else if self.is_empty() {
             Err(Error::FirstWordIsData)
+        } else if self.words.len() <= self.count {
+            Err(Error::MessageIsFull)
         } else {
-            self.words[self.count] = WordType::Data(word);
+            self.words[self.count] = word.into();
             self.count += 1;
             Ok(())
         }
     }
 
-    /// Constructor method to add a data word to the message
+    /// Add a status word
+    ///
+    /// Performs basic checks for message validity before
+    /// Adding the status word. This method will return an error
+    /// if the status word-
+    ///
+    /// * Is not the first word in the message.
+    /// * If the message is full.
+    /// * If the parity bit on the word is wrong.
     ///
     /// # Arguments
     ///
     /// * `word` - A word to add
     ///
-    pub fn with_data<T: Into<DataWord>>(mut self, word: T) -> Result<Self> {
-        self.add_data(word.into())?;
-        Ok(self)
-    }
-
-    /// Add a status word, returning the size of the message on success
-    ///
-    /// # Arguments
-    ///
-    /// * `word` - A word to add
-    ///
-    pub fn add_status(&mut self, word: StatusWord) -> Result<()> {
+    fn add_status(&mut self, word: StatusWord) -> Result<()> {
         if !self.is_empty() {
             Err(Error::StatusWordNotFirst)
         } else if !word.check_parity() {
             Err(Error::InvalidWord)
+        } else if self.words.len() <= self.count {
+            Err(Error::MessageIsFull)
         } else {
-            self.words[self.count] = WordType::Status(word);
+            self.words[self.count] = word.into();
             self.count += 1;
             Ok(())
         }
     }
 
-    /// Constructor method to add a status word to the message
+    /// Add a command word
+    ///
+    /// Performs basic checks for message validity before
+    /// Adding the command word. This method will return an error
+    /// if the command word-
+    ///
+    /// * Is not the first word in the message.
+    /// * If the message is full.
+    /// * If the parity bit on the word is wrong.
     ///
     /// # Arguments
     ///
     /// * `word` - A word to add
     ///
-    pub fn with_status<T: Into<StatusWord>>(mut self, word: T) -> Result<Self> {
-        self.add_status(word.into())?;
-        Ok(self)
-    }
-
-    /// Add a command word, returning the size of the message on success
-    ///
-    /// # Arguments
-    ///
-    /// * `word` - A word to add
-    ///
-    pub fn add_command(&mut self, word: CommandWord) -> Result<()> {
+    fn add_command(&mut self, word: CommandWord) -> Result<()> {
         if !self.is_empty() {
             Err(Error::CommandWordNotFirst)
         } else if !word.check_parity() {
             Err(Error::InvalidWord)
+        } else if self.words.len() <= self.count {
+            Err(Error::MessageIsFull)
         } else {
-            self.words[self.count] = WordType::Command(word);
+            self.words[self.count] = word.into();
             self.count += 1;
             Ok(())
         }
     }
 
-    /// Constructor method to add a command word to the message
+    /// Check if message starts with a command word
+    #[must_use = "Returned value is not used"]
+    pub fn is_command(&self) -> bool {
+        self.command().is_some()
+    }
+
+    /// Check if message starts with a status word
+    #[must_use = "Returned value is not used"]
+    pub fn is_status(&self) -> bool {
+        self.status().is_some()
+    }
+
+    /// Check if the message is full
     ///
-    /// # Arguments
-    ///
-    /// * `word` - A word to add
-    ///
-    pub fn with_command<T: Into<CommandWord>>(mut self, word: T) -> Result<Self> {
-        self.add_command(word.into())?;
-        Ok(self)
+    /// This method will return false for status messages
+    /// until the maximum number of data words has been reached.
+    #[must_use = "Returned value is not used"]
+    pub fn is_full(&self) -> bool {
+        if let Some(w) = self.command() {
+            self.count() == w.word_count().into()
+        } else {
+            self.count == self.words.len()
+        }
+    }
+
+    /// Check if the message is empty
+    #[must_use = "Returned value is not used"]
+    pub fn is_empty(&self) -> bool {
+        self.count == 0
+    }
+
+    /// Clear all words from the message
+    pub fn clear(&mut self) {
+        self.count = 0;
+        self.words = [WordType::None; WORDS];
+    }
+
+    /// Get the number of data words
+    pub fn count(&self) -> usize {
+        self.words.iter().filter(|w| w.is_data()).count()
+    }
+
+    /// Get the total number of words
+    pub fn length(&self) -> usize {
+        self.words.iter().filter(|w| w.is_some()).count()
+    }
+
+    /// Read bytes as a message
+    pub fn read<T: Word + Header>(data: &[u8]) -> Result<Self> {
+        // estimate word count from given data
+        let estimate = ((data.len() * 8) / 20) - 1;
+
+        // parse the specified header word
+        let word = Packet::read(data, 0)?.as_word::<T>()?;
+
+        // get the number of expected words or an
+        // estimate if the header is a status word.
+        let count = word.count().unwrap_or(estimate);
+
+        // create a new message with the header word
+        let mut message: Self = Self::new().with_word(word)?;
+
+        // return if no data words
+        if count == 0 {
+            return Ok(message);
+        }
+
+        // the expected number of bytes to parse
+        let expected = ((count * 20) + 7) / 8;
+
+        // return error if data is too small
+        if data.len() < expected {
+            return Err(Error::InvalidMessage);
+        }
+
+        let start = 1; // skip the service word
+        let end = count + 1; // adjust for service word
+
+        for index in start..end {
+            let b = index * 20; // offset in bits
+            let i = b / 8; // byte offset (whole)
+            let o = b % 8; // byte offset (fraction)
+            let bytes = &data[i..];
+
+            // use a packet to parse the bytes and convert to a word
+            message.add_data(Packet::read(bytes, o)?.try_into()?)?;
+        }
+
+        Ok(message)
+    }
+
+    /// Get the message as a byte array
+    pub fn write(&self, bytes: &mut [u8]) -> Result<()> {
+        let count = ((self.length() * 20) + 7) / 8;
+
+        if bytes.len() < count {
+            return Err(Error::OutOfBounds);
+        }
+
+        for (index, word) in self.words.iter().take_while(|w| w.is_some()).enumerate() {
+            let b = index * 20;
+            let i = b / 8;
+            let o = b % 8;
+
+            let packet = Packet::try_from(word)?;
+            packet.write(&mut bytes[i..], o)?;
+        }
+
+        Ok(())
     }
 }
 
@@ -409,17 +453,91 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_command_three_data_words() {
-        let message = Message::parse_command(&[
+    fn test_message_write_bytes_buffer_5() {
+        let data = [0b10000011, 0b00001100, 0b00100010, 0b11010000, 0b11010010];
+
+        let message: Message<2> = Message::read_command(&data).unwrap();
+
+        let mut buffer: [u8; 5] = [0; 5];
+        let result = message.write(&mut buffer);
+
+        assert!(result.is_ok());
+        assert_eq!(buffer, data);
+    }
+
+    #[test]
+    fn test_message_write_bytes_10() {
+        let data = [
+            0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
+            0b11100010, 0b11001110, 0b11011110,
+        ];
+
+        let message: Message<4> = Message::read_command(&data).unwrap();
+
+        let mut buffer: [u8; 10] = [0; 10];
+        let result = message.write(&mut buffer);
+
+        assert!(result.is_ok());
+        assert_eq!(buffer, data);
+    }
+
+    #[test]
+    fn test_message_write_bytes_buffer_too_small() {
+        let data = [
+            0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
+            0b11100010, 0b11001110, 0b11011110,
+        ];
+
+        let message: Message<4> = Message::read_command(&data).unwrap();
+
+        let mut buffer: [u8; 9] = [0; 9];
+        let result = message.write(&mut buffer);
+
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_parse_words_wrong_word_size() {
+        let result: Result<Message<3>> = Message::read_command(&[
+            0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
+            0b11100010, 0b11001110, 0b11011110,
+        ]);
+
+        assert_eq!(result, Err(Error::MessageIsFull));
+    }
+
+    #[test]
+    fn test_parse_words_right_word_size() {
+        let result: Result<Message<4>> = Message::read_command(&[
+            0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
+            0b11100010, 0b11001110, 0b11011110,
+        ]);
+
+        assert!(result.is_ok());
+    }
+
+    #[test]
+    fn test_parse_words_wrong_byte_size() {
+        let result: Result<Message<2>> = Message::read_command(&[
+            0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
+            0b11100010, 0b11001110,
+        ]);
+
+        assert_eq!(result, Err(Error::MessageIsFull));
+    }
+
+    #[test]
+    fn test_read_command_three_data_words() {
+        let message: Message<4> = Message::read_command(&[
             0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
             0b11100010, 0b11001110, 0b11011110,
         ])
         .unwrap();
 
         assert!(message.is_full());
-        assert!(message.has_command());
-        assert_eq!(message.word_count(), 4);
-        assert_eq!(message.data_count(), 3);
+        assert!(message.is_command());
+        assert_eq!(message.length(), 4);
+        assert_eq!(message.count(), 3);
 
         let word0 = message
             .get(0)
@@ -440,43 +558,43 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_command_two_data_words() {
-        let message = Message::parse_command(&[
+    fn test_read_command_two_data_words() {
+        let message: Message<3> = Message::read_command(&[
             0b10000011, 0b00001100, 0b01000010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
             0b11100000,
         ])
         .unwrap();
 
         assert!(message.is_full());
-        assert!(message.has_command());
-        assert_eq!(message.word_count(), 3);
-        assert_eq!(message.data_count(), 2);
+        assert!(message.is_command());
+        assert_eq!(message.length(), 3);
+        assert_eq!(message.count(), 2);
     }
 
     #[test]
-    fn test_parse_command_one_data_word() {
-        let message =
-            Message::parse_command(&[0b10000011, 0b00001100, 0b00100010, 0b11010000, 0b11010010])
+    fn test_read_command_one_data_word() {
+        let message: Message =
+            Message::read_command(&[0b10000011, 0b00001100, 0b00100010, 0b11010000, 0b11010010])
                 .unwrap();
 
         assert!(message.is_full());
-        assert!(message.has_command());
-        assert_eq!(message.word_count(), 2);
-        assert_eq!(message.data_count(), 1);
+        assert!(message.is_command());
+        assert_eq!(message.length(), 2);
+        assert_eq!(message.count(), 1);
     }
 
     #[test]
-    fn test_parse_status_three_data_words() {
-        let message = Message::parse_status(&[
+    fn test_read_status_three_data_words() {
+        let message: Message = Message::read_status(&[
             0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
             0b11100010, 0b11001110, 0b11011110,
         ])
         .unwrap();
 
         assert!(!message.is_full());
-        assert!(message.has_status());
-        assert_eq!(message.word_count(), 4);
-        assert_eq!(message.data_count(), 3);
+        assert!(message.is_status());
+        assert_eq!(message.length(), 4);
+        assert_eq!(message.count(), 3);
 
         let word0 = message
             .get(0)
@@ -497,60 +615,63 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_status_two_data_words() {
-        let message = Message::parse_status(&[
+    fn test_read_status_two_data_words() {
+        let message: Message = Message::read_status(&[
             0b10000011, 0b00001100, 0b01000010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
             0b11100000,
         ])
         .unwrap();
 
         assert!(!message.is_full());
-        assert!(message.has_status());
-        assert_eq!(message.word_count(), 3);
-        assert_eq!(message.data_count(), 2);
+        assert!(message.is_status());
+        assert_eq!(message.length(), 3);
+        assert_eq!(message.count(), 2);
     }
 
     #[test]
-    fn test_parse_status_one_data_word() {
-        let message =
-            Message::parse_status(&[0b10000011, 0b00001100, 0b00100010, 0b11010000, 0b11010010])
+    fn test_read_status_one_data_word() {
+        let message: Message =
+            Message::read_status(&[0b10000011, 0b00001100, 0b00100010, 0b11010000, 0b11010010])
                 .unwrap();
 
         assert!(!message.is_full());
-        assert!(message.has_status());
-        assert_eq!(message.word_count(), 2);
-        assert_eq!(message.data_count(), 1);
+        assert!(message.is_status());
+        assert_eq!(message.length(), 2);
+        assert_eq!(message.count(), 1);
     }
 
     #[test]
     fn test_create_message() {
-        let message = Message::new();
+        let message: Message = Message::new();
 
         assert_eq!(message.is_full(), false);
         assert_eq!(message.is_empty(), true);
-        assert_eq!(message.first(), None);
-        assert_eq!(message.last(), None);
+        assert_eq!(message.command(), None);
+        assert_eq!(message.status(), None);
+        assert_eq!(message.get(0), None);
 
-        assert_eq!(message.word_count(), 0);
-        assert_eq!(message.data_count(), 0);
+        assert_eq!(message.length(), 0);
+        assert_eq!(message.count(), 0);
     }
 
     #[test]
     fn test_message_command_data() {
-        let mut message = Message::new();
+        let mut message: Message = Message::new();
 
         message
             .add(CommandWord::from_value(0b0001100001100010))
             .unwrap();
 
-        assert_eq!(message.word_count(), 1);
-        assert_eq!(message.data_count(), 0);
-        assert_eq!(message.data_expected(), 2);
+        let expected = message.command().map(CommandWord::word_count).unwrap_or(0);
+
+        assert_eq!(message.length(), 1);
+        assert_eq!(message.count(), 0);
+        assert_eq!(expected, 2);
     }
 
     #[test]
     fn test_message_command_add_data() {
-        let mut message = Message::new();
+        let mut message: Message = Message::new();
 
         message
             .add(CommandWord::from_value(0b0001100001100010))
@@ -558,26 +679,25 @@ mod tests {
 
         message.add(DataWord::from(0b0110100001101001)).unwrap();
 
-        assert_eq!(message.word_count(), 2);
-        assert_eq!(message.data_count(), 1);
+        assert_eq!(message.length(), 2);
+        assert_eq!(message.count(), 1);
     }
 
     #[test]
     fn test_message_status_no_data() {
-        let mut message = Message::new();
+        let mut message: Message = Message::new();
 
         message
             .add(StatusWord::from_value(0b0001100000000010))
             .unwrap();
 
-        assert_eq!(message.word_count(), 1);
-        assert_eq!(message.data_count(), 0);
-        assert_eq!(message.data_expected(), 0);
+        assert_eq!(message.length(), 1);
+        assert_eq!(message.count(), 0);
     }
 
     #[test]
     fn test_message_status_add_data() {
-        let mut message = Message::new();
+        let mut message: Message = Message::new();
 
         message
             .add(StatusWord::from_value(0b0001100000000000))
@@ -585,12 +705,7 @@ mod tests {
 
         message.add(DataWord::from(0b0110100001101001)).unwrap();
 
-        assert_eq!(message.word_count(), 2);
-        assert_eq!(message.data_count(), 1);
-
-        // status words don't have a word count field, and the
-        // number of data words following a status word is set
-        // by an earlier request.
-        assert_eq!(message.data_expected(), 0);
+        assert_eq!(message.length(), 2);
+        assert_eq!(message.count(), 1);
     }
 }
