@@ -34,12 +34,12 @@ jobs:
     - name: Generate code coverage
       run: grcov . -s . -b ./target/debug/ -t html,cobertura --branch --ignore-not-existing -o ./target/debug/coverage/
 
-    - name: Produce coverage report
-        uses: insightsengineering/coverage-action@v2
-        with:
-          path: ./target/debug/coverage/cobertura.xml
-          threshold: 50
-          fail: true
-          publish: true
-          diff: false
-          coverage-summary-title: "Coverage"
+    - name: Code Coverage Report Action
+      uses: insightsengineering/coverage-action@v2.6.0
+      with:
+        path: ./target/debug/coverage/cobertura.xml
+        threshold: 50
+        fail: true
+        publish: true
+        diff: false
+        coverage-summary-title: "Coverage"
