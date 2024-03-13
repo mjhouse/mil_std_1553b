@@ -24,6 +24,17 @@ jobs:
     - name: Test library
       run: cargo test --verbose
 
+    - name: Generate code coverage
+      run: |
+        mkdir -p ./target/debug/coverage && 
+        grcov . -s . -b ./target/debug/ -t html --branch --ignore-not-existing -o .
+
+    - name: Archive code coverage
+      uses: actions/upload-artifact@v4
+      with:
+        name: code-coverage
+        path: ./html
+
   merge:
 
     name: Merge
