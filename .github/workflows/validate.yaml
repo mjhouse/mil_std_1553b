@@ -32,7 +32,9 @@ jobs:
       run: cargo test --verbose
 
     - name: Generate code coverage
-      run: grcov . -s . -b ./target/debug/ -t html,cobertura --branch --ignore-not-existing -o ./target/debug/coverage/
+      run: |
+        mkdir -p ./target/debug/coverage && 
+        grcov . -s . -b ./target/debug/ -t html,cobertura --branch --ignore-not-existing -o ./target/debug/coverage
 
     - name: Code Coverage Report Action
       uses: insightsengineering/coverage-action@v2.6.0
