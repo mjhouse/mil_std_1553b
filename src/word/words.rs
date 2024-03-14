@@ -318,7 +318,10 @@ impl CommandWord {
 
     /// Get the number of data words associated with this word
     ///
-    /// This field is `None` if the subaddress is set to the ModeCode value.
+    /// The word count is a value between 0 and 32 in command words
+    /// that are not mode code commands. Mode code commands are 
+    /// identified using particular values of the subaddress field.
+    /// 
     /// See [SubAddress](crate::flags::SubAddress) for details about
     /// the ModeCode setting of the subaddress.
     pub fn word_count(&self) -> u8 {
@@ -330,21 +333,28 @@ impl CommandWord {
 
     /// Set the number of data words associated with this command
     ///
-    /// This method will do nothing if the subaddress is set to the ModeCode
-    /// value. See [CommandWord::word_count] for more information.
+    /// The word count field is stored in the same bit position as the
+    /// mode code value, and should only be used if the sub address is 
+    /// *not* set to a ModeCode value. See [CommandWord::word_count] 
+    /// for more information.
     ///
+    /// Commands that are not mode code require some number of data
+    /// words, and setting this field to `0` will indicate 32 data 
+    /// words. Any value given greater than 31 will be converted to
+    /// `0`.
+    /// 
     /// # Arguments
     ///
     /// * `value` - A word count to set
     ///
-    pub fn set_word_count(&mut self, value: u8) {
+    pub fn set_word_count(&mut self, mut value: u8) {
+        if value > 31 { value = 0; }
         COMMAND_WORD_COUNT_FIELD.set(self, value);
     }
 
     /// Constructor method to set the number of data words
     ///
-    /// This method will do nothing if the subaddress is set to the ModeCode
-    /// value. See [CommandWord::word_count] for more information.
+    /// See [CommandWord::set_word_count] for more information.
     ///
     /// # Arguments
     ///
@@ -1280,6 +1290,106 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_command_get_set_address() {
+        let value1 = Address::Broadcast(0b11111);
+        let value2 = Address::Value(0b10101);
+
+
+        let mut word = CommandWord::new().with_address(value1);
+        assert_eq!(word.address(),value1);
+
+        word.set_address(value2);
+        assert_eq!(word.address(),value2);
+        assert_eq!(word.as_value(), 0b1010100000000000);
+    }
+
+    #[test]
+    fn test_command_get_set_subaddress() {
+        let value1 = SubAddress::ModeCode(0b11111);
+        let value2 = SubAddress::Value(0b10101);
+
+
+        let mut word = CommandWord::new().with_subaddress(value1);
+        assert_eq!(word.subaddress(),value1);
+
+        word.set_subaddress(value2);
+        assert_eq!(word.subaddress(),value2);
+        assert_eq!(word.as_value(), 0b0000001010100000);
+    }
+
+    #[test]
+    fn test_command_get_set_transmit_receive() {
+        let mut word = CommandWord::new().with_transmit_receive(TransmitReceive::Receive);
+        assert!(word.transmit_receive().is_receive());
+
+        word.set_transmit_receive(TransmitReceive::Transmit);
+        assert!(word.transmit_receive().is_transmit());
+    }
+
+    #[test]
+    fn test_command_get_set_mode_code() {
+        let mut word = CommandWord::new().with_mode_code(ModeCode::TransmitVectorWord);
+        assert_eq!(word.mode_code(), ModeCode::TransmitVectorWord);
+
+        word.set_mode_code(ModeCode::InitiateSelfTest);
+        assert_eq!(word.mode_code(), ModeCode::InitiateSelfTest);
+    }
+
+    #[test]
+    fn test_command_get_set_word_count() {
+        let mut word = CommandWord::new().with_word_count(33);
+        assert_eq!(word.word_count(), 32);
+
+        word.set_word_count(5);
+        assert_eq!(word.word_count(), 5);
+    }
+
+    #[test]
+    fn test_command_is_mode_code() {
+        let mut word = CommandWord::new();
+
+        word.set_subaddress(SubAddress::ModeCode(0b00000));
+        assert!(word.is_mode_code());
+
+        word.set_subaddress(SubAddress::Value(0b01010));
+        assert!(!word.is_mode_code());
+
+        word.set_subaddress(SubAddress::ModeCode(0b11111));
+        assert!(word.is_mode_code());
+    }
+
+    #[test]
+    fn test_command_is_transmit() {
+        let mut word = CommandWord::new();
+
+        word.set_transmit_receive(TransmitReceive::Transmit);
+        assert!(word.is_transmit());
+
+        word.set_transmit_receive(TransmitReceive::Receive);
+        assert!(!word.is_transmit());
+    }
+
+    #[test]
+    fn test_command_is_receive() {
+        let mut word = CommandWord::new();
+
+        word.set_transmit_receive(TransmitReceive::Receive);
+        assert!(word.is_receive());
+
+        word.set_transmit_receive(TransmitReceive::Transmit);
+        assert!(!word.is_receive());
+    }
+
+    #[test]
+    fn test_command_count() {
+        let mut word = CommandWord::new().with_word_count(33);
+        assert_eq!(word.count(), 32);
+
+        word.set_word_count(5);
+        assert_eq!(word.count(), 5);
+    }
+
+    #[test]
     fn test_data_with_bytes() {
         let word = DataWord::new()
             .with_bytes([0b01001000, 0b01001001])
@@ -1445,60 +1555,6 @@ mod tests {
         let mut word = CommandWord::new();
         word.set_subaddress(SubAddress::Value(0b10101));
         assert_eq!(word.as_value(), 0b0000001010100000);
-    }
-
-    #[test]
-    fn test_command_get_set_transmit_receive() {
-        let mut word = CommandWord::new();
-        assert!(word.transmit_receive().is_receive());
-
-        word.set_transmit_receive(TransmitReceive::Transmit);
-        assert!(word.transmit_receive().is_transmit());
-    }
-
-    #[test]
-    fn test_command_get_set_mode_code() {
-        let mut word = CommandWord::new();
-        assert_eq!(word.mode_code(), ModeCode::DynamicBusControl);
-
-        word.set_mode_code(ModeCode::InitiateSelfTest);
-        assert_eq!(word.mode_code(), ModeCode::InitiateSelfTest);
-    }
-
-    #[test]
-    fn test_command_get_set_word_count() {
-        let mut word = CommandWord::new();
-        assert_eq!(word.word_count(), 32);
-
-        word.set_word_count(5);
-        assert_eq!(word.word_count(), 5);
-    }
-
-    #[test]
-    fn test_command_is_mode_code() {
-        let mut word = CommandWord::new();
-        assert!(word.is_mode_code());
-
-        word.set_subaddress(SubAddress::Value(0b01010));
-        assert!(!word.is_mode_code());
-    }
-
-    #[test]
-    fn test_command_is_transmit() {
-        let mut word = CommandWord::new();
-        assert!(!word.is_transmit());
-
-        word.set_transmit_receive(TransmitReceive::Transmit);
-        assert!(word.is_transmit());
-    }
-
-    #[test]
-    fn test_command_is_receive() {
-        let mut word = CommandWord::new();
-        assert!(word.is_receive());
-
-        word.set_transmit_receive(TransmitReceive::Transmit);
-        assert!(!word.is_receive());
     }
 
     #[test]
