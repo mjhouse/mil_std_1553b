@@ -93,7 +93,7 @@ where
 /// ```
 ///
 /// [^1]: p30 [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct CommandWord {
     /// Data of the word
     data: [u8; 2],
@@ -127,7 +127,7 @@ pub struct CommandWord {
 /// ```
 ///
 /// [^1]: p31 [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StatusWord {
     /// Data of the word
     data: [u8; 2],
@@ -159,7 +159,7 @@ pub struct StatusWord {
 /// ```
 ///
 /// [^1]: p31 [MIL-STD-1553 Tutorial](http://www.horntech.cn/techDocuments/MIL-STD-1553Tutorial.pdf)
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct DataWord {
     /// Data of the word
     data: [u8; 2],

@@ -2,6 +2,9 @@ use crate::word::WordType;
 use crate::word::{CommandWord, DataWord, StatusWord};
 use crate::{errors::*, Header, Packet, Word};
 
+/// Default value for word array
+const ARRAY_NONE: WordType = WordType::None;
+
 /// A message sent between two terminals on the bus
 ///
 /// The Message struct does very minimal message validation
@@ -36,7 +39,7 @@ use crate::{errors::*, Header, Packet, Word};
 /// # }
 /// ```
 ///
-#[derive(Copy, Clone, Eq, PartialEq, Debug)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Message<const WORDS: usize = 33> {
     count: usize,
     words: [WordType; WORDS],
@@ -47,7 +50,7 @@ impl<const WORDS: usize> Message<WORDS> {
     pub fn new() -> Self {
         Self {
             count: 0,
-            words: [WordType::None; WORDS],
+            words: [ARRAY_NONE; WORDS],
         }
     }
 
@@ -364,7 +367,7 @@ impl<const WORDS: usize> Message<WORDS> {
     /// Clear all words from the message
     pub fn clear(&mut self) {
         self.count = 0;
-        self.words = [WordType::None; WORDS];
+        self.words = [ARRAY_NONE; WORDS];
     }
 
     /// Get the number of data words
