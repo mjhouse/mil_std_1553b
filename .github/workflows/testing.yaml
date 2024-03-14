@@ -4,6 +4,10 @@ on:
   push:
     branches: [development]
 
+env:
+  RUSTFLAGS: "-C instrument-coverage"
+  LLVM_PROFILE_FILE: "ms1553b-%p-%m.profraw"
+
 jobs:
 
   test:
