@@ -204,49 +204,48 @@ mod tests {
     #[test]
     fn test_wordtype_bytes_command() {
         let item = WordType::Command(0b1010101010101010.into());
-        assert_eq!(item.bytes(),[0b10101010,0b10101010]);
+        assert_eq!(item.bytes(), [0b10101010, 0b10101010]);
     }
 
     #[test]
     fn test_wordtype_bytes_status() {
         let item = WordType::Status(0b1010101010101010.into());
-        assert_eq!(item.bytes(),[0b10101010,0b10101010]);
+        assert_eq!(item.bytes(), [0b10101010, 0b10101010]);
     }
 
     #[test]
     fn test_wordtype_bytes_data() {
         let item = WordType::Data(0b1010101010101010.into());
-        assert_eq!(item.bytes(),[0b10101010,0b10101010]);
+        assert_eq!(item.bytes(), [0b10101010, 0b10101010]);
     }
 
     #[test]
     fn test_wordtype_bytes_nont() {
         let item = WordType::None;
-        assert_eq!(item.bytes(),[0,0]);
+        assert_eq!(item.bytes(), [0, 0]);
     }
 
     #[test]
     fn test_wordtype_parity_command() {
         let item = WordType::from(CommandWord::new().with_parity(1));
-        assert_eq!(item.parity(),1);
+        assert_eq!(item.parity(), 1);
     }
 
     #[test]
     fn test_wordtype_parity_status() {
         let item = WordType::from(StatusWord::new().with_parity(1));
-        assert_eq!(item.parity(),1);
+        assert_eq!(item.parity(), 1);
     }
 
     #[test]
     fn test_wordtype_parity_data() {
         let item = WordType::from(DataWord::new().with_parity(1));
-        assert_eq!(item.parity(),1);
+        assert_eq!(item.parity(), 1);
     }
 
     #[test]
     fn test_wordtype_parity_none() {
         let item = WordType::None;
-        assert_eq!(item.parity(),0);
+        assert_eq!(item.parity(), 0);
     }
-
 }

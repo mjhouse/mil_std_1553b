@@ -316,9 +316,9 @@ impl CommandWord {
     /// Get the number of data words associated with this word
     ///
     /// The word count is a value between 0 and 32 in command words
-    /// that are not mode code commands. Mode code commands are 
+    /// that are not mode code commands. Mode code commands are
     /// identified using particular values of the subaddress field.
-    /// 
+    ///
     /// See [SubAddress](crate::flags::SubAddress) for details about
     /// the ModeCode setting of the subaddress.
     pub fn word_count(&self) -> u8 {
@@ -331,21 +331,23 @@ impl CommandWord {
     /// Set the number of data words associated with this command
     ///
     /// The word count field is stored in the same bit position as the
-    /// mode code value, and should only be used if the sub address is 
-    /// *not* set to a ModeCode value. See [CommandWord::word_count] 
+    /// mode code value, and should only be used if the sub address is
+    /// *not* set to a ModeCode value. See [CommandWord::word_count]
     /// for more information.
     ///
     /// Commands that are not mode code require some number of data
-    /// words, and setting this field to `0` will indicate 32 data 
+    /// words, and setting this field to `0` will indicate 32 data
     /// words. Any value given greater than 31 will be converted to
     /// `0`.
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `value` - A word count to set
     ///
     pub fn set_word_count(&mut self, mut value: u8) {
-        if value > 31 { value = 0; }
+        if value > 31 {
+            value = 0;
+        }
         COMMAND_WORD_COUNT_FIELD.set(self, value);
     }
 
@@ -1247,12 +1249,11 @@ mod tests {
         let value1 = Address::Broadcast(0b11111);
         let value2 = Address::Value(0b10101);
 
-
         let mut word = CommandWord::new().with_address(value1);
-        assert_eq!(word.address(),value1);
+        assert_eq!(word.address(), value1);
 
         word.set_address(value2);
-        assert_eq!(word.address(),value2);
+        assert_eq!(word.address(), value2);
         assert_eq!(word.as_value(), 0b1010100000000000);
     }
 
@@ -1261,12 +1262,11 @@ mod tests {
         let value1 = SubAddress::ModeCode(0b11111);
         let value2 = SubAddress::Value(0b10101);
 
-
         let mut word = CommandWord::new().with_subaddress(value1);
-        assert_eq!(word.subaddress(),value1);
+        assert_eq!(word.subaddress(), value1);
 
         word.set_subaddress(value2);
-        assert_eq!(word.subaddress(),value2);
+        assert_eq!(word.subaddress(), value2);
         assert_eq!(word.as_value(), 0b0000001010100000);
     }
 
@@ -1377,7 +1377,7 @@ mod tests {
     #[test]
     fn test_command_word_new() {
         let word = CommandWord::new();
-        assert_eq!(word.data, [0,0]);
+        assert_eq!(word.data, [0, 0]);
         assert_eq!(word.parity, 1);
     }
 
@@ -1388,7 +1388,7 @@ mod tests {
         assert_eq!(word.as_value(), 0b0101010101010101);
 
         word.set_value(0b1010101010101010);
-        assert_eq!(word.data, [0b10101010,0b10101010]);
+        assert_eq!(word.data, [0b10101010, 0b10101010]);
         assert_eq!(word.as_value(), 0b1010101010101010);
 
         word = CommandWord::from_value(0b0101010101010101);
@@ -1402,9 +1402,9 @@ mod tests {
         assert_eq!(word.data, [0b01010101, 0b01010101]);
         assert_eq!(word.as_bytes(), [0b01010101, 0b01010101]);
 
-        word.set_bytes([0b10101010,0b10101010]);
-        assert_eq!(word.data, [0b10101010,0b10101010]);
-        assert_eq!(word.as_bytes(), [0b10101010,0b10101010]);
+        word.set_bytes([0b10101010, 0b10101010]);
+        assert_eq!(word.data, [0b10101010, 0b10101010]);
+        assert_eq!(word.as_bytes(), [0b10101010, 0b10101010]);
 
         word = CommandWord::from_bytes([0b01010101, 0b01010101]);
         assert_eq!(word.data, [0b01010101, 0b01010101]);
@@ -1416,32 +1416,28 @@ mod tests {
         let mut word = CommandWord::from(0).with_parity(0);
         assert_eq!(word.parity, 0);
         assert_eq!(word.parity(), 0);
-        assert_eq!(word.check_parity(),false);
+        assert_eq!(word.check_parity(), false);
 
         word.set_parity(1);
         assert_eq!(word.parity, 1);
         assert_eq!(word.parity(), 1);
-        assert_eq!(word.check_parity(),true);
+        assert_eq!(word.check_parity(), true);
 
         word = CommandWord::from(1).with_calculated_parity();
         assert_eq!(word.parity, 0);
         assert_eq!(word.parity(), 0);
-        assert_eq!(word.check_parity(),true);
+        assert_eq!(word.check_parity(), true);
     }
 
     #[test]
     fn test_command_word_build_success() {
-        let word = CommandWord::new()
-            .with_calculated_parity()
-            .build();
+        let word = CommandWord::new().with_calculated_parity().build();
         assert!(word.is_ok());
     }
 
     #[test]
     fn test_command_word_build_fail() {
-        let word = CommandWord::new()
-            .with_parity(0)
-            .build();
+        let word = CommandWord::new().with_parity(0).build();
         assert!(word.is_err());
     }
 
@@ -1450,34 +1446,34 @@ mod tests {
     #[test]
     fn test_command_default() {
         let word = CommandWord::default();
-        assert_eq!(word.data, [0,0]);
+        assert_eq!(word.data, [0, 0]);
         assert_eq!(word.parity, 1);
     }
 
     #[test]
     fn test_command_from_value() {
         let word: CommandWord = 0b1010101010101010.into();
-        assert_eq!(word.as_value(),0b1010101010101010);
+        assert_eq!(word.as_value(), 0b1010101010101010);
     }
 
     #[test]
     fn test_command_from_bytes() {
-        let word: CommandWord = [0b10101010,0b10101010].into();
-        assert_eq!(word.as_value(),0b1010101010101010);
+        let word: CommandWord = [0b10101010, 0b10101010].into();
+        assert_eq!(word.as_value(), 0b1010101010101010);
     }
 
     #[test]
     fn test_command_into_value() {
         let word = CommandWord::from(0b1010101010101010);
         let value = u16::from(word);
-        assert_eq!(value,0b1010101010101010);
+        assert_eq!(value, 0b1010101010101010);
     }
 
     #[test]
     fn test_command_into_bytes() {
         let word = CommandWord::from(0b1010101010101010);
-        let bytes = <[u8;2]>::from(word);
-        assert_eq!(bytes,[0b10101010, 0b10101010]);
+        let bytes = <[u8; 2]>::from(word);
+        assert_eq!(bytes, [0b10101010, 0b10101010]);
     }
 
     // ----------------------------------------------------------
@@ -1489,10 +1485,10 @@ mod tests {
         let item2 = Address::Value(0b10101);
 
         let mut word = StatusWord::new().with_address(item1);
-        assert_eq!(word.address(),item1);
+        assert_eq!(word.address(), item1);
 
         word.set_address(item2);
-        assert_eq!(word.address(),item2);
+        assert_eq!(word.address(), item2);
         assert_eq!(word.as_value(), 0b1010100000000000);
     }
 
@@ -1502,10 +1498,10 @@ mod tests {
         let item2 = Instrumentation::Command;
 
         let mut word = StatusWord::new().with_instrumentation(item1);
-        assert_eq!(word.instrumentation(),item1);
+        assert_eq!(word.instrumentation(), item1);
 
         word.set_instrumentation(item2);
-        assert_eq!(word.instrumentation(),item2);
+        assert_eq!(word.instrumentation(), item2);
     }
 
     #[test]
@@ -1514,10 +1510,10 @@ mod tests {
         let item2 = ServiceRequest::Service;
 
         let mut word = StatusWord::new().with_service_request(item1);
-        assert_eq!(word.service_request(),item1);
+        assert_eq!(word.service_request(), item1);
 
         word.set_service_request(item2);
-        assert_eq!(word.service_request(),item2);
+        assert_eq!(word.service_request(), item2);
     }
 
     #[test]
@@ -1526,10 +1522,10 @@ mod tests {
         let item2 = Reserved::Value(0b111);
 
         let mut word = StatusWord::new().with_reserved(item1);
-        assert_eq!(word.reserved(),item1);
+        assert_eq!(word.reserved(), item1);
 
         word.set_reserved(item2);
-        assert_eq!(word.reserved(),item2);
+        assert_eq!(word.reserved(), item2);
     }
 
     #[test]
@@ -1538,10 +1534,10 @@ mod tests {
         let item2 = BroadcastReceived::Received;
 
         let mut word = StatusWord::new().with_broadcast_received(item1);
-        assert_eq!(word.broadcast_received(),item1);
+        assert_eq!(word.broadcast_received(), item1);
 
         word.set_broadcast_received(item2);
-        assert_eq!(word.broadcast_received(),item2);
+        assert_eq!(word.broadcast_received(), item2);
     }
 
     #[test]
@@ -1550,12 +1546,12 @@ mod tests {
         let item2 = TerminalBusy::Busy;
 
         let mut word = StatusWord::new().with_terminal_busy(item1);
-        assert_eq!(word.is_busy(),false);
-        assert_eq!(word.terminal_busy(),item1);
+        assert_eq!(word.is_busy(), false);
+        assert_eq!(word.terminal_busy(), item1);
 
         word.set_terminal_busy(item2);
-        assert_eq!(word.is_busy(),true);
-        assert_eq!(word.terminal_busy(),item2);
+        assert_eq!(word.is_busy(), true);
+        assert_eq!(word.terminal_busy(), item2);
     }
 
     #[test]
@@ -1564,10 +1560,10 @@ mod tests {
         let item2 = DynamicBusAcceptance::Accepted;
 
         let mut word = StatusWord::new().with_dynamic_bus_acceptance(item1);
-        assert_eq!(word.dynamic_bus_acceptance(),item1);
+        assert_eq!(word.dynamic_bus_acceptance(), item1);
 
         word.set_dynamic_bus_acceptance(item2);
-        assert_eq!(word.dynamic_bus_acceptance(),item2);
+        assert_eq!(word.dynamic_bus_acceptance(), item2);
     }
 
     #[test]
@@ -1576,10 +1572,10 @@ mod tests {
         let item2 = MessageError::Error;
 
         let mut word = StatusWord::new().with_message_error(item1);
-        assert_eq!(word.message_error(),item1);
+        assert_eq!(word.message_error(), item1);
 
         word.set_message_error(item2);
-        assert_eq!(word.message_error(),item2);
+        assert_eq!(word.message_error(), item2);
     }
 
     #[test]
@@ -1588,10 +1584,10 @@ mod tests {
         let item2 = SubsystemError::Error;
 
         let mut word = StatusWord::new().with_subsystem_error(item1);
-        assert_eq!(word.subsystem_error(),item1);
+        assert_eq!(word.subsystem_error(), item1);
 
         word.set_subsystem_error(item2);
-        assert_eq!(word.subsystem_error(),item2);
+        assert_eq!(word.subsystem_error(), item2);
     }
 
     #[test]
@@ -1600,10 +1596,10 @@ mod tests {
         let item2 = TerminalError::Error;
 
         let mut word = StatusWord::new().with_terminal_error(item1);
-        assert_eq!(word.terminal_error(),item1);
+        assert_eq!(word.terminal_error(), item1);
 
         word.set_terminal_error(item2);
-        assert_eq!(word.terminal_error(),item2);
+        assert_eq!(word.terminal_error(), item2);
     }
 
     #[test]
@@ -1661,7 +1657,7 @@ mod tests {
     #[test]
     fn test_status_word_new() {
         let word = StatusWord::new();
-        assert_eq!(word.data, [0,0]);
+        assert_eq!(word.data, [0, 0]);
         assert_eq!(word.parity, 1);
     }
 
@@ -1672,7 +1668,7 @@ mod tests {
         assert_eq!(word.as_value(), 0b0101010101010101);
 
         word.set_value(0b1010101010101010);
-        assert_eq!(word.data, [0b10101010,0b10101010]);
+        assert_eq!(word.data, [0b10101010, 0b10101010]);
         assert_eq!(word.as_value(), 0b1010101010101010);
 
         word = StatusWord::from_value(0b0101010101010101);
@@ -1686,9 +1682,9 @@ mod tests {
         assert_eq!(word.data, [0b01010101, 0b01010101]);
         assert_eq!(word.as_bytes(), [0b01010101, 0b01010101]);
 
-        word.set_bytes([0b10101010,0b10101010]);
-        assert_eq!(word.data, [0b10101010,0b10101010]);
-        assert_eq!(word.as_bytes(), [0b10101010,0b10101010]);
+        word.set_bytes([0b10101010, 0b10101010]);
+        assert_eq!(word.data, [0b10101010, 0b10101010]);
+        assert_eq!(word.as_bytes(), [0b10101010, 0b10101010]);
 
         word = StatusWord::from_bytes([0b01010101, 0b01010101]);
         assert_eq!(word.data, [0b01010101, 0b01010101]);
@@ -1700,69 +1696,64 @@ mod tests {
         let mut word = StatusWord::from(0).with_parity(0);
         assert_eq!(word.parity, 0);
         assert_eq!(word.parity(), 0);
-        assert_eq!(word.check_parity(),false);
+        assert_eq!(word.check_parity(), false);
 
         word.set_parity(1);
         assert_eq!(word.parity, 1);
         assert_eq!(word.parity(), 1);
-        assert_eq!(word.check_parity(),true);
+        assert_eq!(word.check_parity(), true);
 
         word = StatusWord::from(1).with_calculated_parity();
         assert_eq!(word.parity, 0);
         assert_eq!(word.parity(), 0);
-        assert_eq!(word.check_parity(),true);
+        assert_eq!(word.check_parity(), true);
     }
 
     #[test]
     fn test_status_word_build_success() {
-        let word = StatusWord::new()
-            .with_calculated_parity()
-            .build();
+        let word = StatusWord::new().with_calculated_parity().build();
         assert!(word.is_ok());
     }
 
     #[test]
     fn test_status_word_build_fail() {
-        let word = StatusWord::new()
-            .with_parity(0)
-            .build();
+        let word = StatusWord::new().with_parity(0).build();
         assert!(word.is_err());
     }
 
     // ----------------------------------------------------------
 
-
     #[test]
     fn test_status_default() {
         let word = StatusWord::default();
-        assert_eq!(word.data, [0,0]);
+        assert_eq!(word.data, [0, 0]);
         assert_eq!(word.parity, 1);
     }
 
     #[test]
     fn test_status_from_value() {
         let word: StatusWord = 0b1010101010101010.into();
-        assert_eq!(word.as_value(),0b1010101010101010);
+        assert_eq!(word.as_value(), 0b1010101010101010);
     }
 
     #[test]
     fn test_status_from_bytes() {
-        let word: StatusWord = [0b10101010,0b10101010].into();
-        assert_eq!(word.as_value(),0b1010101010101010);
+        let word: StatusWord = [0b10101010, 0b10101010].into();
+        assert_eq!(word.as_value(), 0b1010101010101010);
     }
 
     #[test]
     fn test_status_into_value() {
         let word = StatusWord::from(0b1010101010101010);
         let value = u16::from(word);
-        assert_eq!(value,0b1010101010101010);
+        assert_eq!(value, 0b1010101010101010);
     }
 
     #[test]
     fn test_status_into_bytes() {
         let word = StatusWord::from(0b1010101010101010);
-        let bytes = <[u8;2]>::from(word);
-        assert_eq!(bytes,[0b10101010, 0b10101010]);
+        let bytes = <[u8; 2]>::from(word);
+        assert_eq!(bytes, [0b10101010, 0b10101010]);
     }
 
     // ----------------------------------------------------------
@@ -1781,7 +1772,7 @@ mod tests {
         assert_eq!(word.as_value(), 0b0100111001001111);
         assert_eq!(word.as_string(), Ok("NO"));
         assert_eq!(word.parity(), 0);
-    } 
+    }
 
     #[test]
     fn test_data_get_set_string_failure() {
@@ -1798,7 +1789,7 @@ mod tests {
         assert_eq!(word.as_value(), 0b1111111111111111);
         assert!(word.as_string().is_err());
         assert_eq!(word.parity(), 1);
-    } 
+    }
 
     #[test]
     fn test_data_roundtrip() {
@@ -1819,7 +1810,7 @@ mod tests {
     #[test]
     fn test_data_word_new() {
         let word = StatusWord::new();
-        assert_eq!(word.data, [0,0]);
+        assert_eq!(word.data, [0, 0]);
         assert_eq!(word.parity, 1);
     }
 
@@ -1830,7 +1821,7 @@ mod tests {
         assert_eq!(word.as_value(), 0b0101010101010101);
 
         word.set_value(0b1010101010101010);
-        assert_eq!(word.data, [0b10101010,0b10101010]);
+        assert_eq!(word.data, [0b10101010, 0b10101010]);
         assert_eq!(word.as_value(), 0b1010101010101010);
 
         word = DataWord::from_value(0b0101010101010101);
@@ -1844,9 +1835,9 @@ mod tests {
         assert_eq!(word.data, [0b01010101, 0b01010101]);
         assert_eq!(word.as_bytes(), [0b01010101, 0b01010101]);
 
-        word.set_bytes([0b10101010,0b10101010]);
-        assert_eq!(word.data, [0b10101010,0b10101010]);
-        assert_eq!(word.as_bytes(), [0b10101010,0b10101010]);
+        word.set_bytes([0b10101010, 0b10101010]);
+        assert_eq!(word.data, [0b10101010, 0b10101010]);
+        assert_eq!(word.as_bytes(), [0b10101010, 0b10101010]);
 
         word = DataWord::from_bytes([0b01010101, 0b01010101]);
         assert_eq!(word.data, [0b01010101, 0b01010101]);
@@ -1858,32 +1849,28 @@ mod tests {
         let mut word = DataWord::from(0).with_parity(0);
         assert_eq!(word.parity, 0);
         assert_eq!(word.parity(), 0);
-        assert_eq!(word.check_parity(),false);
+        assert_eq!(word.check_parity(), false);
 
         word.set_parity(1);
         assert_eq!(word.parity, 1);
         assert_eq!(word.parity(), 1);
-        assert_eq!(word.check_parity(),true);
+        assert_eq!(word.check_parity(), true);
 
         word = DataWord::from(1).with_calculated_parity();
         assert_eq!(word.parity, 0);
         assert_eq!(word.parity(), 0);
-        assert_eq!(word.check_parity(),true);
+        assert_eq!(word.check_parity(), true);
     }
 
     #[test]
     fn test_data_build_success() {
-        let word = DataWord::new()
-            .with_calculated_parity()
-            .build();
+        let word = DataWord::new().with_calculated_parity().build();
         assert!(word.is_ok());
     }
 
     #[test]
     fn test_data_build_fail() {
-        let word = DataWord::new()
-            .with_parity(0)
-            .build();
+        let word = DataWord::new().with_parity(0).build();
         assert!(word.is_err());
     }
 
@@ -1892,7 +1879,7 @@ mod tests {
     #[test]
     fn test_data_default() {
         let word = DataWord::default();
-        assert_eq!(word.data, [0,0]);
+        assert_eq!(word.data, [0, 0]);
         assert_eq!(word.parity, 1);
     }
 
@@ -1911,62 +1898,61 @@ mod tests {
     #[test]
     fn test_data_from_value() {
         let word: DataWord = 0b1010101010101010.into();
-        assert_eq!(word.as_value(),0b1010101010101010);
+        assert_eq!(word.as_value(), 0b1010101010101010);
     }
 
     #[test]
     fn test_data_from_bytes() {
-        let word: DataWord = [0b10101010,0b10101010].into();
-        assert_eq!(word.as_value(),0b1010101010101010);
+        let word: DataWord = [0b10101010, 0b10101010].into();
+        assert_eq!(word.as_value(), 0b1010101010101010);
     }
 
     #[test]
     fn test_data_into_value() {
         let word = DataWord::from(0b1010101010101010);
         let value = u16::from(word);
-        assert_eq!(value,0b1010101010101010);
+        assert_eq!(value, 0b1010101010101010);
     }
 
     #[test]
     fn test_data_into_bytes() {
         let word = DataWord::from(0b1010101010101010);
-        let bytes = <[u8;2]>::from(word);
-        assert_eq!(bytes,[0b10101010, 0b10101010]);
+        let bytes = <[u8; 2]>::from(word);
+        assert_eq!(bytes, [0b10101010, 0b10101010]);
     }
 
     #[test]
     fn test_data_into_u32() {
         let word = DataWord::from(0b0000000010101010);
         let value = u32::from(word);
-        assert_eq!(value,170); // decimal
+        assert_eq!(value, 170); // decimal
     }
 
     #[test]
     fn test_data_into_u64() {
         let word = DataWord::from(0b0000000010101010);
         let value = u64::from(word);
-        assert_eq!(value,170); // decimal
+        assert_eq!(value, 170); // decimal
     }
 
     #[test]
     fn test_data_into_i16() {
         let word = DataWord::from(0b0000000010101010);
         let value = i16::from(word);
-        assert_eq!(value,170); // decimal
+        assert_eq!(value, 170); // decimal
     }
 
     #[test]
     fn test_data_into_i32() {
         let word = DataWord::from(0b0000000010101010);
         let value = i32::from(word);
-        assert_eq!(value,170); // decimal
+        assert_eq!(value, 170); // decimal
     }
 
     #[test]
     fn test_data_into_i64() {
         let word = DataWord::from(0b0000000010101010);
         let value = i64::from(word);
-        assert_eq!(value,170); // decimal
+        assert_eq!(value, 170); // decimal
     }
-
 }
