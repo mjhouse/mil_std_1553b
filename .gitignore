@@ -1,3 +1,6 @@
 /assets
 /target
 /Cargo.lock
+
+# code coverage files
+*.profraw
