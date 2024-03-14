@@ -38,7 +38,7 @@ jobs:
       id: download-coverage
       uses: dawidd6/action-download-artifact@v3
       with:
-        workflow: testing.yml
+        workflow: testing.yaml
         name: code-coverage
         path: ./target/doc/coverage/
 
