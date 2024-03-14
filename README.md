@@ -3,7 +3,7 @@
 [![tests passing](https://github.com/mjhouse/mil_std_1553b/actions/workflows/testing.yaml/badge.svg)](https://github.com/mjhouse/mil_std_1553b/actions)
 [![docs passing](https://github.com/mjhouse/mil_std_1553b/actions/workflows/documentation.yaml/badge.svg)](https://mjhouse.github.io/mil_std_1553b/)
 [![crates.io](https://img.shields.io/crates/v/mil_std_1553b.svg)](https://crates.io/crates/mil_std_1553b)
-[![code coverage](https://mjhouse.github.io/mil_std_1553b/)](https://github.com/mjhouse/mil_std_1553b/actions)
+[![code coverage](https://mjhouse.github.io/mil_std_1553b/coverage/badges/plastic.svg)](https://mjhouse.github.io/mil_std_1553b/coverage)
 
 This library implements a complete set of Rust structs for parsing or constructing messages that comply with
 the MIL STD 1553B communication protocal.
