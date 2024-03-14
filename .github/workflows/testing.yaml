@@ -18,6 +18,11 @@ jobs:
     - name: Install Rust toolchain
       run: rustup update --no-self-update stable
 
+    - name: Install gcovr
+      run: |
+        rustup component add llvm-tools-preview &&
+        cargo install grcov
+
     - name: Build library
       run: cargo build --verbose
     
