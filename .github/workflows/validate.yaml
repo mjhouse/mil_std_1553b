@@ -36,12 +36,9 @@ jobs:
         mkdir -p ./target/debug/coverage && 
         grcov . -s . -b ./target/debug/ -t cobertura --branch --ignore-not-existing -o .
 
-    - name: Code Coverage Report Action
+    - name: Make coverage report
       uses: insightsengineering/coverage-action@v2.6.0
       with:
         path: ./cobertura.xml
         threshold: 80
         fail: true
-        publish: true
-        diff: false
-        coverage-summary-title: "Coverage"
