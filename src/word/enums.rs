@@ -87,3 +87,166 @@ impl From<DataWord> for WordType {
         WordType::Data(value)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_wordtype_clone_equal_command() {
+        let item1 = WordType::Command(0b1010101010101010.into());
+        let item2 = item1.clone();
+        assert!(item1 == item2);
+    }
+
+    #[test]
+    fn test_wordtype_clone_equal_status() {
+        let item1 = WordType::Status(0b1010101010101010.into());
+        let item2 = item1.clone();
+        assert!(item1 == item2);
+    }
+
+    #[test]
+    fn test_wordtype_clone_equal_data() {
+        let item1 = WordType::Data(0b1010101010101010.into());
+        let item2 = item1.clone();
+        assert!(item1 == item2);
+    }
+
+    #[test]
+    fn test_wordtype_equal_command() {
+        let item1 = WordType::Command(0b1010101010101010.into());
+        let item2 = WordType::Command(0b1010101010101010.into());
+        assert!(item1 == item2);
+    }
+
+    #[test]
+    fn test_wordtype_not_equal_command() {
+        let item1 = WordType::Command(0b0000000000000000.into());
+        let item2 = WordType::Command(0b1010101010101010.into());
+        assert!(item1 != item2);
+    }
+
+    #[test]
+    fn test_wordtype_equal_status() {
+        let item1 = WordType::Status(0b1010101010101010.into());
+        let item2 = WordType::Status(0b1010101010101010.into());
+        assert!(item1 == item2);
+    }
+
+    #[test]
+    fn test_wordtype_not_equal_status() {
+        let item1 = WordType::Status(0b0000000000000000.into());
+        let item2 = WordType::Status(0b1010101010101010.into());
+        assert!(item1 != item2);
+    }
+
+    #[test]
+    fn test_wordtype_equal_data() {
+        let item1 = WordType::Data(0b1010101010101010.into());
+        let item2 = WordType::Data(0b1010101010101010.into());
+        assert!(item1 == item2);
+    }
+
+    #[test]
+    fn test_wordtype_not_equal_data() {
+        let item1 = WordType::Data(0b0000000000000000.into());
+        let item2 = WordType::Data(0b1010101010101010.into());
+        assert!(item1 != item2);
+    }
+
+    #[test]
+    fn test_wordtype_is_command() {
+        let item = WordType::from(CommandWord::new());
+        assert!(item.is_command());
+    }
+
+    #[test]
+    fn test_wordtype_is_status() {
+        let item = WordType::from(StatusWord::new());
+        assert!(item.is_status());
+    }
+
+    #[test]
+    fn test_wordtype_is_data() {
+        let item = WordType::from(DataWord::new());
+        assert!(item.is_data());
+    }
+
+    #[test]
+    fn test_wordtype_is_some_command() {
+        let item = WordType::from(CommandWord::new());
+        assert!(item.is_some());
+        assert!(!item.is_none());
+    }
+
+    #[test]
+    fn test_wordtype_is_some_status() {
+        let item = WordType::from(StatusWord::new());
+        assert!(item.is_some());
+        assert!(!item.is_none());
+    }
+
+    #[test]
+    fn test_wordtype_is_some_data() {
+        let item = WordType::from(DataWord::new());
+        assert!(item.is_some());
+        assert!(!item.is_none());
+    }
+
+    #[test]
+    fn test_wordtype_is_none() {
+        let item = WordType::None;
+        assert!(!item.is_some());
+        assert!(item.is_none());
+    }
+
+    #[test]
+    fn test_wordtype_bytes_command() {
+        let item = WordType::Command(0b1010101010101010.into());
+        assert_eq!(item.bytes(),[0b10101010,0b10101010]);
+    }
+
+    #[test]
+    fn test_wordtype_bytes_status() {
+        let item = WordType::Status(0b1010101010101010.into());
+        assert_eq!(item.bytes(),[0b10101010,0b10101010]);
+    }
+
+    #[test]
+    fn test_wordtype_bytes_data() {
+        let item = WordType::Data(0b1010101010101010.into());
+        assert_eq!(item.bytes(),[0b10101010,0b10101010]);
+    }
+
+    #[test]
+    fn test_wordtype_bytes_nont() {
+        let item = WordType::None;
+        assert_eq!(item.bytes(),[0,0]);
+    }
+
+    #[test]
+    fn test_wordtype_parity_command() {
+        let item = WordType::from(CommandWord::new().with_parity(1));
+        assert_eq!(item.parity(),1);
+    }
+
+    #[test]
+    fn test_wordtype_parity_status() {
+        let item = WordType::from(StatusWord::new().with_parity(1));
+        assert_eq!(item.parity(),1);
+    }
+
+    #[test]
+    fn test_wordtype_parity_data() {
+        let item = WordType::from(DataWord::new().with_parity(1));
+        assert_eq!(item.parity(),1);
+    }
+
+    #[test]
+    fn test_wordtype_parity_none() {
+        let item = WordType::None;
+        assert_eq!(item.parity(),0);
+    }
+
+}
