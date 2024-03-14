@@ -26,11 +26,21 @@ jobs:
     - name: Install Rust toolchain
       run: rustup update --no-self-update stable
 
-    - name: Build Documentation
+    - name: Build documentation
       run: cargo doc --all --no-deps
 
     - name: Add redirect
-      run: echo '<meta http-equiv="refresh" content="0;url=mil_std_1553b/index.html">' > target/doc/index.html
+      run: |
+        mkdir -p ./target/doc/coverage &&
+        echo '<meta http-equiv="refresh" content="0;url=mil_std_1553b/index.html">' > target/doc/index.html
+
+    - name: Download code coverage
+      id: download-coverage
+      uses: dawidd6/action-download-artifact@v3
+      with:
+        workflow: testing.yml
+        name: code-coverage
+        path: ./target/doc/coverage/
 
     - name: Fix permissions
       run: |
