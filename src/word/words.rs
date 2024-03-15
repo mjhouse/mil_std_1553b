@@ -801,7 +801,7 @@ impl DataWord {
     /// * `data` - A &str to set as data
     ///
     pub fn set_string(&mut self, data: &str) -> Result<()> {
-        self.data = data.as_bytes().try_into()?;
+        self.data = data.as_bytes().try_into().or(Err(Error::InvalidString))?;
         self.parity = self.calculate_parity();
         Ok(())
     }
@@ -858,7 +858,7 @@ impl Word for CommandWord {
         if self.check_parity() {
             Ok(self)
         } else {
-            Err(Error::WordIsInvalid)
+            Err(Error::InvalidWord)
         }
     }
 
@@ -937,7 +937,7 @@ impl Word for StatusWord {
         if self.check_parity() {
             Ok(self)
         } else {
-            Err(Error::WordIsInvalid)
+            Err(Error::InvalidWord)
         }
     }
 
@@ -1016,7 +1016,7 @@ impl Word for DataWord {
         if self.check_parity() {
             Ok(self)
         } else {
-            Err(Error::WordIsInvalid)
+            Err(Error::InvalidWord)
         }
     }
 
@@ -1095,7 +1095,7 @@ impl<'a> TryFrom<&'a DataWord> for &'a str {
     type Error = Error;
 
     fn try_from(value: &'a DataWord) -> Result<Self> {
-        core::str::from_utf8(&value.data).or(Err(Error::StringIsInvalid))
+        core::str::from_utf8(&value.data).or(Err(Error::InvalidString))
     }
 }
 

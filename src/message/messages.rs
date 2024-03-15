@@ -245,7 +245,7 @@ impl<const WORDS: usize> Message<WORDS> {
             WordType::Data(v) => self.add_data(v),
             WordType::Status(v) => self.add_status(v),
             WordType::Command(v) => self.add_command(v),
-            _ => Err(Error::WordIsInvalid),
+            _ => Err(Error::InvalidWord),
         }
     }
 
@@ -265,11 +265,11 @@ impl<const WORDS: usize> Message<WORDS> {
     ///
     fn add_data(&mut self, word: DataWord) -> Result<()> {
         if self.is_full() && self.is_command() {
-            Err(Error::MessageIsFull)
+            Err(Error::MessageFull)
         } else if self.is_empty() {
-            Err(Error::FirstWordIsData)
+            Err(Error::DataFirst)
         } else if self.words.len() <= self.count {
-            Err(Error::MessageIsFull)
+            Err(Error::MessageFull)
         } else {
             self.words[self.count] = word.into();
             self.count += 1;
@@ -293,11 +293,11 @@ impl<const WORDS: usize> Message<WORDS> {
     ///
     fn add_status(&mut self, word: StatusWord) -> Result<()> {
         if !self.is_empty() {
-            Err(Error::StatusWordNotFirst)
+            Err(Error::HeaderNotFirst)
         } else if !word.check_parity() {
             Err(Error::InvalidWord)
         } else if self.words.len() <= self.count {
-            Err(Error::MessageIsFull)
+            Err(Error::MessageFull)
         } else {
             self.words[self.count] = word.into();
             self.count += 1;
@@ -321,11 +321,11 @@ impl<const WORDS: usize> Message<WORDS> {
     ///
     fn add_command(&mut self, word: CommandWord) -> Result<()> {
         if !self.is_empty() {
-            Err(Error::CommandWordNotFirst)
+            Err(Error::HeaderNotFirst)
         } else if !word.check_parity() {
             Err(Error::InvalidWord)
         } else if self.words.len() <= self.count {
-            Err(Error::MessageIsFull)
+            Err(Error::MessageFull)
         } else {
             self.words[self.count] = word.into();
             self.count += 1;
@@ -506,7 +506,7 @@ mod tests {
             0b11100010, 0b11001110, 0b11011110,
         ]);
 
-        assert_eq!(result, Err(Error::MessageIsFull));
+        assert_eq!(result, Err(Error::MessageFull));
     }
 
     #[test]
@@ -526,7 +526,7 @@ mod tests {
             0b11100010, 0b11001110,
         ]);
 
-        assert_eq!(result, Err(Error::MessageIsFull));
+        assert_eq!(result, Err(Error::MessageFull));
     }
 
     #[test]

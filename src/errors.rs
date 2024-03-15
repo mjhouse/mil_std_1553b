@@ -1,7 +1,5 @@
 //! Error enums and flags
 
-use core::{array::TryFromSliceError, str::Utf8Error};
-
 /// A result type which uses the [Error] enum as the error type.
 pub type Result<T> = core::result::Result<T, Error>;
 
@@ -28,65 +26,33 @@ pub(crate) const fn parity(v: u16) -> u8 {
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[repr(u8)]
 pub enum Error {
-    /// An index was out of bounds for the data structure
+
+    /// An index or range was out of bounds
     OutOfBounds,
 
-    /// An unexpected or invalid ModeCode was found
-    InvalidCode,
+    /// A packet was found to be invalid
+    InvalidPacket,
 
-    /// This word is not a ModeCode command word
-    NotModeCode,
-
-    /// A malformed packet was given while building a message
-    PacketIsInvalid,
-
-    /// A word was found to be invalid while building a message
-    WordIsInvalid,
-
-    /// An array could not be created from a given slice
-    FromSliceError,
-
-    /// A byte array could not be converted to a string
-    StringIsInvalid,
-
-    /// An invalid word was given while building a message
+    /// A word was found to be invalid
     InvalidWord,
 
+    /// The given string is the wrong size or encoding
+    InvalidString,
+
+    /// The message is full and cannot accept words
+    MessageFull,
+
     /// A message cannot begin with a data word
-    FirstWordIsData,
+    DataFirst,
 
-    /// A message cannot add new words because it is full
-    MessageIsFull,
+    /// Cannot add header words after the first word
+    HeaderNotFirst,
 
-    /// A message cannot add a status word if it isn't empty
-    StatusWordNotFirst,
-
-    /// A message cannot add a command word if it isn't empty
-    CommandWordNotFirst,
-
-    /// The reserved bits of a word were used
-    ReservedUsed,
-
-    /// The requested resource was not found
-    NotFound,
-
-    /// The message has an unrecognizeable configuration
+    /// The message is invalid
     InvalidMessage,
 
-    /// An error from a terminal elsewhere in the system (see [SystemError])
+    /// An error from a terminal (see [SystemError])
     SystemError(SystemError),
-}
-
-impl From<TryFromSliceError> for Error {
-    fn from(_: TryFromSliceError) -> Self {
-        Self::FromSliceError
-    }
-}
-
-impl From<Utf8Error> for Error {
-    fn from(_: Utf8Error) -> Self {
-        Self::FromSliceError
-    }
 }
 
 /// An error deriving from a remote terminal or bus controller.
@@ -266,5 +232,130 @@ impl From<MessageError> for u8 {
             MessageError::Error => 1,
             MessageError::None => 0,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rstest::rstest;
+
+    #[rstest]
+    #[case(0b1010101010101010, 1)]
+    #[case(0b1010101010101000, 0)]
+    #[case(0b1010101010100000, 1)]
+    #[case(0b1010101010000000, 0)]
+    fn test_parity(#[case] input: u16, #[case] expected: u8) {
+        let value = parity(input);
+        assert_eq!(value, expected);
+    }
+
+    #[test]
+    fn test_system_error_clone() {
+        let error1 = SystemError::Terminal(TerminalError::Error);
+        let error2 = error1.clone();
+        assert_eq!(error1,error2);
+    }
+
+    #[test]
+    fn test_terminal_error_clone() {
+        let error1 = TerminalError::Error;
+        let error2 = error1.clone();
+        assert_eq!(error1,error2);
+    }
+
+    #[test]
+    fn test_terminal_error() {
+        let error = TerminalError::None;
+        assert!(error.is_none());
+
+        let error = TerminalError::Error;
+        assert!(error.is_error());
+    }
+
+    #[test]
+    fn test_terminal_error_from_u8() {
+        let error = TerminalError::from(0);
+        assert!(error.is_none());
+
+        let error = TerminalError::from(1);
+        assert!(error.is_error());
+    }
+
+    #[test]
+    fn test_u8_from_terminal_error() {
+        let error = u8::from(TerminalError::None);
+        assert_eq!(error,0);
+
+        let error = u8::from(TerminalError::Error);
+        assert_eq!(error,1);
+    }
+
+    #[test]
+    fn test_subsystem_error_clone() {
+        let error1 = SubsystemError::Error;
+        let error2 = error1.clone();
+        assert_eq!(error1,error2);
+    }
+
+    #[test]
+    fn test_subsystem_error() {
+        let error = SubsystemError::None;
+        assert!(error.is_none());
+
+        let error = SubsystemError::Error;
+        assert!(error.is_error());
+    }
+
+    #[test]
+    fn test_subsystem_error_from_u8() {
+        let error = SubsystemError::from(0);
+        assert!(error.is_none());
+
+        let error = SubsystemError::from(1);
+        assert!(error.is_error());
+    }
+
+    #[test]
+    fn test_u8_from_subsystem_error() {
+        let error = u8::from(SubsystemError::None);
+        assert_eq!(error,0);
+
+        let error = u8::from(SubsystemError::Error);
+        assert_eq!(error,1);
+    }
+
+    #[test]
+    fn test_message_error_clone() {
+        let error1 = MessageError::Error;
+        let error2 = error1.clone();
+        assert_eq!(error1,error2);
+    }
+
+    #[test]
+    fn test_message_error() {
+        let error = MessageError::None;
+        assert!(error.is_none());
+
+        let error = MessageError::Error;
+        assert!(error.is_error());
+    }
+
+    #[test]
+    fn test_message_error_from_u8() {
+        let error = MessageError::from(0);
+        assert!(error.is_none());
+
+        let error = MessageError::from(1);
+        assert!(error.is_error());
+    }
+
+    #[test]
+    fn test_u8_from_message_error() {
+        let error = u8::from(MessageError::None);
+        assert_eq!(error,0);
+
+        let error = u8::from(MessageError::Error);
+        assert_eq!(error,1);
     }
 }

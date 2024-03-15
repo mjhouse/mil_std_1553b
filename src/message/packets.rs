@@ -83,25 +83,22 @@ impl Packet {
     /// # Ok(())
     /// # }
     pub fn read(data: &[u8], offset: usize) -> Result<Self> {
-        
         // if the offset won't fit in a u32
         if offset > 12 {
             return Err(Error::OutOfBounds);
         }
-
-        // if the offset requires 4 bytes and 
+        // if the offset requires 4 bytes and
         // they weren't given
         else if offset > 4 && data.len() < 4 {
             return Err(Error::OutOfBounds);
         }
-
         // if the offset requires 3 bytes and
         // they weren't given
         else if data.len() < 3 {
             return Err(Error::OutOfBounds);
         }
 
-        let mut buf: [u8; 4] = [0,0,0,0];
+        let mut buf: [u8; 4] = [0, 0, 0, 0];
 
         buf[0] = data.get(0).cloned().unwrap_or(0);
         buf[1] = data.get(1).cloned().unwrap_or(0);
@@ -122,19 +119,18 @@ impl Packet {
     }
 
     /// Write the packet to a byte array
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `data` - A slice of bytes to parse
     /// * `offset` - The **bit** offset at which to write
-    /// 
+    ///
     pub fn write(&self, data: &mut [u8], offset: usize) -> Result<()> {
-        // if the offset requires 4 bytes and 
+        // if the offset requires 4 bytes and
         // they weren't given
         if offset > 4 && data.len() < 4 {
             return Err(Error::OutOfBounds);
         }
-
         // if the offset requires 3 bytes and
         // they weren't given
         else if data.len() < 3 {
@@ -236,7 +232,7 @@ impl TryFrom<Packet> for CommandWord {
         if value.is_service() {
             value.as_word()
         } else {
-            Err(Error::PacketIsInvalid)
+            Err(Error::InvalidPacket)
         }
     }
 }
@@ -248,7 +244,7 @@ impl TryFrom<Packet> for StatusWord {
         if value.is_service() {
             value.as_word()
         } else {
-            Err(Error::PacketIsInvalid)
+            Err(Error::InvalidPacket)
         }
     }
 }
@@ -260,7 +256,7 @@ impl TryFrom<Packet> for DataWord {
         if value.is_data() {
             value.as_word()
         } else {
-            Err(Error::PacketIsInvalid)
+            Err(Error::InvalidPacket)
         }
     }
 }
@@ -281,16 +277,16 @@ mod tests {
     fn test_packet_write_success(
         #[case] offset: usize,
         #[case] input: &[u8],
-        #[case] expected: &[u8]
+        #[case] expected: &[u8],
     ) -> Result<()> {
-        let mut buffer = [0;4];
+        let mut buffer = [0; 4];
 
         // read then write the packet
         let packet = Packet::read(input, offset)?;
         packet.write(&mut buffer, 0)?;
 
         // compare the output with the original data
-        assert_eq!(&buffer[..3],expected);
+        assert_eq!(&buffer[..3], expected);
 
         Ok(())
     }
@@ -302,14 +298,13 @@ mod tests {
         #[case] offset: usize,
         #[case] input: &[u8],
         #[case] output: &mut [u8],
-        #[case] expected: bool
+        #[case] expected: bool,
     ) -> Result<()> {
-
         // read then write the packet
         let packet = Packet::read(input, 0)?;
         let result = packet.write(output, offset);
 
-        assert_eq!(result.is_ok(),expected);
+        assert_eq!(result.is_ok(), expected);
         Ok(())
     }
 
@@ -325,7 +320,6 @@ mod tests {
         #[case] body: [u8; 2],
         #[case] parity: u8,
     ) -> Result<()> {
-
         let packet = Packet::read(input, offset)?;
 
         assert_eq!(packet.sync, sync);
@@ -342,11 +336,10 @@ mod tests {
     fn test_packet_read_fail(
         #[case] offset: usize,
         #[case] input: &[u8],
-        #[case] expected: bool
+        #[case] expected: bool,
     ) -> Result<()> {
-
         let result = Packet::read(input, offset);
-        assert_eq!(result.is_ok(),expected);
+        assert_eq!(result.is_ok(), expected);
 
         Ok(())
     }
@@ -370,12 +363,12 @@ mod tests {
     #[case(0b001, [0b10000100, 0b10001001], 1, false)]
     fn test_packet_check_parity(
         #[case] sync: u8,
-        #[case] body: [u8;2],
+        #[case] body: [u8; 2],
         #[case] parity: u8,
-        #[case] expected: bool
+        #[case] expected: bool,
     ) -> Result<()> {
-        let packet = Packet::new(sync,body,parity);
-        assert_eq!(packet.check_parity(),expected);
+        let packet = Packet::new(sync, body, parity);
+        assert_eq!(packet.check_parity(), expected);
         Ok(())
     }
 
@@ -386,12 +379,12 @@ mod tests {
     #[case(0b001, [0b10000000, 0b10000001], 0, true)]
     fn test_packet_check_sync(
         #[case] sync: u8,
-        #[case] body: [u8;2],
+        #[case] body: [u8; 2],
         #[case] parity: u8,
-        #[case] expected: bool
+        #[case] expected: bool,
     ) -> Result<()> {
-        let packet = Packet::new(sync,body,parity);
-        assert_eq!(packet.check_sync(),expected);
+        let packet = Packet::new(sync, body, parity);
+        assert_eq!(packet.check_sync(), expected);
         Ok(())
     }
 
@@ -410,12 +403,12 @@ mod tests {
     #[case(0b100, [0b10000000, 0b10000001], 0, false)]
     fn test_packet_is_data(
         #[case] sync: u8,
-        #[case] body: [u8;2],
+        #[case] body: [u8; 2],
         #[case] parity: u8,
-        #[case] expected: bool
+        #[case] expected: bool,
     ) -> Result<()> {
-        let packet = Packet::new(sync,body,parity);
-        assert_eq!(packet.is_data(),expected);
+        let packet = Packet::new(sync, body, parity);
+        assert_eq!(packet.is_data(), expected);
         Ok(())
     }
 
@@ -434,12 +427,12 @@ mod tests {
     #[case(0b100, [0b10000000, 0b10000001], 0, true)]
     fn test_packet_is_service(
         #[case] sync: u8,
-        #[case] body: [u8;2],
+        #[case] body: [u8; 2],
         #[case] parity: u8,
-        #[case] expected: bool
+        #[case] expected: bool,
     ) -> Result<()> {
-        let packet = Packet::new(sync,body,parity);
-        assert_eq!(packet.is_service(),expected);
+        let packet = Packet::new(sync, body, parity);
+        assert_eq!(packet.is_service(), expected);
         Ok(())
     }
 
@@ -462,12 +455,12 @@ mod tests {
     #[case(0b100, [0b10000001, 0b10000000], 1, false)]
     fn test_packet_is_valid(
         #[case] sync: u8,
-        #[case] body: [u8;2],
+        #[case] body: [u8; 2],
         #[case] parity: u8,
-        #[case] expected: bool
+        #[case] expected: bool,
     ) -> Result<()> {
-        let packet = Packet::new(sync,body,parity);
-        assert_eq!(packet.is_valid(),expected);
+        let packet = Packet::new(sync, body, parity);
+        assert_eq!(packet.is_valid(), expected);
         Ok(())
     }
 
@@ -488,16 +481,13 @@ mod tests {
     // Traits
 
     #[rstest]
-    #[case( WordType::Command(CommandWord::new()), true )]
-    #[case( WordType::Status(StatusWord::new()), true )]
-    #[case( WordType::Data(DataWord::new()), true )]
-    #[case( WordType::None, false )]
-    fn test_packet_try_from_word(
-        #[case] word: WordType,
-        #[case] expected: bool
-    ) -> Result<()> {
+    #[case(WordType::Command(CommandWord::new()), true)]
+    #[case(WordType::Status(StatusWord::new()), true)]
+    #[case(WordType::Data(DataWord::new()), true)]
+    #[case(WordType::None, false)]
+    fn test_packet_try_from_word(#[case] word: WordType, #[case] expected: bool) -> Result<()> {
         let result = Packet::try_from(word);
-        assert_eq!(result.is_ok(),expected);
+        assert_eq!(result.is_ok(), expected);
         Ok(())
     }
 
@@ -510,12 +500,9 @@ mod tests {
     #[case( &[0b10100000, 0b00000000, 0b00010000], false )]
     #[case( &[0b10000000, 0b00000000, 0b00010000], true )]
     #[case( &[0b10000000, 0b00000000, 0b00010000], true )]
-    fn test_command_try_from_packet(
-        #[case] input: &[u8],
-        #[case] expected: bool
-    ) -> Result<()> {
+    fn test_command_try_from_packet(#[case] input: &[u8], #[case] expected: bool) -> Result<()> {
         let result = CommandWord::try_from(Packet::read(input, 0).unwrap());
-        assert_eq!(result.is_ok(),expected);
+        assert_eq!(result.is_ok(), expected);
         Ok(())
     }
 
@@ -528,12 +515,9 @@ mod tests {
     #[case( &[0b10100000, 0b00000000, 0b00010000], false )]
     #[case( &[0b10000000, 0b00000000, 0b00010000], true )]
     #[case( &[0b10000000, 0b00000000, 0b00010000], true )]
-    fn test_status_try_from_packet(
-        #[case] input: &[u8],
-        #[case] expected: bool
-    ) -> Result<()> {
+    fn test_status_try_from_packet(#[case] input: &[u8], #[case] expected: bool) -> Result<()> {
         let result = StatusWord::try_from(Packet::read(input, 0).unwrap());
-        assert_eq!(result.is_ok(),expected);
+        assert_eq!(result.is_ok(), expected);
         Ok(())
     }
 
@@ -546,15 +530,11 @@ mod tests {
     #[case( &[0b10100000, 0b00000000, 0b00010000], false )]
     #[case( &[0b00100000, 0b00000000, 0b00010000], true )]
     #[case( &[0b00100000, 0b00000000, 0b00010000], true )]
-    fn test_data_try_from_packet(
-        #[case] input: &[u8],
-        #[case] expected: bool
-    ) -> Result<()> {
+    fn test_data_try_from_packet(#[case] input: &[u8], #[case] expected: bool) -> Result<()> {
         let result = DataWord::try_from(Packet::read(input, 0).unwrap());
-        assert_eq!(result.is_ok(),expected);
+        assert_eq!(result.is_ok(), expected);
         Ok(())
     }
 
     // ----------------------------------------------------------
-
 }

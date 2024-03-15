@@ -163,28 +163,28 @@ mod tests {
     fn test_field_clone() {
         let field1 = Field::from(0b1010101010101010);
         let field2 = field1.clone();
-        assert_eq!(field1,field2);
+        assert_eq!(field1, field2);
     }
 
     #[test]
     fn test_field_new() {
         let field = Field::new();
-        assert_eq!(field.mask,0);
-        assert_eq!(field.offset,0);
+        assert_eq!(field.mask, 0);
+        assert_eq!(field.offset, 0);
     }
 
     #[test]
     fn test_field_with_mask() {
         let field = Field::new().with_mask(0b1010101010101010);
-        assert_eq!(field.mask,0b1010101010101010);
-        assert_eq!(field.offset,0);
+        assert_eq!(field.mask, 0b1010101010101010);
+        assert_eq!(field.offset, 0);
     }
 
     #[test]
     fn test_field_with_offset() {
         let field = Field::new().with_offset(2);
-        assert_eq!(field.mask,0);
-        assert_eq!(field.offset,2);
+        assert_eq!(field.mask, 0);
+        assert_eq!(field.offset, 2);
     }
 
     #[rstest]
@@ -192,12 +192,9 @@ mod tests {
     #[case(0b1010101010101000, 3)]
     #[case(0b1010101010100000, 5)]
     #[case(0b1010101010000000, 7)]
-    fn test_field_with_calculated_offset(
-        #[case] input: u16,
-        #[case] expected: u32
-    ) {
+    fn test_field_with_calculated_offset(#[case] input: u16, #[case] expected: u32) {
         let field = Field::new().with_mask(input).with_calculated_offset();
-        assert_eq!(field.offset,expected);
+        assert_eq!(field.offset, expected);
     }
 
     #[rstest]
@@ -205,13 +202,10 @@ mod tests {
     #[case(0b1010101010101000, 3)]
     #[case(0b1010101010100000, 5)]
     #[case(0b1010101010000000, 7)]
-    fn test_field_from_u16(
-        #[case] input: u16,
-        #[case] expected: u32
-    ) {
+    fn test_field_from_u16(#[case] input: u16, #[case] expected: u32) {
         let field = Field::from(input);
-        assert_eq!(field.mask,input);
-        assert_eq!(field.offset,expected);
+        assert_eq!(field.mask, input);
+        assert_eq!(field.offset, expected);
     }
 
     #[rstest]
@@ -220,15 +214,11 @@ mod tests {
     #[case(0b0000011111000000, 0b0000010101000000, 0b10101)]
     #[case(0b0000000001111110, 0b0000000001011010, 0b101101)]
     #[case(0b0000000000000011, 0b0000000000000011, 0b0000011)]
-    fn test_field_get(
-        #[case] mask: u16,
-        #[case] input: u16,
-        #[case] expected: u8,
-    ) {
+    fn test_field_get(#[case] mask: u16, #[case] input: u16, #[case] expected: u8) {
         let field = Field::from(mask);
         let word = DataWord::from(input);
         let value = field.get(&word);
-        assert_eq!(value,expected);
+        assert_eq!(value, expected);
     }
 
     #[rstest]
@@ -237,16 +227,11 @@ mod tests {
     #[case(0b0000011111000000, 0b10101, 0b0000010101000000)]
     #[case(0b0000000001111110, 0b101101, 0b0000000001011010)]
     #[case(0b0000000000000011, 0b0000011, 0b0000000000000011)]
-    fn test_field_set(
-        #[case] mask: u16,
-        #[case] input: u8,
-        #[case] expected: u16,
-    ) {
+    fn test_field_set(#[case] mask: u16, #[case] input: u8, #[case] expected: u16) {
         let field = Field::from(mask);
         let mut word = DataWord::from(0);
-        
-        field.set(&mut word, input);
-        assert_eq!(word.as_value(),expected);
-    }
 
+        field.set(&mut word, input);
+        assert_eq!(word.as_value(), expected);
+    }
 }
