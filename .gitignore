@@ -3,4 +3,5 @@
 /Cargo.lock
 
 # code coverage files
+/coverage
 *.profraw

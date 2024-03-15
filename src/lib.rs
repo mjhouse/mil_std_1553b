@@ -45,7 +45,7 @@ mod word;
 
 pub(crate) mod fields;
 
-pub use crate::message::{Message, MessageDirection, MessageSide, MessageType, Packet};
+pub use crate::message::{Message, Packet};
 
 pub use crate::errors::{Error, MessageError, Result, SubsystemError, SystemError, TerminalError};
 
