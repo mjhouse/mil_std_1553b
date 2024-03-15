@@ -27,11 +27,10 @@ jobs:
         rustup component add llvm-tools-preview &&
         cargo install grcov
 
-    - name: Build library
-      run: cargo build --verbose
-    
     - name: Test library
-      run: cargo test --verbose
+      run: |
+        cargo clean &&
+        cargo test
 
     - name: Generate code coverage
       run: |
