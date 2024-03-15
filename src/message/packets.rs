@@ -82,6 +82,7 @@ impl Packet {
     ///    assert_eq!(packet.parity, 0b00000001);
     /// # Ok(())
     /// # }
+    #[allow(clippy::if_same_then_else)]
     pub fn read(data: &[u8], offset: usize) -> Result<Self> {
         // if the offset won't fit in a u32
         if offset > 12 {
@@ -100,7 +101,7 @@ impl Packet {
 
         let mut buf: [u8; 4] = [0, 0, 0, 0];
 
-        buf[0] = data.get(0).cloned().unwrap_or(0);
+        buf[0] = data.first().cloned().unwrap_or(0);
         buf[1] = data.get(1).cloned().unwrap_or(0);
         buf[2] = data.get(2).cloned().unwrap_or(0);
         buf[3] = data.get(3).cloned().unwrap_or(0);
@@ -125,6 +126,7 @@ impl Packet {
     /// * `data` - A slice of bytes to parse
     /// * `offset` - The **bit** offset at which to write
     ///
+    #[allow(clippy::if_same_then_else)]
     pub fn write(&self, data: &mut [u8], offset: usize) -> Result<()> {
         // if the offset requires 4 bytes and
         // they weren't given

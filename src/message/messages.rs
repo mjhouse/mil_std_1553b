@@ -198,7 +198,7 @@ impl<const WORDS: usize> Message<WORDS> {
     /// * `index` - An index
     ///
     pub fn command(&self) -> Option<&CommandWord> {
-        if let Some(WordType::Command(w)) = &self.words.get(0) {
+        if let Some(WordType::Command(w)) = &self.words.first() {
             Some(w)
         } else {
             None
@@ -215,7 +215,7 @@ impl<const WORDS: usize> Message<WORDS> {
     /// * `index` - An index
     ///
     pub fn status(&self) -> Option<&StatusWord> {
-        if let Some(WordType::Status(w)) = &self.words.get(0) {
+        if let Some(WordType::Status(w)) = &self.words.first() {
             Some(w)
         } else {
             None
@@ -408,7 +408,7 @@ impl<const WORDS: usize> Message<WORDS> {
         let count = word.count().unwrap_or(estimate);
 
         // the expected number of bytes to parse
-        let expected = (((count+1) * 20) + 7) / 8;
+        let expected = (((count + 1) * 20) + 7) / 8;
 
         // return error if data is too small
         if data.len() < expected {
@@ -469,47 +469,52 @@ mod tests {
     #[test]
     fn test_message_default() {
         let message: Message = Message::default();
-        assert_eq!(message.length(),0);
-        assert_eq!(message.count(),0);
-        assert_eq!(message.size(),33);
+        assert_eq!(message.length(), 0);
+        assert_eq!(message.count(), 0);
+        assert_eq!(message.size(), 33);
     }
 
     #[test]
     fn test_message_clone() {
         let message1: Message<2> = Message::new()
-            .with_command(0b0000000000000001).unwrap()
-            .with_data(0b0000000000000001).unwrap()
-            .build().unwrap();
+            .with_command(0b0000000000000001)
+            .unwrap()
+            .with_data(0b0000000000000001)
+            .unwrap()
+            .build()
+            .unwrap();
 
         let message2 = message1.clone();
-        assert_eq!(message1,message2);
+        assert_eq!(message1, message2);
     }
 
     #[test]
     fn test_message_new() {
         let message: Message = Message::new();
-        assert_eq!(message.length(),0);
-        assert_eq!(message.count(),0);
-        assert_eq!(message.size(),33);
+        assert_eq!(message.length(), 0);
+        assert_eq!(message.count(), 0);
+        assert_eq!(message.size(), 33);
     }
 
     #[test]
     fn test_message_with_command() {
         let message: Message<2> = Message::new()
-            .with_command(0b0000000000000001).unwrap()
-            .with_data(0b0000000000000001).unwrap()
-            .build().unwrap();
-        assert_eq!(message.length(),2);
-        assert_eq!(message.count(),1);
-        assert_eq!(message.size(),2);
+            .with_command(0b0000000000000001)
+            .unwrap()
+            .with_data(0b0000000000000001)
+            .unwrap()
+            .build()
+            .unwrap();
+        assert_eq!(message.length(), 2);
+        assert_eq!(message.count(), 1);
+        assert_eq!(message.size(), 2);
         assert!(message.is_command());
         assert!(!message.is_status());
     }
 
     #[test]
     fn test_message_command_add_data() {
-        let mut message: Message<2> = Message::new()
-            .with_command(0b0001100001100010).unwrap();
+        let mut message: Message<2> = Message::new().with_command(0b0001100001100010).unwrap();
 
         let result = message.add_data(0b0110100001101001.into());
 
@@ -522,7 +527,8 @@ mod tests {
     fn test_message_with_command_fail_duplicate_header() {
         // adding two header words to the message
         let message: Result<Message<2>> = Message::new()
-            .with_command(0b0000000000000001).unwrap()
+            .with_command(0b0000000000000001)
+            .unwrap()
             .with_command(0b0000000000000001);
         assert!(message.is_err());
     }
@@ -540,8 +546,7 @@ mod tests {
 
     #[test]
     fn test_message_with_command_fail_message_full() {
-        let result: Result<Message<0>> = Message::new()
-            .with_command(0b0000000000000001);
+        let result: Result<Message<0>> = Message::new().with_command(0b0000000000000001);
         assert!(result.is_err());
     }
 
@@ -554,26 +559,28 @@ mod tests {
         let mut message: Message = Message::new();
         let result = message.add_command(word);
 
-        assert_eq!(result,Err(Error::InvalidWord));
+        assert_eq!(result, Err(Error::InvalidWord));
     }
 
     #[test]
     fn test_message_with_status() {
         let message: Message<2> = Message::new()
-            .with_status(0b0000000000000001).unwrap()
-            .with_data(0b0000000000000001).unwrap()
-            .build().unwrap();
-        assert_eq!(message.length(),2);
-        assert_eq!(message.count(),1);
-        assert_eq!(message.size(),2);
+            .with_status(0b0000000000000001)
+            .unwrap()
+            .with_data(0b0000000000000001)
+            .unwrap()
+            .build()
+            .unwrap();
+        assert_eq!(message.length(), 2);
+        assert_eq!(message.count(), 1);
+        assert_eq!(message.size(), 2);
         assert!(message.is_status());
         assert!(!message.is_command());
     }
 
     #[test]
     fn test_message_status_add_data() {
-        let mut message: Message<2> = Message::new()
-            .with_status(0b0001100001100010).unwrap();
+        let mut message: Message<2> = Message::new().with_status(0b0001100001100010).unwrap();
 
         let result = message.add_data(0b0110100001101001.into());
 
@@ -586,7 +593,8 @@ mod tests {
     fn test_message_with_status_fail_duplicate_header() {
         // adding two header words to the message
         let message: Result<Message<2>> = Message::new()
-            .with_status(0b0000000000000001).unwrap()
+            .with_status(0b0000000000000001)
+            .unwrap()
             .with_status(0b0000000000000001);
         assert!(message.is_err());
     }
@@ -604,8 +612,7 @@ mod tests {
 
     #[test]
     fn test_message_with_status_fail_message_full() {
-        let result: Result<Message<0>> = Message::new()
-            .with_status(0b0000000000000001);
+        let result: Result<Message<0>> = Message::new().with_status(0b0000000000000001);
         assert!(result.is_err());
     }
 
@@ -618,32 +625,36 @@ mod tests {
         let mut message: Message = Message::new();
         let result = message.add_status(word);
 
-        assert_eq!(result,Err(Error::InvalidWord));
+        assert_eq!(result, Err(Error::InvalidWord));
     }
 
     #[test]
     fn test_message_with_data() {
         let message: Message<2> = Message::new()
-            .with_status(0b0000000000000001).unwrap()
-            .with_data(0b0000000000000001).unwrap()
-            .build().unwrap();
-        assert_eq!(message.length(),2);
-        assert_eq!(message.count(),1);
-        assert_eq!(message.size(),2);
+            .with_status(0b0000000000000001)
+            .unwrap()
+            .with_data(0b0000000000000001)
+            .unwrap()
+            .build()
+            .unwrap();
+        assert_eq!(message.length(), 2);
+        assert_eq!(message.count(), 1);
+        assert_eq!(message.size(), 2);
     }
 
     #[test]
     fn test_message_with_data_fail() {
-        let result: Result<Message<2>> = Message::new()
-            .with_data(0b0000000000000001);
+        let result: Result<Message<2>> = Message::new().with_data(0b0000000000000001);
         assert!(result.is_err());
     }
 
     #[test]
     fn test_message_with_data_fail_message_full() {
         let result: Result<Message<2>> = Message::new()
-            .with_status(0b0000000000000001).unwrap()
-            .with_data(0b0000000000000001).unwrap()
+            .with_status(0b0000000000000001)
+            .unwrap()
+            .with_data(0b0000000000000001)
+            .unwrap()
             .with_data(0b0000000000000001);
         assert!(result.is_err());
     }
@@ -651,23 +662,29 @@ mod tests {
     #[test]
     fn test_message_with_word_command() {
         let message: Message<2> = Message::new()
-            .with_word(CommandWord::from(0b0000000000000001)).unwrap()
-            .with_word(DataWord::from(0b0000000000000001)).unwrap()
-            .build().unwrap();
-        assert_eq!(message.length(),2);
-        assert_eq!(message.count(),1);
-        assert_eq!(message.size(),2);
+            .with_word(CommandWord::from(0b0000000000000001))
+            .unwrap()
+            .with_word(DataWord::from(0b0000000000000001))
+            .unwrap()
+            .build()
+            .unwrap();
+        assert_eq!(message.length(), 2);
+        assert_eq!(message.count(), 1);
+        assert_eq!(message.size(), 2);
     }
 
     #[test]
     fn test_message_with_word_status() {
         let message: Message<2> = Message::new()
-            .with_word(StatusWord::from(0b0000000000000001)).unwrap()
-            .with_word(DataWord::from(0b0000000000000001)).unwrap()
-            .build().unwrap();
-        assert_eq!(message.length(),2);
-        assert_eq!(message.count(),1);
-        assert_eq!(message.size(),2);
+            .with_word(StatusWord::from(0b0000000000000001))
+            .unwrap()
+            .with_word(DataWord::from(0b0000000000000001))
+            .unwrap()
+            .build()
+            .unwrap();
+        assert_eq!(message.length(), 2);
+        assert_eq!(message.count(), 1);
+        assert_eq!(message.size(), 2);
     }
 
     #[rstest]
@@ -681,7 +698,7 @@ mod tests {
         message.write(&mut buffer)?;
 
         assert_eq!(&buffer[..l], input);
-        assert_eq!(message.length(),length);
+        assert_eq!(message.length(), length);
         Ok(())
     }
 
@@ -696,7 +713,7 @@ mod tests {
         message.write(&mut buffer)?;
 
         assert_eq!(&buffer[..l], input);
-        assert_eq!(message.length(),length);
+        assert_eq!(message.length(), length);
         Ok(())
     }
 
@@ -704,21 +721,21 @@ mod tests {
     fn test_message_read_status_no_data() {
         let input = [0b10000011, 0b00001100, 0b00100010];
         let message: Message<1> = Message::read_status(&input).unwrap();
-        assert_eq!(message.length(),1);
+        assert_eq!(message.length(), 1);
     }
 
     #[test]
     fn test_message_read_status_fail_buffer_too_small() {
         let input = [0b10000011, 0b00001100];
         let result: Result<Message<1>> = Message::read_status(&input);
-        assert_eq!(result,Err(Error::InvalidMessage));
+        assert_eq!(result, Err(Error::InvalidMessage));
     }
 
     #[test]
     fn test_message_read_command_fail_buffer_too_small() {
         let input = [0b10000011, 0b00001100, 0b00100010];
         let result: Result<Message<2>> = Message::read_command(&input);
-        assert_eq!(result,Err(Error::InvalidMessage));
+        assert_eq!(result, Err(Error::InvalidMessage));
     }
 
     #[test]
@@ -726,12 +743,15 @@ mod tests {
         let mut buffer = [0, 0, 0];
 
         let message: Message<2> = Message::new()
-            .with_command(0b0001100001100001).unwrap()
-            .with_data(0b0000000000000000).unwrap()
-            .build().unwrap();
+            .with_command(0b0001100001100001)
+            .unwrap()
+            .with_data(0b0000000000000000)
+            .unwrap()
+            .build()
+            .unwrap();
 
         let result = message.write(&mut buffer);
-        assert_eq!(result,Err(Error::OutOfBounds));
+        assert_eq!(result, Err(Error::OutOfBounds));
     }
 
     #[test]
@@ -739,25 +759,26 @@ mod tests {
         let mut buffer = [0, 0, 0];
 
         let message: Message<2> = Message::new()
-            .with_status(0b0001100001100001).unwrap()
-            .with_data(0b0000000000000000).unwrap()
-            .build().unwrap();
+            .with_status(0b0001100001100001)
+            .unwrap()
+            .with_data(0b0000000000000000)
+            .unwrap()
+            .build()
+            .unwrap();
 
         let result = message.write(&mut buffer);
-        assert_eq!(result,Err(Error::OutOfBounds));
+        assert_eq!(result, Err(Error::OutOfBounds));
     }
 
     #[test]
     fn test_message_status() {
-        let message: Message<2> = Message::new()
-            .with_status(0b0000000000000001).unwrap();
+        let message: Message<2> = Message::new().with_status(0b0000000000000001).unwrap();
         assert!(message.status().is_some());
     }
 
     #[test]
     fn test_message_command() {
-        let message: Message<2> = Message::new()
-            .with_command(0b0000000000000001).unwrap();
+        let message: Message<2> = Message::new().with_command(0b0000000000000001).unwrap();
         assert!(message.command().is_some());
     }
 
@@ -768,37 +789,44 @@ mod tests {
         let data3: DataWord = 0b0000000001010101.into();
 
         let message: Message<4> = Message::new()
-            .with_command(0b0000000000000011).unwrap()
-            .with_data(data1).unwrap()
-            .with_data(data2).unwrap()
-            .with_data(data3).unwrap()
-            .build().unwrap();
+            .with_command(0b0000000000000011)
+            .unwrap()
+            .with_data(data1)
+            .unwrap()
+            .with_data(data2)
+            .unwrap()
+            .with_data(data3)
+            .unwrap()
+            .build()
+            .unwrap();
 
         let word1 = message.get(0);
         let word2 = message.get(1);
         let word3 = message.get(2);
         let word4 = message.get(3);
 
-        assert_eq!(word1,Some(&data1));
-        assert_eq!(word2,Some(&data2));
-        assert_eq!(word3,Some(&data3));
-        assert_eq!(word4,None);
+        assert_eq!(word1, Some(&data1));
+        assert_eq!(word2, Some(&data2));
+        assert_eq!(word3, Some(&data3));
+        assert_eq!(word4, None);
     }
 
     #[test]
     fn test_message_clear() {
         let mut message: Message<2> = Message::new()
-            .with_command(0b0000000000000001).unwrap()
-            .with_data(0b0000000000000001).unwrap()
-            .build().unwrap();
+            .with_command(0b0000000000000001)
+            .unwrap()
+            .with_data(0b0000000000000001)
+            .unwrap()
+            .build()
+            .unwrap();
 
         message.clear();
 
-        assert_eq!(message.length(),0);
-        assert_eq!(message.count(),0);
-        assert_eq!(message.size(),2);
+        assert_eq!(message.length(), 0);
+        assert_eq!(message.count(), 0);
+        assert_eq!(message.size(), 2);
         assert!(message.is_empty());
         assert!(!message.is_full());
     }
-
 }
