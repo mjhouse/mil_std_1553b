@@ -28,7 +28,7 @@ jobs:
     - name: Test the library
       run: |
         cargo clean &&
-        cargo test
+        cargo test 
 
     - name: Generate code coverage
       run: |
