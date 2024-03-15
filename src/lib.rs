@@ -11,7 +11,7 @@
     macro_use_extern_crate,
     meta_variable_misuse,
     missing_abi,
-    // missing_copy_implementations,
+    missing_copy_implementations,
     missing_debug_implementations,
     missing_docs,
     non_ascii_idents,

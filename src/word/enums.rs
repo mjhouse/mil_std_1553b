@@ -3,7 +3,7 @@ use crate::Word;
 use super::{CommandWord, DataWord, StatusWord};
 
 /// Container enum for the different kinds of words
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum WordType {
     /// No contained word
     None,

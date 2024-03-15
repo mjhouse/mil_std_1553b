@@ -26,7 +26,6 @@ pub(crate) const fn parity(v: u16) -> u8 {
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 #[repr(u8)]
 pub enum Error {
-
     /// An index or range was out of bounds
     OutOfBounds,
 
@@ -254,14 +253,14 @@ mod tests {
     fn test_system_error_clone() {
         let error1 = SystemError::Terminal(TerminalError::Error);
         let error2 = error1.clone();
-        assert_eq!(error1,error2);
+        assert_eq!(error1, error2);
     }
 
     #[test]
     fn test_terminal_error_clone() {
         let error1 = TerminalError::Error;
         let error2 = error1.clone();
-        assert_eq!(error1,error2);
+        assert_eq!(error1, error2);
     }
 
     #[test]
@@ -285,17 +284,17 @@ mod tests {
     #[test]
     fn test_u8_from_terminal_error() {
         let error = u8::from(TerminalError::None);
-        assert_eq!(error,0);
+        assert_eq!(error, 0);
 
         let error = u8::from(TerminalError::Error);
-        assert_eq!(error,1);
+        assert_eq!(error, 1);
     }
 
     #[test]
     fn test_subsystem_error_clone() {
         let error1 = SubsystemError::Error;
         let error2 = error1.clone();
-        assert_eq!(error1,error2);
+        assert_eq!(error1, error2);
     }
 
     #[test]
@@ -319,17 +318,17 @@ mod tests {
     #[test]
     fn test_u8_from_subsystem_error() {
         let error = u8::from(SubsystemError::None);
-        assert_eq!(error,0);
+        assert_eq!(error, 0);
 
         let error = u8::from(SubsystemError::Error);
-        assert_eq!(error,1);
+        assert_eq!(error, 1);
     }
 
     #[test]
     fn test_message_error_clone() {
         let error1 = MessageError::Error;
         let error2 = error1.clone();
-        assert_eq!(error1,error2);
+        assert_eq!(error1, error2);
     }
 
     #[test]
@@ -353,9 +352,9 @@ mod tests {
     #[test]
     fn test_u8_from_message_error() {
         let error = u8::from(MessageError::None);
-        assert_eq!(error,0);
+        assert_eq!(error, 0);
 
         let error = u8::from(MessageError::Error);
-        assert_eq!(error,1);
+        assert_eq!(error, 1);
     }
 }

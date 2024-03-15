@@ -317,7 +317,6 @@ pub enum Address {
 }
 
 impl Address {
-
     /// Check if this enum contains an address
     #[must_use = "Returned value is not used"]
     pub const fn is_value(&self) -> bool {
@@ -380,7 +379,6 @@ pub enum SubAddress {
 }
 
 impl SubAddress {
-
     /// Check if this enum contains an address
     pub const fn is_value(&self) -> bool {
         matches!(self, Self::Value(_))
@@ -752,7 +750,7 @@ mod tests {
     fn test_mode_code_clone() {
         let item1 = ModeCode::InhibitTerminalFlagBit;
         let item2 = item1.clone();
-        assert_eq!(item1,item2);
+        assert_eq!(item1, item2);
     }
 
     #[rstest]
@@ -772,11 +770,8 @@ mod tests {
     #[case(ModeCode::SelectedTransmitterShutdown, 0b10100)]
     #[case(ModeCode::OverrideSelectedTransmitterShutdown, 0b10101)]
     #[case(ModeCode::UnknownModeCode(0b11111), 0b11111)]
-    fn test_mode_code_value(
-        #[case] code: ModeCode,
-        #[case] expected: u8,
-    ) {
-        assert_eq!(code.value(),expected);
+    fn test_mode_code_value(#[case] code: ModeCode, #[case] expected: u8) {
+        assert_eq!(code.value(), expected);
     }
 
     #[rstest]
@@ -796,11 +791,8 @@ mod tests {
     #[case(ModeCode::SelectedTransmitterShutdown, false)]
     #[case(ModeCode::OverrideSelectedTransmitterShutdown, false)]
     #[case(ModeCode::UnknownModeCode(0b11111), false)]
-    fn test_mode_code_is_transmit(
-        #[case] code: ModeCode,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(code.is_transmit(),expected);
+    fn test_mode_code_is_transmit(#[case] code: ModeCode, #[case] expected: bool) {
+        assert_eq!(code.is_transmit(), expected);
     }
 
     #[rstest]
@@ -820,11 +812,8 @@ mod tests {
     #[case(ModeCode::SelectedTransmitterShutdown, true)]
     #[case(ModeCode::OverrideSelectedTransmitterShutdown, true)]
     #[case(ModeCode::UnknownModeCode(0b11111), false)]
-    fn test_mode_code_is_receive(
-        #[case] code: ModeCode,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(code.is_receive(),expected);
+    fn test_mode_code_is_receive(#[case] code: ModeCode, #[case] expected: bool) {
+        assert_eq!(code.is_receive(), expected);
     }
 
     #[rstest]
@@ -844,11 +833,8 @@ mod tests {
     #[case(ModeCode::SelectedTransmitterShutdown, true)]
     #[case(ModeCode::OverrideSelectedTransmitterShutdown, true)]
     #[case(ModeCode::UnknownModeCode(0b11111), false)]
-    fn test_mode_code_has_data(
-        #[case] code: ModeCode,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(code.has_data(),expected);
+    fn test_mode_code_has_data(#[case] code: ModeCode, #[case] expected: bool) {
+        assert_eq!(code.has_data(), expected);
     }
 
     #[rstest]
@@ -868,11 +854,8 @@ mod tests {
     #[case(ModeCode::SelectedTransmitterShutdown, true)]
     #[case(ModeCode::OverrideSelectedTransmitterShutdown, true)]
     #[case(ModeCode::UnknownModeCode(0b11111), false)]
-    fn test_mode_code_is_broadcast(
-        #[case] code: ModeCode,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(code.is_broadcast(),expected);
+    fn test_mode_code_is_broadcast(#[case] code: ModeCode, #[case] expected: bool) {
+        assert_eq!(code.is_broadcast(), expected);
     }
 
     #[rstest]
@@ -892,11 +875,8 @@ mod tests {
     #[case(ModeCode::SelectedTransmitterShutdown, false)]
     #[case(ModeCode::OverrideSelectedTransmitterShutdown, false)]
     #[case(ModeCode::UnknownModeCode(0b11111), true)]
-    fn test_mode_code_is_unknown(
-        #[case] code: ModeCode,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(code.is_unknown(),expected);
+    fn test_mode_code_is_unknown(#[case] code: ModeCode, #[case] expected: bool) {
+        assert_eq!(code.is_unknown(), expected);
     }
 
     #[rstest]
@@ -916,11 +896,8 @@ mod tests {
     #[case(0b10100, ModeCode::SelectedTransmitterShutdown)]
     #[case(0b10101, ModeCode::OverrideSelectedTransmitterShutdown)]
     #[case(0b11111, ModeCode::UnknownModeCode(0b11111))]
-    fn test_mode_code_from_u8(
-        #[case] value: u8,
-        #[case] expected: ModeCode,
-    ) {
-        assert_eq!(ModeCode::from(value),expected);
+    fn test_mode_code_from_u8(#[case] value: u8, #[case] expected: ModeCode) {
+        assert_eq!(ModeCode::from(value), expected);
     }
 
     #[rstest]
@@ -940,127 +917,97 @@ mod tests {
     #[case(0b10100, ModeCode::SelectedTransmitterShutdown)]
     #[case(0b10101, ModeCode::OverrideSelectedTransmitterShutdown)]
     #[case(0b11111, ModeCode::UnknownModeCode(0b11111))]
-    fn test_mode_code_to_u8(
-        #[case] expected: u8,
-        #[case] code: ModeCode,
-    ) {
-        assert_eq!(u8::from(code),expected);
+    fn test_mode_code_to_u8(#[case] expected: u8, #[case] code: ModeCode) {
+        assert_eq!(u8::from(code), expected);
     }
 
     #[test]
     fn test_transmit_receive_clone() {
         let item1 = TransmitReceive::Transmit;
         let item2 = item1.clone();
-        assert_eq!(item1,item2);
+        assert_eq!(item1, item2);
     }
 
     #[rstest]
     #[case(TransmitReceive::Receive, false)]
     #[case(TransmitReceive::Transmit, true)]
-    fn test_transmit_receive_is_transmit(
-        #[case] code: TransmitReceive,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(code.is_transmit(),expected);
+    fn test_transmit_receive_is_transmit(#[case] code: TransmitReceive, #[case] expected: bool) {
+        assert_eq!(code.is_transmit(), expected);
     }
 
     #[rstest]
     #[case(TransmitReceive::Receive, true)]
     #[case(TransmitReceive::Transmit, false)]
-    fn test_transmit_receive_is_receive(
-        #[case] code: TransmitReceive,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(code.is_receive(),expected);
+    fn test_transmit_receive_is_receive(#[case] code: TransmitReceive, #[case] expected: bool) {
+        assert_eq!(code.is_receive(), expected);
     }
 
     #[rstest]
     #[case(TransmitReceive::Receive, 0)]
     #[case(TransmitReceive::Transmit, 1)]
-    fn test_transmit_receive_from_u8(
-        #[case] expected: TransmitReceive,
-        #[case] input: u8,
-    ) {
-        assert_eq!(TransmitReceive::from(input),expected);
+    fn test_transmit_receive_from_u8(#[case] expected: TransmitReceive, #[case] input: u8) {
+        assert_eq!(TransmitReceive::from(input), expected);
     }
 
     #[rstest]
     #[case(TransmitReceive::Receive, 0)]
     #[case(TransmitReceive::Transmit, 1)]
-    fn test_transmit_receive_to_u8(
-        #[case] input: TransmitReceive,
-        #[case] expected: u8,
-    ) {
-        assert_eq!(u8::from(input),expected);
+    fn test_transmit_receive_to_u8(#[case] input: TransmitReceive, #[case] expected: u8) {
+        assert_eq!(u8::from(input), expected);
     }
 
     #[test]
     fn test_address_clone() {
         let item1 = Address::Broadcast(0b11111);
         let item2 = item1.clone();
-        assert_eq!(item1,item2);
+        assert_eq!(item1, item2);
     }
 
     #[rstest]
     #[case(Address::Value(0b10101), true)]
     #[case(Address::Unknown(0b1111111), false)]
     #[case(Address::Broadcast(0b11111), false)]
-    fn test_address_is_value(
-        #[case] input: Address,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(input.is_value(),expected);
+    fn test_address_is_value(#[case] input: Address, #[case] expected: bool) {
+        assert_eq!(input.is_value(), expected);
     }
 
     #[rstest]
     #[case(Address::Value(0b10101), false)]
     #[case(Address::Unknown(0b1111111), true)]
     #[case(Address::Broadcast(0b11111), false)]
-    fn test_address_is_unknown(
-        #[case] input: Address,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(input.is_unknown(),expected);
+    fn test_address_is_unknown(#[case] input: Address, #[case] expected: bool) {
+        assert_eq!(input.is_unknown(), expected);
     }
 
     #[rstest]
     #[case(Address::Value(0b10101), false)]
     #[case(Address::Unknown(0b1111111), false)]
     #[case(Address::Broadcast(0b11111), true)]
-    fn test_address_is_broadcast(
-        #[case] input: Address,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(input.is_broadcast(),expected);
+    fn test_address_is_broadcast(#[case] input: Address, #[case] expected: bool) {
+        assert_eq!(input.is_broadcast(), expected);
     }
 
     #[rstest]
     #[case(Address::Value(0b10101), 0b10101)]
     #[case(Address::Unknown(0b1111111), 0b1111111)]
     #[case(Address::Broadcast(0b11111), 0b11111)]
-    fn test_address_to_u8(
-        #[case] input: Address,
-        #[case] expected: u8,
-    ) {
-        assert_eq!(u8::from(input),expected);
+    fn test_address_to_u8(#[case] input: Address, #[case] expected: u8) {
+        assert_eq!(u8::from(input), expected);
     }
 
     #[rstest]
     #[case(Address::Value(0b10101), 0b10101)]
     #[case(Address::Unknown(0b1111111), 0b1111111)]
     #[case(Address::Broadcast(0b11111), 0b11111)]
-    fn test_address_from_u8(
-        #[case] expected: Address,
-        #[case] input: u8,
-    ) {
-        assert_eq!(Address::from(input),expected);
+    fn test_address_from_u8(#[case] expected: Address, #[case] input: u8) {
+        assert_eq!(Address::from(input), expected);
     }
 
     #[test]
     fn test_subaddress_clone() {
         let item1 = SubAddress::ModeCode(0b11111);
         let item2 = item1.clone();
-        assert_eq!(item1,item2);
+        assert_eq!(item1, item2);
     }
 
     #[rstest]
@@ -1068,11 +1015,8 @@ mod tests {
     #[case(SubAddress::Unknown(0b1111111), false)]
     #[case(SubAddress::ModeCode(0b11111), false)]
     #[case(SubAddress::ModeCode(0b00000), false)]
-    fn test_subaddress_is_value(
-        #[case] input: SubAddress,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(input.is_value(),expected);
+    fn test_subaddress_is_value(#[case] input: SubAddress, #[case] expected: bool) {
+        assert_eq!(input.is_value(), expected);
     }
 
     #[rstest]
@@ -1080,11 +1024,8 @@ mod tests {
     #[case(SubAddress::Unknown(0b1111111), true)]
     #[case(SubAddress::ModeCode(0b11111), false)]
     #[case(SubAddress::ModeCode(0b00000), false)]
-    fn test_subaddress_is_unknown(
-        #[case] input: SubAddress,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(input.is_unknown(),expected);
+    fn test_subaddress_is_unknown(#[case] input: SubAddress, #[case] expected: bool) {
+        assert_eq!(input.is_unknown(), expected);
     }
 
     #[rstest]
@@ -1092,11 +1033,8 @@ mod tests {
     #[case(SubAddress::Unknown(0b1111111), false)]
     #[case(SubAddress::ModeCode(0b11111), true)]
     #[case(SubAddress::ModeCode(0b00000), true)]
-    fn test_subaddress_is_mode_code(
-        #[case] input: SubAddress,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(input.is_mode_code(),expected);
+    fn test_subaddress_is_mode_code(#[case] input: SubAddress, #[case] expected: bool) {
+        assert_eq!(input.is_mode_code(), expected);
     }
 
     #[rstest]
@@ -1104,11 +1042,8 @@ mod tests {
     #[case(SubAddress::Unknown(0b1111111), 0b1111111)]
     #[case(SubAddress::ModeCode(0b11111), 0b11111)]
     #[case(SubAddress::ModeCode(0b00000), 0b00000)]
-    fn test_subaddress_to_u8(
-        #[case] input: SubAddress,
-        #[case] expected: u8,
-    ) {
-        assert_eq!(u8::from(input),expected);
+    fn test_subaddress_to_u8(#[case] input: SubAddress, #[case] expected: u8) {
+        assert_eq!(u8::from(input), expected);
     }
 
     #[rstest]
@@ -1116,159 +1051,120 @@ mod tests {
     #[case(SubAddress::Unknown(0b1111111), 0b1111111)]
     #[case(SubAddress::ModeCode(0b11111), 0b11111)]
     #[case(SubAddress::ModeCode(0b00000), 0b00000)]
-    fn test_subaddress_from_u8(
-        #[case] expected: SubAddress,
-        #[case] input: u8,
-    ) {
-        assert_eq!(SubAddress::from(input),expected);
+    fn test_subaddress_from_u8(#[case] expected: SubAddress, #[case] input: u8) {
+        assert_eq!(SubAddress::from(input), expected);
     }
 
     #[test]
     fn test_instrumentation_clone() {
         let item1 = Instrumentation::Command;
         let item2 = item1.clone();
-        assert_eq!(item1,item2);
+        assert_eq!(item1, item2);
     }
 
     #[rstest]
     #[case(Instrumentation::Status, true)]
     #[case(Instrumentation::Command, false)]
-    fn test_instrumentation_is_status(
-        #[case] input: Instrumentation,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(input.is_status(),expected);
+    fn test_instrumentation_is_status(#[case] input: Instrumentation, #[case] expected: bool) {
+        assert_eq!(input.is_status(), expected);
     }
 
     #[rstest]
     #[case(Instrumentation::Status, false)]
     #[case(Instrumentation::Command, true)]
-    fn test_instrumentation_is_command(
-        #[case] input: Instrumentation,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(input.is_command(),expected);
+    fn test_instrumentation_is_command(#[case] input: Instrumentation, #[case] expected: bool) {
+        assert_eq!(input.is_command(), expected);
     }
 
     #[rstest]
     #[case(Instrumentation::Status, 0)]
     #[case(Instrumentation::Command, 1)]
-    fn test_instrumentation_from_u8(
-        #[case] expected: Instrumentation,
-        #[case] input: u8,
-    ) {
-        assert_eq!(Instrumentation::from(input),expected);
+    fn test_instrumentation_from_u8(#[case] expected: Instrumentation, #[case] input: u8) {
+        assert_eq!(Instrumentation::from(input), expected);
     }
 
     #[rstest]
     #[case(Instrumentation::Status, 0)]
     #[case(Instrumentation::Command, 1)]
-    fn test_instrumentation_to_u8(
-        #[case] input: Instrumentation,
-        #[case] expected: u8,
-    ) {
-        assert_eq!(u8::from(input),expected);
+    fn test_instrumentation_to_u8(#[case] input: Instrumentation, #[case] expected: u8) {
+        assert_eq!(u8::from(input), expected);
     }
 
     #[test]
     fn test_service_request_clone() {
         let item1 = ServiceRequest::Service;
         let item2 = item1.clone();
-        assert_eq!(item1,item2);
+        assert_eq!(item1, item2);
     }
 
     #[rstest]
     #[case(ServiceRequest::NoService, true)]
     #[case(ServiceRequest::Service, false)]
-    fn test_service_request_is_noservice(
-        #[case] input: ServiceRequest,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(input.is_noservice(),expected);
+    fn test_service_request_is_noservice(#[case] input: ServiceRequest, #[case] expected: bool) {
+        assert_eq!(input.is_noservice(), expected);
     }
 
     #[rstest]
     #[case(ServiceRequest::NoService, false)]
     #[case(ServiceRequest::Service, true)]
-    fn test_service_request_is_service(
-        #[case] input: ServiceRequest,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(input.is_service(),expected);
+    fn test_service_request_is_service(#[case] input: ServiceRequest, #[case] expected: bool) {
+        assert_eq!(input.is_service(), expected);
     }
 
     #[rstest]
     #[case(ServiceRequest::NoService, 0)]
     #[case(ServiceRequest::Service, 1)]
-    fn test_service_request_from_u8(
-        #[case] expected: ServiceRequest,
-        #[case] input: u8,
-    ) {
-        assert_eq!(ServiceRequest::from(input),expected);
+    fn test_service_request_from_u8(#[case] expected: ServiceRequest, #[case] input: u8) {
+        assert_eq!(ServiceRequest::from(input), expected);
     }
 
     #[rstest]
     #[case(ServiceRequest::NoService, 0)]
     #[case(ServiceRequest::Service, 1)]
-    fn test_service_request_to_u8(
-        #[case] input: ServiceRequest,
-        #[case] expected: u8,
-    ) {
-        assert_eq!(u8::from(input),expected);
+    fn test_service_request_to_u8(#[case] input: ServiceRequest, #[case] expected: u8) {
+        assert_eq!(u8::from(input), expected);
     }
 
     #[test]
     fn test_reserved_clone() {
         let item1 = Reserved::Value(0b111);
         let item2 = item1.clone();
-        assert_eq!(item1,item2);
+        assert_eq!(item1, item2);
     }
 
     #[rstest]
     #[case(Reserved::None, true)]
     #[case(Reserved::Value(0b111), false)]
-    fn test_reserved_is_none(
-        #[case] input: Reserved,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(input.is_none(),expected);
+    fn test_reserved_is_none(#[case] input: Reserved, #[case] expected: bool) {
+        assert_eq!(input.is_none(), expected);
     }
 
     #[rstest]
     #[case(Reserved::None, false)]
     #[case(Reserved::Value(0b111), true)]
-    fn test_reserved_is_value(
-        #[case] input: Reserved,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(input.is_value(),expected);
+    fn test_reserved_is_value(#[case] input: Reserved, #[case] expected: bool) {
+        assert_eq!(input.is_value(), expected);
     }
 
     #[rstest]
     #[case(Reserved::None, 0)]
     #[case(Reserved::Value(0b111), 0b111)]
-    fn test_reserved_from_u8(
-        #[case] expected: Reserved,
-        #[case] input: u8,
-    ) {
-        assert_eq!(Reserved::from(input),expected);
+    fn test_reserved_from_u8(#[case] expected: Reserved, #[case] input: u8) {
+        assert_eq!(Reserved::from(input), expected);
     }
 
     #[rstest]
     #[case(Reserved::None, 0)]
     #[case(Reserved::Value(0b111), 0b111)]
-    fn test_reserved_to_u8(
-        #[case] input: Reserved,
-        #[case] expected: u8,
-    ) {
-        assert_eq!(u8::from(input),expected);
+    fn test_reserved_to_u8(#[case] input: Reserved, #[case] expected: u8) {
+        assert_eq!(u8::from(input), expected);
     }
 
     #[test]
     fn test_broadcast_received_clone() {
         let item1 = BroadcastReceived::Received;
         let item2 = item1.clone();
-        assert_eq!(item1,item2);
+        assert_eq!(item1, item2);
     }
 
     #[rstest]
@@ -1278,7 +1174,7 @@ mod tests {
         #[case] input: BroadcastReceived,
         #[case] expected: bool,
     ) {
-        assert_eq!(input.is_notreceived(),expected);
+        assert_eq!(input.is_notreceived(), expected);
     }
 
     #[rstest]
@@ -1288,81 +1184,63 @@ mod tests {
         #[case] input: BroadcastReceived,
         #[case] expected: bool,
     ) {
-        assert_eq!(input.is_received(),expected);
+        assert_eq!(input.is_received(), expected);
     }
 
     #[rstest]
     #[case(BroadcastReceived::NotReceived, 0)]
     #[case(BroadcastReceived::Received, 1)]
-    fn test_broadcast_received_from_u8(
-        #[case] expected: BroadcastReceived,
-        #[case] input: u8,
-    ) {
-        assert_eq!(BroadcastReceived::from(input),expected);
+    fn test_broadcast_received_from_u8(#[case] expected: BroadcastReceived, #[case] input: u8) {
+        assert_eq!(BroadcastReceived::from(input), expected);
     }
 
     #[rstest]
     #[case(BroadcastReceived::NotReceived, 0)]
     #[case(BroadcastReceived::Received, 1)]
-    fn test_broadcast_received_to_u8(
-        #[case] input: BroadcastReceived,
-        #[case] expected: u8,
-    ) {
-        assert_eq!(u8::from(input),expected);
+    fn test_broadcast_received_to_u8(#[case] input: BroadcastReceived, #[case] expected: u8) {
+        assert_eq!(u8::from(input), expected);
     }
 
     #[test]
     fn test_terminal_busy_clone() {
         let item1 = TerminalBusy::Busy;
         let item2 = item1.clone();
-        assert_eq!(item1,item2);
+        assert_eq!(item1, item2);
     }
 
     #[rstest]
     #[case(TerminalBusy::NotBusy, true)]
     #[case(TerminalBusy::Busy, false)]
-    fn test_terminal_busy_is_notbusy(
-        #[case] input: TerminalBusy,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(input.is_notbusy(),expected);
+    fn test_terminal_busy_is_notbusy(#[case] input: TerminalBusy, #[case] expected: bool) {
+        assert_eq!(input.is_notbusy(), expected);
     }
 
     #[rstest]
     #[case(TerminalBusy::NotBusy, false)]
     #[case(TerminalBusy::Busy, true)]
-    fn test_terminal_busy_is_busy(
-        #[case] input: TerminalBusy,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(input.is_busy(),expected);
+    fn test_terminal_busy_is_busy(#[case] input: TerminalBusy, #[case] expected: bool) {
+        assert_eq!(input.is_busy(), expected);
     }
 
     #[rstest]
     #[case(TerminalBusy::NotBusy, 0)]
     #[case(TerminalBusy::Busy, 1)]
-    fn test_terminal_busy_from_u8(
-        #[case] expected: TerminalBusy,
-        #[case] input: u8,
-    ) {
-        assert_eq!(TerminalBusy::from(input),expected);
+    fn test_terminal_busy_from_u8(#[case] expected: TerminalBusy, #[case] input: u8) {
+        assert_eq!(TerminalBusy::from(input), expected);
     }
 
     #[rstest]
     #[case(TerminalBusy::NotBusy, 0)]
     #[case(TerminalBusy::Busy, 1)]
-    fn test_terminal_busy_to_u8(
-        #[case] input: TerminalBusy,
-        #[case] expected: u8,
-    ) {
-        assert_eq!(u8::from(input),expected);
+    fn test_terminal_busy_to_u8(#[case] input: TerminalBusy, #[case] expected: u8) {
+        assert_eq!(u8::from(input), expected);
     }
 
     #[test]
     fn test_dynamic_bus_acceptance_clone() {
         let item1 = DynamicBusAcceptance::Accepted;
         let item2 = item1.clone();
-        assert_eq!(item1,item2);
+        assert_eq!(item1, item2);
     }
 
     #[rstest]
@@ -1372,7 +1250,7 @@ mod tests {
         #[case] input: DynamicBusAcceptance,
         #[case] expected: bool,
     ) {
-        assert_eq!(input.is_notaccepted(),expected);
+        assert_eq!(input.is_notaccepted(), expected);
     }
 
     #[rstest]
@@ -1382,7 +1260,7 @@ mod tests {
         #[case] input: DynamicBusAcceptance,
         #[case] expected: bool,
     ) {
-        assert_eq!(input.is_accepted(),expected);
+        assert_eq!(input.is_accepted(), expected);
     }
 
     #[rstest]
@@ -1392,7 +1270,7 @@ mod tests {
         #[case] expected: DynamicBusAcceptance,
         #[case] input: u8,
     ) {
-        assert_eq!(DynamicBusAcceptance::from(input),expected);
+        assert_eq!(DynamicBusAcceptance::from(input), expected);
     }
 
     #[rstest]
@@ -1402,6 +1280,6 @@ mod tests {
         #[case] input: DynamicBusAcceptance,
         #[case] expected: u8,
     ) {
-        assert_eq!(u8::from(input),expected);
+        assert_eq!(u8::from(input), expected);
     }
 }
