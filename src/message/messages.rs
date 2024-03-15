@@ -356,8 +356,6 @@ impl<const WORDS: usize> Message<WORDS> {
         if let Some(w) = self.command() {
             self.count() == w.count()
         } else {
-            dbg!(self.length());
-            dbg!(self.size());
             self.length() == self.size()
         }
     }
@@ -390,6 +388,11 @@ impl<const WORDS: usize> Message<WORDS> {
     }
 
     /// Read bytes as a message
+    /// 
+    /// # Arguments
+    ///
+    /// * `data` - A slice of bytes to read
+    /// 
     pub fn read<T: Word + Header>(data: &[u8]) -> Result<Self> {
         let min = 3;
 
@@ -435,11 +438,16 @@ impl<const WORDS: usize> Message<WORDS> {
         Ok(message)
     }
 
-    /// Get the message as a byte array
-    pub fn write(&self, bytes: &mut [u8]) -> Result<()> {
+    /// Write the message to a byte array
+    /// 
+    /// # Arguments
+    ///
+    /// * `data` - A slice of bytes to write
+    /// 
+    pub fn write(&self, data: &mut [u8]) -> Result<()> {
         let count = ((self.length() * 20) + 7) / 8;
 
-        if bytes.len() < count {
+        if data.len() < count {
             return Err(Error::OutOfBounds);
         }
 
@@ -449,7 +457,7 @@ impl<const WORDS: usize> Message<WORDS> {
             let o = b % 8;
 
             let packet = Packet::try_from(word)?;
-            packet.write(&mut bytes[i..], o)?;
+            packet.write(&mut data[i..], o)?;
         }
 
         Ok(())
@@ -651,7 +659,7 @@ mod tests {
 
     #[test]
     fn test_message_with_data_fail_message_full() {
-        let result: Result<Message<2>> = Message::new()
+        let result = Message::<2>::new()
             .with_status(0b0000000000000001)
             .unwrap()
             .with_data(0b0000000000000001)
@@ -662,7 +670,7 @@ mod tests {
 
     #[test]
     fn test_message_with_word_command() {
-        let message: Message<2> = Message::new()
+        let message = Message::<2>::new()
             .with_word(CommandWord::from(0b0000000000000001))
             .unwrap()
             .with_word(DataWord::from(0b0000000000000001))
@@ -676,7 +684,7 @@ mod tests {
 
     #[test]
     fn test_message_with_word_status() {
-        let message: Message<2> = Message::new()
+        let message = Message::<2>::new()
             .with_word(StatusWord::from(0b0000000000000001))
             .unwrap()
             .with_word(DataWord::from(0b0000000000000001))

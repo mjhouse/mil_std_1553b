@@ -1,4 +1,4 @@
-// #![no_std]
+#![no_std]
 #![forbid(
     arithmetic_overflow,
     absolute_paths_not_starting_with_crate,
