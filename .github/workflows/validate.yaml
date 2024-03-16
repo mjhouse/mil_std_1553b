@@ -26,7 +26,7 @@ jobs:
         cargo install grcov
 
     - name: Build the library
-      run: cargo test --no-run && rm -f *.profraw
+      run: cargo test --no-run
 
     - name: Test the library
       run: cargo test
