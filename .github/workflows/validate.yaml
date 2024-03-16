@@ -26,10 +26,10 @@ jobs:
         cargo install grcov
 
     - name: Build the library
-      run: cargo test --no-run && rm *.profraw
+      run: cargo test --no-run && rm *.profraw && ls | grep 'profraw'
 
     - name: Test the library
-      run: cargo test
+      run: cargo test && ls | grep 'profraw'
 
     - name: Generate code coverage
       run: grcov . -s . -b ./target/debug/ -t cobertura --branch --ignore-not-existing -o .
