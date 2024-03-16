@@ -29,7 +29,7 @@ jobs:
       run: cargo test --no-run && rm -f *.profraw
 
     - name: Test the library
-      run: ls | grep 'profraw' && cargo test && ls | grep 'profraw'
+      run: cargo test && ls | grep 'profraw'
 
     - name: Generate code coverage
       run: grcov . -s . -b ./target/debug/ -t cobertura --branch --ignore-not-existing -o .
