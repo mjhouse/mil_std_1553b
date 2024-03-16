@@ -22,7 +22,7 @@ jobs:
         cargo install grcov
 
     - name: Build the library
-      run: cargo build --tests
+      run: cargo test --no-run
 
     - name: Test the library
       env:
@@ -37,6 +37,7 @@ jobs:
       uses: 5monkeys/cobertura-action@v13
       with: 
         path: ./cobertura.xml
+        report_name: Code coverage
         fail_below_threshold: true
         minimum_coverage: 95
 
