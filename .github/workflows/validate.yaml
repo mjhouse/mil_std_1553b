@@ -16,7 +16,7 @@ jobs:
     - name: Install Rust toolchain
       run: rustup update --no-self-update stable
 
-    - name: Install gcovr
+    - name: Install grcov
       run: |
         rustup component add llvm-tools-preview &&
         cargo install grcov
@@ -34,8 +34,14 @@ jobs:
       run: grcov . -s . -b ./target/debug/ -t cobertura --branch --ignore-not-existing -o .
 
     - name: Make coverage report
-      uses: insightsengineering/coverage-action@v2.6.0
-      with:
+      uses: 5monkeys/cobertura-action@v13
+      with: 
         path: ./cobertura.xml
-        threshold: 95
-        fail: true
+        fail_below_threshold: true
+        minimum_coverage: 95
+
+      # uses: insightsengineering/coverage-action@v2.6.0
+      # with:
+      #   path: ./cobertura.xml
+      #   threshold: 95
+      #   fail: true
