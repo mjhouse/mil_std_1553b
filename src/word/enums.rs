@@ -68,6 +68,16 @@ impl WordType {
             _ => 0,
         }
     }
+
+    /// Check the parity of the word
+    pub fn check_parity(&self) -> bool {
+        match self {
+            Self::Command(w) => w.check_parity(),
+            Self::Status(w) => w.check_parity(),
+            Self::Data(w) => w.check_parity(),
+            _ => false,
+        }
+    }
 }
 
 impl From<CommandWord> for WordType {
@@ -220,7 +230,7 @@ mod tests {
     }
 
     #[test]
-    fn test_wordtype_bytes_nont() {
+    fn test_wordtype_bytes_none() {
         let item = WordType::None;
         assert_eq!(item.bytes(), [0, 0]);
     }
@@ -247,5 +257,46 @@ mod tests {
     fn test_wordtype_parity_none() {
         let item = WordType::None;
         assert_eq!(item.parity(), 0);
+    }
+
+    #[test]
+    fn test_wordtype_check_parity_command() {
+        let item = WordType::from(CommandWord::new().with_parity(1));
+        assert_eq!(item.check_parity(), true);
+    }
+
+    #[test]
+    fn test_wordtype_check_parity_command_fail() {
+        let item = WordType::from(CommandWord::new().with_parity(0));
+        assert_eq!(item.check_parity(), false);
+    }
+
+    #[test]
+    fn test_wordtype_check_parity_status() {
+        let item = WordType::from(StatusWord::new().with_parity(1));
+        assert_eq!(item.check_parity(), true);
+    }
+
+    #[test]
+    fn test_wordtype_check_parity_status_fail() {
+        let item = WordType::from(StatusWord::new().with_parity(0));
+        assert_eq!(item.check_parity(), false);
+    }
+
+    #[test]
+    fn test_wordtype_check_parity_data() {
+        let item = WordType::from(DataWord::new().with_parity(1));
+        assert_eq!(item.check_parity(), true);
+    }
+
+    #[test]
+    fn test_wordtype_check_parity_data_fail() {
+        let item = WordType::from(DataWord::new().with_parity(0));
+        assert_eq!(item.check_parity(), false);
+    }
+
+    #[test]
+    fn test_wordtype_check_parity_none() {
+        assert_eq!(WordType::None.check_parity(), false);
     }
 }
