@@ -39,5 +39,5 @@ jobs:
       uses: insightsengineering/coverage-action@v2.6.0
       with:
         path: ./cobertura.xml
-        threshold: 80
+        threshold: 95
         fail: true

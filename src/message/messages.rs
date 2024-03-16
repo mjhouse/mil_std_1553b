@@ -100,6 +100,19 @@ impl<const WORDS: usize> Message<WORDS> {
 
     /// Method to finalize construction
     pub fn build(self) -> Result<Self> {
+
+        if self.count > self.size() {
+            return Err(Error::OutOfBounds);
+        }
+
+        if self.words.iter().any(|w| !w.check_parity()) {
+            return Err(Error::InvalidWord);
+        }
+
+        if self.words.first().map(|w| w.is_data()).unwrap_or(false) {
+            return Err(Error::HeaderNotFirst);
+        }
+
         Ok(self)
     }
 
