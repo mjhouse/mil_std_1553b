@@ -21,14 +21,12 @@ jobs:
         rustup component add llvm-tools-preview &&
         cargo install grcov
 
-    - name: Build the library
-      run: cargo test --no-run
-
     - name: Test the library
-      env:
-        RUSTFLAGS: "-C instrument-coverage"
-        LLVM_PROFILE_FILE: "ms1553b-%p-%m.profraw"
-      run: cargo test
+      run: |
+        cargo test --no-run &&
+        export RUSTFLAGS="-C instrument-coverage" &&
+        export LLVM_PROFILE_FILE="ms1553b-%p-%m.profraw" &&
+        cargo test
 
     - name: Generate code coverage
       run: grcov . -s . -b ./target/debug/ -t cobertura --branch --ignore-not-existing -o .
@@ -40,9 +38,3 @@ jobs:
         report_name: Code coverage
         fail_below_threshold: true
         minimum_coverage: 95
-
-      # uses: insightsengineering/coverage-action@v2.6.0
-      # with:
-      #   path: ./cobertura.xml
-      #   threshold: 95
-      #   fail: true
