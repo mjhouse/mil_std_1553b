@@ -27,15 +27,14 @@ jobs:
         rustup component add llvm-tools-preview &&
         cargo install grcov
 
-    - name: Test library
-      run: |
-        cargo clean &&
-        cargo test
+    - name: Build the library
+      run: cargo test --no-run
+
+    - name: Test the library
+      run: cargo test
 
     - name: Generate code coverage
-      run: |
-        mkdir -p ./target/debug/coverage && 
-        grcov . -s . -b ./target/debug/ -t html --branch --ignore-not-existing -o .
+      run: grcov . -s . -b target/debug -t html --branch --ignore-not-existing --keep-only 'src/**/*' -o .
 
     - name: Archive code coverage
       uses: actions/upload-artifact@v4
