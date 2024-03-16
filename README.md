@@ -28,15 +28,17 @@ StatusWord, and DataWord.
 ```rust
     use mil_std_1553b::*;
 
-    let message: Message = Message::new()
+    let message = Message::<3>::new()
         .with_command(CommandWord::new()
             .with_address(Address::Value(12))
             .with_subaddress(SubAddress::Value(5))
             .with_word_count(2)
             .build().unwrap()
-        ).unwrap()
-        .with_data(DataWord::new()).unwrap()
-        .with_data(DataWord::new()).unwrap();
+        )
+        .with_data(DataWord::new())
+        .with_data(DataWord::new())
+        .build()
+        .unwrap();
 
     assert_eq!(message.length(),3);
 ```

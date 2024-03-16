@@ -28,9 +28,10 @@ const ARRAY_NONE: WordType = WordType::None;
 ///             .with_subaddress(SubAddress::Value(5))
 ///             .with_word_count(2)
 ///             .build()?
-///         )?
-///         .with_data(DataWord::new())?
-///         .with_data(DataWord::new())?;
+///         )
+///         .with_data(DataWord::new())
+///         .with_data(DataWord::new())
+///         .build()?;
 ///
 ///     assert!(message.is_full());
 ///     assert_eq!(message.length(),3);
@@ -60,9 +61,9 @@ impl<const WORDS: usize> Message<WORDS> {
     ///
     /// * `word` - A word to add
     ///
-    pub fn with_command<T: Into<CommandWord>>(mut self, word: T) -> Result<Self> {
-        self.add_command(word.into())?;
-        Ok(self)
+    pub fn with_command<T: Into<CommandWord>>(mut self, word: T) -> Self {
+        self.add_command(word.into());
+        self
     }
 
     /// Constructor method to add a status word to the message
@@ -71,9 +72,9 @@ impl<const WORDS: usize> Message<WORDS> {
     ///
     /// * `word` - A word to add
     ///
-    pub fn with_status<T: Into<StatusWord>>(mut self, word: T) -> Result<Self> {
-        self.add_status(word.into())?;
-        Ok(self)
+    pub fn with_status<T: Into<StatusWord>>(mut self, word: T) -> Self {
+        self.add_status(word.into());
+        self
     }
 
     /// Constructor method to add a data word to the message
@@ -82,9 +83,9 @@ impl<const WORDS: usize> Message<WORDS> {
     ///
     /// * `word` - A word to add
     ///
-    pub fn with_data<T: Into<DataWord>>(mut self, word: T) -> Result<Self> {
-        self.add_data(word.into())?;
-        Ok(self)
+    pub fn with_data<T: Into<DataWord>>(mut self, word: T) -> Self {
+        self.add_data(word.into());
+        self
     }
 
     /// Constructor method to add a word to the message
@@ -93,22 +94,39 @@ impl<const WORDS: usize> Message<WORDS> {
     ///
     /// * `word` - A word to add
     ///
-    pub fn with_word<T: Word>(mut self, word: T) -> Result<Self> {
-        self.add(word)?;
-        Ok(self)
+    pub fn with_word<T: Word>(mut self, word: T) -> Self {
+        self.add(word);
+        self
     }
 
     /// Method to finalize construction
+    /// 
+    /// Performs basic checks for message validity, returning 
+    /// an error:
+    ///
+    /// * If the wrong number of words were added during construction
+    /// * If there are multiple header words (command or status)
+    /// * If any word has a bad parity
+    /// * If the first word is a data word
+    /// 
     pub fn build(self) -> Result<Self> {
 
-        if self.count > self.size() {
+        // fail if the wrong number of words were added
+        if self.count != self.size() {
             return Err(Error::OutOfBounds);
         }
 
+        // fail if there are multiple header words
+        if self.count() != (self.length() - 1) {
+            return Err(Error::InvalidWord);
+        }
+
+        // fail if any word has a bad parity bit
         if self.words.iter().any(|w| !w.check_parity()) {
             return Err(Error::InvalidWord);
         }
 
+        // fail if the first word is a data word
         if self.words.first().map(|w| w.is_data()).unwrap_or(false) {
             return Err(Error::HeaderNotFirst);
         }
@@ -257,95 +275,43 @@ impl<const WORDS: usize> Message<WORDS> {
     ///
     /// * `word` - A word to add
     ///
-    pub fn add<T: Word>(&mut self, word: T) -> Result<()> {
-        match word.into() {
-            WordType::Data(v) => self.add_data(v),
-            WordType::Status(v) => self.add_status(v),
-            WordType::Command(v) => self.add_command(v),
-            _ => Err(Error::InvalidWord),
+    pub fn add<T: Word>(&mut self, word: T) {
+        let index = self.count;
+        self.count += 1;
+
+        if index < self.words.len() {
+            self.words[index] = word.into();
         }
     }
 
     /// Add a data word
     ///
-    /// Performs basic checks for message validity before
-    /// Adding the data word. This method will return an error
-    /// if the status word-
-    ///
-    /// * Is the first word in the message.
-    /// * If the message is full.
-    /// * If the parity bit on the word is wrong.
-    ///
     /// # Arguments
     ///
     /// * `word` - A word to add
     ///
-    fn add_data(&mut self, word: DataWord) -> Result<()> {
-        if self.is_full() {
-            Err(Error::MessageFull)
-        } else if self.is_empty() {
-            Err(Error::DataFirst)
-        } else {
-            self.words[self.count] = word.into();
-            self.count += 1;
-            Ok(())
-        }
+    pub fn add_data(&mut self, word: DataWord) {
+        self.add(word);
     }
 
     /// Add a status word
     ///
-    /// Performs basic checks for message validity before
-    /// Adding the status word. This method will return an error
-    /// if the status word-
-    ///
-    /// * Is not the first word in the message.
-    /// * If the message is full.
-    /// * If the parity bit on the word is wrong.
-    ///
     /// # Arguments
     ///
     /// * `word` - A word to add
     ///
-    fn add_status(&mut self, word: StatusWord) -> Result<()> {
-        if !self.is_empty() {
-            Err(Error::HeaderNotFirst)
-        } else if self.is_full() {
-            Err(Error::MessageFull)
-        } else if !word.check_parity() {
-            Err(Error::InvalidWord)
-        } else {
-            self.words[self.count] = word.into();
-            self.count += 1;
-            Ok(())
-        }
+    pub fn add_status(&mut self, word: StatusWord) {
+        self.add(word);
     }
 
     /// Add a command word
     ///
-    /// Performs basic checks for message validity before
-    /// Adding the command word. This method will return an error
-    /// if the command word-
-    ///
-    /// * Is not the first word in the message.
-    /// * If the message is full.
-    /// * If the parity bit on the word is wrong.
-    ///
     /// # Arguments
     ///
     /// * `word` - A word to add
     ///
-    fn add_command(&mut self, word: CommandWord) -> Result<()> {
-        if !self.is_empty() {
-            Err(Error::HeaderNotFirst)
-        } else if self.is_full() {
-            Err(Error::MessageFull)
-        } else if !word.check_parity() {
-            Err(Error::InvalidWord)
-        } else {
-            self.words[self.count] = word.into();
-            self.count += 1;
-            Ok(())
-        }
+    pub fn add_command(&mut self, word: CommandWord) {
+        self.add(word);
     }
 
     /// Check if message starts with a command word
@@ -433,7 +399,7 @@ impl<const WORDS: usize> Message<WORDS> {
         }
 
         // create a new message with the header word
-        let mut message: Self = Self::new().with_word(word)?;
+        let mut message: Self = Self::new().with_word(word);
 
         let start = 1; // skip the service word
         let end = count + 1; // adjust for service word
@@ -445,7 +411,7 @@ impl<const WORDS: usize> Message<WORDS> {
             let bytes = &data[i..];
 
             // use a packet to parse the bytes and convert to a word
-            message.add_data(Packet::read(bytes, o)?.try_into()?)?;
+            message.add_data(Packet::read(bytes, o)?.try_into()?);
         }
 
         Ok(message)
@@ -500,9 +466,7 @@ mod tests {
     fn test_message_clone() {
         let message1 = Message::<2>::new()
             .with_command(0b0000000000000001)
-            .unwrap()
             .with_data(0b0000000000000001)
-            .unwrap()
             .build()
             .unwrap();
 
@@ -522,9 +486,7 @@ mod tests {
     fn test_message_with_command() {
         let message = Message::<2>::new()
             .with_command(0b0000000000000001)
-            .unwrap()
             .with_data(0b0000000000000001)
-            .unwrap()
             .build()
             .unwrap();
         assert_eq!(message.length(), 2);
@@ -535,40 +497,30 @@ mod tests {
     }
 
     #[test]
-    fn test_message_command_add_data() {
-        let mut message = Message::<2>::new().with_command(0b0001100001100010).unwrap();
-
-        let result = message.add_data(0b0110100001101001.into());
-
-        assert!(result.is_ok());
-        assert_eq!(message.length(), 2);
-        assert_eq!(message.count(), 1);
-    }
-
-    #[test]
     fn test_message_with_command_fail_duplicate_header() {
         // adding two header words to the message
         let message = Message::<2>::new()
             .with_command(0b0000000000000001)
-            .unwrap()
-            .with_command(0b0000000000000001);
+            .with_command(0b0000000000000001)
+            .build();
         assert!(message.is_err());
     }
 
     #[test]
     fn test_message_with_command_fail_header_not_first() {
-        // manually adding a data word to the message
-        let mut message = Message::<2>::new();
-        message.words[0] = DataWord::new().into();
-        message.count = 1;
-
-        let result = message.with_command(0b0000000000000001);
-        assert!(result.is_err());
+        // add a data word to the message first
+        let message = Message::<2>::new()
+            .with_data(0b0000000000000001)
+            .with_command(0b0000000000000001)
+            .build();
+        assert!(message.is_err());
     }
 
     #[test]
     fn test_message_with_command_fail_message_full() {
-        let result = Message::<0>::new().with_command(0b0000000000000001);
+        let result = Message::<0>::new()
+            .with_command(0b0000000000000001)
+            .build();
         assert!(result.is_err());
     }
 
@@ -578,8 +530,9 @@ mod tests {
             .with_value(0b0000000000000000)
             .with_parity(0);
 
-        let mut message = Message::<1>::new();
-        let result = message.add_command(word);
+        let result = Message::<1>::new()
+            .with_command(word)
+            .build();
 
         assert_eq!(result, Err(Error::InvalidWord));
     }
@@ -588,9 +541,7 @@ mod tests {
     fn test_message_with_status() {
         let message = Message::<2>::new()
             .with_status(0b0000000000000001)
-            .unwrap()
             .with_data(0b0000000000000001)
-            .unwrap()
             .build()
             .unwrap();
         assert_eq!(message.length(), 2);
@@ -601,40 +552,30 @@ mod tests {
     }
 
     #[test]
-    fn test_message_status_add_data() {
-        let mut message = Message::<2>::new().with_status(0b0001100001100010).unwrap();
-
-        let result = message.add_data(0b0110100001101001.into());
-
-        assert!(result.is_ok());
-        assert_eq!(message.length(), 2);
-        assert_eq!(message.count(), 1);
-    }
-
-    #[test]
     fn test_message_with_status_fail_duplicate_header() {
         // adding two header words to the message
         let message = Message::<2>::new()
             .with_status(0b0000000000000001)
-            .unwrap()
-            .with_status(0b0000000000000001);
+            .with_status(0b0000000000000001)
+            .build();
         assert!(message.is_err());
     }
 
     #[test]
     fn test_message_with_status_fail_header_not_first() {
-        // manually adding a data word to the message
-        let mut message = Message::<2>::new();
-        message.words[0] = DataWord::new().into();
-        message.count = 1;
-
-        let result = message.with_status(0b0000000000000001);
-        assert!(result.is_err());
+        // add a data word to the message first
+        let message = Message::<2>::new()
+            .with_data(0b0000000000000001)
+            .with_status(0b0000000000000001)
+            .build();
+        assert!(message.is_err());
     }
 
     #[test]
     fn test_message_with_status_fail_message_full() {
-        let result = Message::<0>::new().with_status(0b0000000000000001);
+        let result = Message::<0>::new()
+            .with_status(0b0000000000000001)
+            .build();
         assert!(result.is_err());
     }
 
@@ -644,8 +585,9 @@ mod tests {
             .with_value(0b0000000000000000)
             .with_parity(0);
 
-        let mut message = Message::<1>::new();
-        let result = message.add_status(word);
+        let result = Message::<1>::new()
+            .with_status(word)
+            .build();
 
         assert_eq!(result, Err(Error::InvalidWord));
     }
@@ -654,9 +596,7 @@ mod tests {
     fn test_message_with_data() {
         let message = Message::<2>::new()
             .with_status(0b0000000000000001)
-            .unwrap()
             .with_data(0b0000000000000001)
-            .unwrap()
             .build()
             .unwrap();
         assert_eq!(message.length(), 2);
@@ -666,7 +606,9 @@ mod tests {
 
     #[test]
     fn test_message_with_data_fail() {
-        let result = Message::<2>::new().with_data(0b0000000000000001);
+        let result = Message::<2>::new()
+            .with_data(0b0000000000000001)
+            .build();
         assert!(result.is_err());
     }
 
@@ -674,10 +616,9 @@ mod tests {
     fn test_message_with_data_fail_message_full() {
         let result = Message::<2>::new()
             .with_status(0b0000000000000001)
-            .unwrap()
             .with_data(0b0000000000000001)
-            .unwrap()
-            .with_data(0b0000000000000001);
+            .with_data(0b0000000000000001)
+            .build();
         assert!(result.is_err());
     }
 
@@ -685,9 +626,7 @@ mod tests {
     fn test_message_with_word_command() {
         let message = Message::<2>::new()
             .with_word(CommandWord::from(0b0000000000000001))
-            .unwrap()
             .with_word(DataWord::from(0b0000000000000001))
-            .unwrap()
             .build()
             .unwrap();
         assert_eq!(message.length(), 2);
@@ -699,9 +638,7 @@ mod tests {
     fn test_message_with_word_status() {
         let message = Message::<2>::new()
             .with_word(StatusWord::from(0b0000000000000001))
-            .unwrap()
             .with_word(DataWord::from(0b0000000000000001))
-            .unwrap()
             .build()
             .unwrap();
         assert_eq!(message.length(), 2);
@@ -766,9 +703,7 @@ mod tests {
 
         let message = Message::<2>::new()
             .with_command(0b0001100001100001)
-            .unwrap()
             .with_data(0b0000000000000000)
-            .unwrap()
             .build()
             .unwrap();
 
@@ -782,9 +717,7 @@ mod tests {
 
         let message = Message::<2>::new()
             .with_status(0b0001100001100001)
-            .unwrap()
             .with_data(0b0000000000000000)
-            .unwrap()
             .build()
             .unwrap();
 
@@ -794,13 +727,19 @@ mod tests {
 
     #[test]
     fn test_message_status() {
-        let message = Message::<2>::new().with_status(0b0000000000000001).unwrap();
+        let message = Message::<1>::new()
+            .with_status(0b0000000000000001)
+            .build()
+            .unwrap();
         assert!(message.status().is_some());
     }
 
     #[test]
     fn test_message_command() {
-        let message = Message::<2>::new().with_command(0b0000000000000001).unwrap();
+        let message = Message::<1>::new()
+            .with_command(0b0000000000000001)
+            .build()
+            .unwrap();
         assert!(message.command().is_some());
     }
 
@@ -812,13 +751,9 @@ mod tests {
 
         let message = Message::<4>::new()
             .with_command(0b0000000000000011)
-            .unwrap()
             .with_data(data1)
-            .unwrap()
             .with_data(data2)
-            .unwrap()
             .with_data(data3)
-            .unwrap()
             .build()
             .unwrap();
 
@@ -837,9 +772,7 @@ mod tests {
     fn test_message_clear() {
         let mut message = Message::<2>::new()
             .with_command(0b0000000000000001)
-            .unwrap()
             .with_data(0b0000000000000001)
-            .unwrap()
             .build()
             .unwrap();
 
