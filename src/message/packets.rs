@@ -12,7 +12,7 @@ use crate::WordType;
 ///
 /// ```rust
 /// # use mil_std_1553b::*;
-/// # fn try_main() -> Result<()> {
+/// # fn main() -> Result<()> {
 ///     let packet = Packet::new(
 ///         0b100,
 ///         [0b01000000, 0b00100000],
@@ -69,7 +69,7 @@ impl Packet {
     ///
     /// ```rust
     /// # use mil_std_1553b::*;
-    /// # fn try_main() -> Result<()> {
+    /// # fn main() -> Result<()> {
     ///    let packet = Packet::read(&[
     ///        0b00000000,
     ///        0b00001111,

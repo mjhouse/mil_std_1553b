@@ -74,17 +74,17 @@ where
 ///
 /// ```rust
 /// # use mil_std_1553b::*;
-/// # fn try_main() -> Result<()> {
-/// let word = CommandWord::new()
-///     .with_address(Address::Value(16))
-///     .with_subaddress(SubAddress::ModeCode(0))
-///     .with_transmit_receive(TransmitReceive::Receive)
-///     .with_mode_code(ModeCode::TransmitterShutdown)
-///     .with_calculated_parity()
-///     .build()?;
+/// # fn main() -> Result<()> {
+///     let word = CommandWord::new()
+///         .with_address(Address::Value(16))
+///         .with_subaddress(SubAddress::ModeCode(0))
+///         .with_transmit_receive(TransmitReceive::Receive)
+///         .with_mode_code(ModeCode::TransmitterShutdown)
+///         .with_calculated_parity()
+///         .build()?;
 ///
-/// assert_eq!(word.subaddress(),SubAddress::ModeCode(0));
-/// assert_eq!(word.mode_code(),ModeCode::TransmitterShutdown);
+///     assert_eq!(word.subaddress(),SubAddress::ModeCode(0));
+///     assert_eq!(word.mode_code(),ModeCode::TransmitterShutdown);
 /// # Ok(())
 /// # }
 /// ```
@@ -109,16 +109,16 @@ pub struct CommandWord {
 ///
 /// ```rust
 /// # use mil_std_1553b::*;
-/// # fn try_main() -> Result<()> {
-/// let word = StatusWord::new()
-///     .with_address(Address::Value(16))
-///     .with_service_request(ServiceRequest::Service)
-///     .with_broadcast_received(BroadcastReceived::Received)
-///     .with_calculated_parity()
-///     .build()?;
+/// # fn main() -> Result<()> {
+///     let word = StatusWord::new()
+///         .with_address(Address::Value(16))
+///         .with_service_request(ServiceRequest::Service)
+///         .with_broadcast_received(BroadcastReceived::Received)
+///         .with_calculated_parity()
+///         .build()?;
 ///
-/// assert_eq!(word.broadcast_received(),BroadcastReceived::Received);
-/// assert_eq!(word.service_request(),ServiceRequest::Service);
+///     assert_eq!(word.broadcast_received(),BroadcastReceived::Received);
+///     assert_eq!(word.service_request(),ServiceRequest::Service);
 /// # Ok(())
 /// # }
 /// ```
@@ -144,13 +144,13 @@ pub struct StatusWord {
 ///
 /// ```rust
 /// # use mil_std_1553b::*;
-/// # fn try_main() -> Result<()> {
-/// let word = DataWord::new()
-///     .with_value(0b0100100001001001u16)
-///     .with_calculated_parity()
-///     .build()?;
+/// # fn main() -> Result<()> {
+///     let word = DataWord::new()
+///         .with_value(0b0100100001001001u16)
+///         .with_calculated_parity()
+///         .build()?;
 ///
-/// assert_eq!(word.as_string(),Ok("HI"));
+///     assert_eq!(word.as_string(),Ok("HI"));
 /// # Ok(())
 /// # }
 /// ```
