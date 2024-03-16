@@ -32,7 +32,7 @@ jobs:
       run: cargo test
 
     - name: Generate code coverage
-      run: grcov . -s . -b target/debug -t html --branch --ignore-not-existing --keep-only 'src/**/*' -o .
+      run: grcov . -s . -b target/debug -t cobertura --branch --ignore-not-existing --keep-only 'src/**/*' -o .
 
     - name: Make coverage report
       uses: 5monkeys/cobertura-action@v13
