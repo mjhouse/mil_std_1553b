@@ -2,10 +2,6 @@ name: Validate
 
 on: pull_request
 
-env:
-  RUSTFLAGS: "-C instrument-coverage"
-  LLVM_PROFILE_FILE: "ms1553b-%p-%m.profraw"
-
 jobs:
 
   test:
@@ -25,15 +21,17 @@ jobs:
         rustup component add llvm-tools-preview &&
         cargo install grcov
 
+    - name: Build the library
+      run: cargo build --tests
+
     - name: Test the library
-      run: |
-        cargo clean &&
-        cargo test 
+      env:
+        RUSTFLAGS: "-C instrument-coverage"
+        LLVM_PROFILE_FILE: "ms1553b-%p-%m.profraw"
+      run: cargo test
 
     - name: Generate code coverage
-      run: |
-        mkdir -p ./target/debug/coverage && 
-        grcov . -s . -b ./target/debug/ -t cobertura --branch --ignore-not-existing -o .
+      run: grcov . -s . -b ./target/debug/ -t cobertura --branch --ignore-not-existing -o .
 
     - name: Make coverage report
       uses: insightsengineering/coverage-action@v2.6.0
