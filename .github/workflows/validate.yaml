@@ -29,10 +29,16 @@ jobs:
       run: cargo test --no-run && rm -f *.profraw
 
     - name: Test the library
-      run: cargo test && ls | grep 'profraw'
+      run: cargo test
 
     - name: Generate code coverage
-      run: grcov . -s . -b ./target/debug/ -t cobertura --branch --ignore-not-existing -o .
+      run: |
+        grcov . -s . -b       \
+        $(find ./target/debug/deps ! -path -prune -name 'mil_*' ! -name '*.d') \
+        -t cobertura          \
+        --branch              \
+        --ignore-not-existing \
+        -o .
 
     - name: Make coverage report
       uses: 5monkeys/cobertura-action@v13
