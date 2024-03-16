@@ -78,7 +78,6 @@ impl WordType {
             _ => false,
         }
     }
-
 }
 
 impl From<CommandWord> for WordType {
@@ -300,5 +299,4 @@ mod tests {
     fn test_wordtype_check_parity_none() {
         assert_eq!(WordType::None.check_parity(), false);
     }
-    
 }

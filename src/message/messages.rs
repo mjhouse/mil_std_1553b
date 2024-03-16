@@ -100,17 +100,16 @@ impl<const WORDS: usize> Message<WORDS> {
     }
 
     /// Method to finalize construction
-    /// 
-    /// Performs basic checks for message validity, returning 
+    ///
+    /// Performs basic checks for message validity, returning
     /// an error:
     ///
     /// * If the wrong number of words were added during construction
     /// * If there are multiple header words (command or status)
     /// * If any word has a bad parity
     /// * If the first word is a data word
-    /// 
+    ///
     pub fn build(self) -> Result<Self> {
-
         // fail if the wrong number of words were added
         if self.count != self.size() {
             return Err(Error::OutOfBounds);
@@ -157,10 +156,10 @@ impl<const WORDS: usize> Message<WORDS> {
     /// # use mil_std_1553b::*;
     /// # fn main() -> Result<()> {
     ///     let message = Message::<2>::read_command(&[
-    ///         0b10000011, 
-    ///         0b00001100, 
-    ///         0b00100010, 
-    ///         0b11010000, 
+    ///         0b10000011,
+    ///         0b00001100,
+    ///         0b00100010,
+    ///         0b11010000,
     ///         0b11010010
     ///     ])?;
     ///
@@ -199,13 +198,13 @@ impl<const WORDS: usize> Message<WORDS> {
     /// # use mil_std_1553b::*;
     /// # fn main() -> Result<()> {
     ///     let message = Message::<2>::read_status(&[
-    ///         0b10000011, 
-    ///         0b00001100, 
-    ///         0b00100010, 
-    ///         0b11010000, 
+    ///         0b10000011,
+    ///         0b00001100,
+    ///         0b00100010,
+    ///         0b11010000,
     ///         0b11010010
     ///     ])?;
-    /// 
+    ///
     ///     assert!(message.is_full());
     ///     assert!(message.is_status());
     ///     assert_eq!(message.length(),2);
@@ -367,11 +366,11 @@ impl<const WORDS: usize> Message<WORDS> {
     }
 
     /// Read bytes as a message
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `data` - A slice of bytes to read
-    /// 
+    ///
     pub fn read<T: Word + Header>(data: &[u8]) -> Result<Self> {
         let min = 3;
 
@@ -418,11 +417,11 @@ impl<const WORDS: usize> Message<WORDS> {
     }
 
     /// Write the message to a byte array
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `data` - A slice of bytes to write
-    /// 
+    ///
     pub fn write(&self, data: &mut [u8]) -> Result<()> {
         let count = ((self.length() * 20) + 7) / 8;
 
@@ -518,9 +517,7 @@ mod tests {
 
     #[test]
     fn test_message_with_command_fail_message_full() {
-        let result = Message::<0>::new()
-            .with_command(0b0000000000000001)
-            .build();
+        let result = Message::<0>::new().with_command(0b0000000000000001).build();
         assert!(result.is_err());
     }
 
@@ -530,9 +527,7 @@ mod tests {
             .with_value(0b0000000000000000)
             .with_parity(0);
 
-        let result = Message::<1>::new()
-            .with_command(word)
-            .build();
+        let result = Message::<1>::new().with_command(word).build();
 
         assert_eq!(result, Err(Error::InvalidWord));
     }
@@ -573,9 +568,7 @@ mod tests {
 
     #[test]
     fn test_message_with_status_fail_message_full() {
-        let result = Message::<0>::new()
-            .with_status(0b0000000000000001)
-            .build();
+        let result = Message::<0>::new().with_status(0b0000000000000001).build();
         assert!(result.is_err());
     }
 
@@ -585,9 +578,7 @@ mod tests {
             .with_value(0b0000000000000000)
             .with_parity(0);
 
-        let result = Message::<1>::new()
-            .with_status(word)
-            .build();
+        let result = Message::<1>::new().with_status(word).build();
 
         assert_eq!(result, Err(Error::InvalidWord));
     }
@@ -606,9 +597,7 @@ mod tests {
 
     #[test]
     fn test_message_with_data_fail() {
-        let result = Message::<2>::new()
-            .with_data(0b0000000000000001)
-            .build();
+        let result = Message::<2>::new().with_data(0b0000000000000001).build();
         assert!(result.is_err());
     }
 
@@ -653,7 +642,7 @@ mod tests {
         let l = input.len();
         let mut buffer = [0; 10];
 
-        let message= Message::<4>::read_command(&input)?;
+        let message = Message::<4>::read_command(&input)?;
         message.write(&mut buffer)?;
 
         assert_eq!(&buffer[..l], input);
@@ -668,7 +657,7 @@ mod tests {
         let l = input.len();
         let mut buffer = [0; 10];
 
-        let message= Message::<4>::read_status(&input)?;
+        let message = Message::<4>::read_status(&input)?;
         message.write(&mut buffer)?;
 
         assert_eq!(&buffer[..l], input);
