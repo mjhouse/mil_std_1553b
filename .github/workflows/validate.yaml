@@ -38,6 +38,8 @@ jobs:
       uses: 5monkeys/cobertura-action@v13
       with: 
         path: ./cobertura.xml
-        report_name: Code coverage
+        report_name: Coverage
+        skip_covered: false
+        only_changed_files: false
         fail_below_threshold: true
         minimum_coverage: 95
