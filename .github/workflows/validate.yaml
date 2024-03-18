@@ -31,14 +31,10 @@ jobs:
     - name: Install Rust toolchain
       run: rustup update --no-self-update stable
 
-    - name: Install Rust target
-      run: rustup target add ${{ matrix.target }}
-
-    - name: Install cross
-      run: cargo install cross
-
-    - name: Test the library
-      run: cargo test --target ${{ matrix.target }}
+      uses: houseabsolute/actions-rust-cross@v0
+      with:
+        target: ${{ matrix.target }}
+        command: test
 
   coverage:
     env:
