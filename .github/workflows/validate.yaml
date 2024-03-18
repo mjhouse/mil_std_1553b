@@ -31,11 +31,11 @@ jobs:
     - name: Install Rust toolchain
       run: rustup update --no-self-update stable
 
-    - name: Build the library
-      run: cargo test --no-run
+    - name: Install cross
+      run: cargo install cross
 
     - name: Test the library
-      run: cargo test
+      run: cargo test --target ${{ matrix.target }}
 
   coverage:
     env:
