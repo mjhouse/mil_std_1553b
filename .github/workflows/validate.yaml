@@ -15,22 +15,27 @@ jobs:
           - name: Windows
             os: windows-latest
             target: x86_64-pc-windows-msvc
+            test: True
 
           - name: Windows - x86_64
             os: windows-latest
             target: x86_64-unknown-linux-musl
+            test: False
 
           - name: Windows - x86_32
             os: windows-latest
             target: i686-unknown-linux-musl
+            test: False
 
           - name: Windows - ARM64
             os: windows-latest
             target: aarch64-unknown-linux-musl
+            test: False
 
           - name: Windows - ARM32
             os: windows-latest
-            target: armv7-unknown-linux-musl
+            target: armv7-unknown-linux-musleabi
+            test: False
 
         # os:
         #   - windows-latest 
@@ -56,7 +61,11 @@ jobs:
       run: rustup target add ${{ matrix.system.target }}
 
     - name: Build the library
-      run: cargo build --target ${{ matrix.system.target }}
+      run: cargo test --no-run --target ${{ matrix.system.target }}
+
+    - name: Test the library
+      if: ${{ matrix.system.test }}
+      run: cargo test
 
   test:
 
@@ -83,9 +92,6 @@ jobs:
 
     - name: Install grcov
       run: cargo binstall --no-confirm grcov
-
-    # - name: Install grcov
-    #   run: cargo install grcov
 
     - name: Build the library
       run: cargo test --no-run
