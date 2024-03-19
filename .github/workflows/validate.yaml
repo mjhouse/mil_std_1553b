@@ -4,9 +4,9 @@ on: pull_request
 
 jobs:
 
-  test:
+  build:
 
-    name: Test
+    name: Build
 
     strategy:
       fail-fast: false
@@ -43,11 +43,13 @@ jobs:
     - name: Install target
       run: rustup target add ${{ matrix.system.target }}
 
-    - name: Test the library
+    - name: Build the library
       run: cargo build --target ${{ matrix.system.target }}
 
-  coverage:
-    needs: test
+  test:
+
+    name: Test
+    needs: build
 
     env:
       RUSTFLAGS: "-C instrument-coverage"
