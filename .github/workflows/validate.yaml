@@ -74,7 +74,7 @@ jobs:
       uses: cargo-bins/cargo-binstall@main
 
     - name: Install grcov
-      run: cargo binstall --no-confirm grcov@latest
+      run: cargo binstall --no-confirm grcov
 
     # - name: Install grcov
     #   run: cargo install grcov
