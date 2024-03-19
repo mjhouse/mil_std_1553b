@@ -266,204 +266,476 @@ impl TryFrom<Packet> for DataWord {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rstest::rstest;
 
     // ----------------------------------------------------------
     // Packet
 
-    #[rstest]
-    #[case(0, &[0b11110000, 0b00000000, 0b00110000], &[0b11110000, 0b00000000, 0b00110000])]
-    #[case(4, &[0b00001111, 0b00000000, 0b00000011], &[0b11110000, 0b00000000, 0b00110000])]
-    #[case(6, &[0b00000011, 0b11000000, 0b00000000, 0b11000000], &[0b11110000, 0b00000000, 0b00110000])]
-    #[case(12, &[0b00000000, 0b00001111, 0b00000000, 0b00000011], &[0b11110000, 0b00000000, 0b00110000])]
-    fn test_packet_write_success(
-        #[case] offset: usize,
-        #[case] input: &[u8],
-        #[case] expected: &[u8],
-    ) -> Result<()> {
+    fn test_packet_write_success(offset: usize, input: &[u8], expected: &[u8]) {
         let mut buffer = [0; 4];
 
         // read then write the packet
-        let packet = Packet::read(input, offset)?;
-        packet.write(&mut buffer, 0)?;
+        let packet = Packet::read(input, offset).unwrap();
+        packet.write(&mut buffer, 0).unwrap();
 
         // compare the output with the original data
         assert_eq!(&buffer[..3], expected);
-
-        Ok(())
     }
 
-    #[rstest]
-    #[case(5, &[0b11110000, 0b00000000, 0b00110000], &mut [0, 0, 0], false)]
-    #[case(0, &[0b11110000, 0b00000000, 0b00110000], &mut [0, 0], false)]
-    fn test_packet_write_fail(
-        #[case] offset: usize,
-        #[case] input: &[u8],
-        #[case] output: &mut [u8],
-        #[case] expected: bool,
-    ) -> Result<()> {
-        // read then write the packet
-        let packet = Packet::read(input, 0)?;
+    #[test]
+    fn test_packet_write_success_0() {
+        test_packet_write_success(
+            0,
+            &[0b11110000, 0b00000000, 0b00110000],
+            &[0b11110000, 0b00000000, 0b00110000],
+        );
+    }
+
+    #[test]
+    fn test_packet_write_success_1() {
+        test_packet_write_success(
+            4,
+            &[0b00001111, 0b00000000, 0b00000011],
+            &[0b11110000, 0b00000000, 0b00110000],
+        );
+    }
+
+    #[test]
+    fn test_packet_write_success_2() {
+        test_packet_write_success(
+            6,
+            &[0b00000011, 0b11000000, 0b00000000, 0b11000000],
+            &[0b11110000, 0b00000000, 0b00110000],
+        );
+    }
+
+    #[test]
+    fn test_packet_write_success_3() {
+        test_packet_write_success(
+            12,
+            &[0b00000000, 0b00001111, 0b00000000, 0b00000011],
+            &[0b11110000, 0b00000000, 0b00110000],
+        );
+    }
+
+    fn test_packet_write_fail(offset: usize, input: &[u8], output: &mut [u8], expected: bool) {
+        let packet = Packet::read(input, 0).unwrap();
         let result = packet.write(output, offset);
-
         assert_eq!(result.is_ok(), expected);
-        Ok(())
     }
 
-    #[rstest]
-    #[case(0, &[0b11110000, 0b00000000, 0b00110000], 0b00000111, [0b10000000, 0b00000001], 0b00000001)]
-    #[case(4, &[0b00001111, 0b00000000, 0b00000011], 0b00000111, [0b10000000, 0b00000001], 0b00000001)]
-    #[case(6, &[0b00000011, 0b11000000, 0b00000000, 0b11000000], 0b00000111, [0b10000000, 0b00000001], 0b00000001)]
-    #[case(12, &[0b00000000, 0b00001111, 0b00000000, 0b00000011], 0b00000111, [0b10000000, 0b00000001], 0b00000001)]
-    fn test_packet_read_success(
-        #[case] offset: usize,
-        #[case] input: &[u8],
-        #[case] sync: u8,
-        #[case] body: [u8; 2],
-        #[case] parity: u8,
-    ) -> Result<()> {
-        let packet = Packet::read(input, offset)?;
+    #[test]
+    fn test_packet_write_fail_0() {
+        test_packet_write_fail(
+            5,
+            &[0b11110000, 0b00000000, 0b00110000],
+            &mut [0, 0, 0],
+            false,
+        );
+    }
 
+    #[test]
+    fn test_packet_write_fail_1() {
+        test_packet_write_fail(0, &[0b11110000, 0b00000000, 0b00110000], &mut [0, 0], false);
+    }
+
+    fn test_packet_read_success(offset: usize, input: &[u8], sync: u8, body: [u8; 2], parity: u8) {
+        let packet = Packet::read(input, offset).unwrap();
         assert_eq!(packet.sync, sync);
         assert_eq!(packet.body, body);
         assert_eq!(packet.parity, parity);
-
-        Ok(())
     }
 
-    #[rstest]
-    #[case(13, &[0b00000000, 0b00000111, 0b10000000, 0b00000001, 0b10000000], false)]
-    #[case(12, &[0b00000000, 0b00000111, 0b10000000], false)]
-    #[case(0, &[0b11110000, 0b00110000], false)]
-    fn test_packet_read_fail(
-        #[case] offset: usize,
-        #[case] input: &[u8],
-        #[case] expected: bool,
-    ) -> Result<()> {
+    #[test]
+    fn test_packet_read_success_0() {
+        test_packet_read_success(
+            0,
+            &[0b11110000, 0b00000000, 0b00110000],
+            0b00000111,
+            [0b10000000, 0b00000001],
+            0b00000001,
+        );
+    }
+
+    #[test]
+    fn test_packet_read_success_1() {
+        test_packet_read_success(
+            4,
+            &[0b00001111, 0b00000000, 0b00000011],
+            0b00000111,
+            [0b10000000, 0b00000001],
+            0b00000001,
+        );
+    }
+
+    #[test]
+    fn test_packet_read_success_2() {
+        test_packet_read_success(
+            6,
+            &[0b00000011, 0b11000000, 0b00000000, 0b11000000],
+            0b00000111,
+            [0b10000000, 0b00000001],
+            0b00000001,
+        );
+    }
+
+    #[test]
+    fn test_packet_read_success_3() {
+        test_packet_read_success(
+            12,
+            &[0b00000000, 0b00001111, 0b00000000, 0b00000011],
+            0b00000111,
+            [0b10000000, 0b00000001],
+            0b00000001,
+        );
+    }
+
+    fn test_packet_read_fail(offset: usize, input: &[u8], expected: bool) {
         let result = Packet::read(input, offset);
         assert_eq!(result.is_ok(), expected);
-
-        Ok(())
     }
 
-    #[rstest]
-    #[case(0b100, [0b10000000, 0b00000001], 1, true)]
-    #[case(0b100, [0b10000100, 0b00000001], 0, true)]
-    #[case(0b100, [0b10000100, 0b00001001], 1, true)]
-    #[case(0b100, [0b10000100, 0b10001001], 0, true)]
-    #[case(0b001, [0b10000000, 0b00000001], 1, true)]
-    #[case(0b001, [0b10000100, 0b00000001], 0, true)]
-    #[case(0b001, [0b10000100, 0b00001001], 1, true)]
-    #[case(0b001, [0b10000100, 0b10001001], 0, true)]
-    #[case(0b100, [0b10000000, 0b00000001], 0, false)]
-    #[case(0b100, [0b10000100, 0b00000001], 1, false)]
-    #[case(0b100, [0b10000100, 0b00001001], 0, false)]
-    #[case(0b100, [0b10000100, 0b10001001], 1, false)]
-    #[case(0b001, [0b10000000, 0b00000001], 0, false)]
-    #[case(0b001, [0b10000100, 0b00000001], 1, false)]
-    #[case(0b001, [0b10000100, 0b00001001], 0, false)]
-    #[case(0b001, [0b10000100, 0b10001001], 1, false)]
-    fn test_packet_check_parity(
-        #[case] sync: u8,
-        #[case] body: [u8; 2],
-        #[case] parity: u8,
-        #[case] expected: bool,
-    ) -> Result<()> {
+    #[test]
+    fn test_packet_read_fail_0() {
+        test_packet_read_fail(
+            13,
+            &[0b00000000, 0b00000111, 0b10000000, 0b00000001, 0b10000000],
+            false,
+        );
+    }
+
+    #[test]
+    fn test_packet_read_fail_1() {
+        test_packet_read_fail(12, &[0b00000000, 0b00000111, 0b10000000], false);
+    }
+
+    #[test]
+    fn test_packet_read_fail_2() {
+        test_packet_read_fail(0, &[0b11110000, 0b00110000], false);
+    }
+
+    fn test_packet_check_parity(sync: u8, body: [u8; 2], parity: u8, expected: bool) {
         let packet = Packet::new(sync, body, parity);
         assert_eq!(packet.check_parity(), expected);
-        Ok(())
     }
 
-    #[rstest]
-    #[case(0b100, [0b10000000, 0b00000001], 1, true)]
-    #[case(0b100, [0b10000000, 0b10000001], 0, true)]
-    #[case(0b001, [0b10000000, 0b00000001], 1, true)]
-    #[case(0b001, [0b10000000, 0b10000001], 0, true)]
-    fn test_packet_check_sync(
-        #[case] sync: u8,
-        #[case] body: [u8; 2],
-        #[case] parity: u8,
-        #[case] expected: bool,
-    ) -> Result<()> {
+    #[test]
+    fn test_packet_check_parity_0() {
+        test_packet_check_parity(0b100, [0b10000000, 0b00000001], 1, true);
+    }
+
+    #[test]
+    fn test_packet_check_parity_1() {
+        test_packet_check_parity(0b100, [0b10000100, 0b00000001], 0, true);
+    }
+
+    #[test]
+    fn test_packet_check_parity_2() {
+        test_packet_check_parity(0b100, [0b10000100, 0b00001001], 1, true);
+    }
+
+    #[test]
+    fn test_packet_check_parity_3() {
+        test_packet_check_parity(0b100, [0b10000100, 0b10001001], 0, true);
+    }
+
+    #[test]
+    fn test_packet_check_parity_4() {
+        test_packet_check_parity(0b001, [0b10000000, 0b00000001], 1, true);
+    }
+
+    #[test]
+    fn test_packet_check_parity_5() {
+        test_packet_check_parity(0b001, [0b10000100, 0b00000001], 0, true);
+    }
+
+    #[test]
+    fn test_packet_check_parity_6() {
+        test_packet_check_parity(0b001, [0b10000100, 0b00001001], 1, true);
+    }
+
+    #[test]
+    fn test_packet_check_parity_7() {
+        test_packet_check_parity(0b001, [0b10000100, 0b10001001], 0, true);
+    }
+
+    #[test]
+    fn test_packet_check_parity_8() {
+        test_packet_check_parity(0b100, [0b10000000, 0b00000001], 0, false);
+    }
+
+    #[test]
+    fn test_packet_check_parity_9() {
+        test_packet_check_parity(0b100, [0b10000100, 0b00000001], 1, false);
+    }
+
+    #[test]
+    fn test_packet_check_parity_10() {
+        test_packet_check_parity(0b100, [0b10000100, 0b00001001], 0, false);
+    }
+
+    #[test]
+    fn test_packet_check_parity_11() {
+        test_packet_check_parity(0b100, [0b10000100, 0b10001001], 1, false);
+    }
+
+    #[test]
+    fn test_packet_check_parity_12() {
+        test_packet_check_parity(0b001, [0b10000000, 0b00000001], 0, false);
+    }
+
+    #[test]
+    fn test_packet_check_parity_13() {
+        test_packet_check_parity(0b001, [0b10000100, 0b00000001], 1, false);
+    }
+
+    #[test]
+    fn test_packet_check_parity_14() {
+        test_packet_check_parity(0b001, [0b10000100, 0b00001001], 0, false);
+    }
+
+    #[test]
+    fn test_packet_check_parity_15() {
+        test_packet_check_parity(0b001, [0b10000100, 0b10001001], 1, false);
+    }
+
+    fn test_packet_check_sync(sync: u8, body: [u8; 2], parity: u8, expected: bool) {
         let packet = Packet::new(sync, body, parity);
         assert_eq!(packet.check_sync(), expected);
-        Ok(())
     }
 
-    #[rstest]
-    #[case(0b001, [0b10000000, 0b00000001], 1, true)]
-    #[case(0b001, [0b10000000, 0b10000001], 0, true)]
-    #[case(0b011, [0b10000000, 0b00000001], 1, false)]
-    #[case(0b011, [0b10000000, 0b10000001], 0, false)]
-    #[case(0b101, [0b10000000, 0b00000001], 1, false)]
-    #[case(0b101, [0b10000000, 0b10000001], 0, false)]
-    #[case(0b110, [0b10000000, 0b00000001], 1, false)]
-    #[case(0b110, [0b10000000, 0b10000001], 0, false)]
-    #[case(0b111, [0b10000000, 0b00000001], 1, false)]
-    #[case(0b111, [0b10000000, 0b10000001], 0, false)]
-    #[case(0b100, [0b10000000, 0b00000001], 1, false)]
-    #[case(0b100, [0b10000000, 0b10000001], 0, false)]
-    fn test_packet_is_data(
-        #[case] sync: u8,
-        #[case] body: [u8; 2],
-        #[case] parity: u8,
-        #[case] expected: bool,
-    ) -> Result<()> {
+    #[test]
+    fn test_packet_check_sync_0() {
+        test_packet_check_sync(0b100, [0b10000000, 0b00000001], 1, true);
+    }
+
+    #[test]
+    fn test_packet_check_sync_1() {
+        test_packet_check_sync(0b100, [0b10000000, 0b10000001], 0, true);
+    }
+
+    #[test]
+    fn test_packet_check_sync_2() {
+        test_packet_check_sync(0b001, [0b10000000, 0b00000001], 1, true);
+    }
+
+    #[test]
+    fn test_packet_check_sync_3() {
+        test_packet_check_sync(0b001, [0b10000000, 0b10000001], 0, true);
+    }
+
+    fn test_packet_is_data(sync: u8, body: [u8; 2], parity: u8, expected: bool) {
         let packet = Packet::new(sync, body, parity);
         assert_eq!(packet.is_data(), expected);
-        Ok(())
     }
 
-    #[rstest]
-    #[case(0b001, [0b10000000, 0b00000001], 1, false)]
-    #[case(0b001, [0b10000000, 0b10000001], 0, false)]
-    #[case(0b011, [0b10000000, 0b00000001], 1, false)]
-    #[case(0b011, [0b10000000, 0b10000001], 0, false)]
-    #[case(0b101, [0b10000000, 0b00000001], 1, false)]
-    #[case(0b101, [0b10000000, 0b10000001], 0, false)]
-    #[case(0b110, [0b10000000, 0b00000001], 1, false)]
-    #[case(0b110, [0b10000000, 0b10000001], 0, false)]
-    #[case(0b111, [0b10000000, 0b00000001], 1, false)]
-    #[case(0b111, [0b10000000, 0b10000001], 0, false)]
-    #[case(0b100, [0b10000000, 0b00000001], 1, true)]
-    #[case(0b100, [0b10000000, 0b10000001], 0, true)]
-    fn test_packet_is_service(
-        #[case] sync: u8,
-        #[case] body: [u8; 2],
-        #[case] parity: u8,
-        #[case] expected: bool,
-    ) -> Result<()> {
+    #[test]
+    fn test_packet_is_data_0() {
+        test_packet_is_data(0b001, [0b10000000, 0b00000001], 1, true);
+    }
+
+    #[test]
+    fn test_packet_is_data_1() {
+        test_packet_is_data(0b001, [0b10000000, 0b10000001], 0, true);
+    }
+
+    #[test]
+    fn test_packet_is_data_2() {
+        test_packet_is_data(0b011, [0b10000000, 0b00000001], 1, false);
+    }
+
+    #[test]
+    fn test_packet_is_data_3() {
+        test_packet_is_data(0b011, [0b10000000, 0b10000001], 0, false);
+    }
+
+    #[test]
+    fn test_packet_is_data_4() {
+        test_packet_is_data(0b101, [0b10000000, 0b00000001], 1, false);
+    }
+
+    #[test]
+    fn test_packet_is_data_5() {
+        test_packet_is_data(0b101, [0b10000000, 0b10000001], 0, false);
+    }
+
+    #[test]
+    fn test_packet_is_data_6() {
+        test_packet_is_data(0b110, [0b10000000, 0b00000001], 1, false);
+    }
+
+    #[test]
+    fn test_packet_is_data_7() {
+        test_packet_is_data(0b110, [0b10000000, 0b10000001], 0, false);
+    }
+
+    #[test]
+    fn test_packet_is_data_8() {
+        test_packet_is_data(0b111, [0b10000000, 0b00000001], 1, false);
+    }
+
+    #[test]
+    fn test_packet_is_data_9() {
+        test_packet_is_data(0b111, [0b10000000, 0b10000001], 0, false);
+    }
+
+    #[test]
+    fn test_packet_is_data_10() {
+        test_packet_is_data(0b100, [0b10000000, 0b00000001], 1, false);
+    }
+
+    #[test]
+    fn test_packet_is_data_11() {
+        test_packet_is_data(0b100, [0b10000000, 0b10000001], 0, false);
+    }
+
+    fn test_packet_is_service(sync: u8, body: [u8; 2], parity: u8, expected: bool) {
         let packet = Packet::new(sync, body, parity);
         assert_eq!(packet.is_service(), expected);
-        Ok(())
     }
 
-    #[rstest]
-    #[case(0b001, [0b10000000, 0b00000001], 1, true)]
-    #[case(0b001, [0b10000000, 0b10000001], 0, true)]
-    #[case(0b001, [0b10001000, 0b00000000], 0, false)]
-    #[case(0b001, [0b10000011, 0b10000001], 1, false)]
-    #[case(0b011, [0b10000000, 0b00000001], 1, false)]
-    #[case(0b011, [0b10000000, 0b10000001], 0, false)]
-    #[case(0b101, [0b10000000, 0b00000001], 1, false)]
-    #[case(0b101, [0b10000000, 0b10000001], 0, false)]
-    #[case(0b110, [0b10000000, 0b00000001], 1, false)]
-    #[case(0b110, [0b10000000, 0b10000001], 0, false)]
-    #[case(0b111, [0b10000000, 0b00000001], 1, false)]
-    #[case(0b111, [0b10000000, 0b10000001], 0, false)]
-    #[case(0b100, [0b10000000, 0b00000001], 1, true)]
-    #[case(0b100, [0b10000000, 0b10000001], 0, true)]
-    #[case(0b100, [0b10000000, 0b00100000], 0, false)]
-    #[case(0b100, [0b10000001, 0b10000000], 1, false)]
-    fn test_packet_is_valid(
-        #[case] sync: u8,
-        #[case] body: [u8; 2],
-        #[case] parity: u8,
-        #[case] expected: bool,
-    ) -> Result<()> {
+    #[test]
+    fn test_packet_is_service_0() {
+        test_packet_is_service(0b001, [0b10000000, 0b00000001], 1, false);
+    }
+
+    #[test]
+    fn test_packet_is_service_1() {
+        test_packet_is_service(0b001, [0b10000000, 0b10000001], 0, false);
+    }
+
+    #[test]
+    fn test_packet_is_service_2() {
+        test_packet_is_service(0b011, [0b10000000, 0b00000001], 1, false);
+    }
+
+    #[test]
+    fn test_packet_is_service_3() {
+        test_packet_is_service(0b011, [0b10000000, 0b10000001], 0, false);
+    }
+
+    #[test]
+    fn test_packet_is_service_4() {
+        test_packet_is_service(0b101, [0b10000000, 0b00000001], 1, false);
+    }
+
+    #[test]
+    fn test_packet_is_service_5() {
+        test_packet_is_service(0b101, [0b10000000, 0b10000001], 0, false);
+    }
+
+    #[test]
+    fn test_packet_is_service_6() {
+        test_packet_is_service(0b110, [0b10000000, 0b00000001], 1, false);
+    }
+
+    #[test]
+    fn test_packet_is_service_7() {
+        test_packet_is_service(0b110, [0b10000000, 0b10000001], 0, false);
+    }
+
+    #[test]
+    fn test_packet_is_service_8() {
+        test_packet_is_service(0b111, [0b10000000, 0b00000001], 1, false);
+    }
+
+    #[test]
+    fn test_packet_is_service_9() {
+        test_packet_is_service(0b111, [0b10000000, 0b10000001], 0, false);
+    }
+
+    #[test]
+    fn test_packet_is_service_10() {
+        test_packet_is_service(0b100, [0b10000000, 0b00000001], 1, true);
+    }
+
+    #[test]
+    fn test_packet_is_service_11() {
+        test_packet_is_service(0b100, [0b10000000, 0b10000001], 0, true);
+    }
+
+    fn test_packet_is_valid(sync: u8, body: [u8; 2], parity: u8, expected: bool) {
         let packet = Packet::new(sync, body, parity);
         assert_eq!(packet.is_valid(), expected);
-        Ok(())
+    }
+
+    #[test]
+    fn test_packet_is_valid_0() {
+        test_packet_is_valid(0b001, [0b10000000, 0b00000001], 1, true);
+    }
+
+    #[test]
+    fn test_packet_is_valid_1() {
+        test_packet_is_valid(0b001, [0b10000000, 0b10000001], 0, true);
+    }
+
+    #[test]
+    fn test_packet_is_valid_2() {
+        test_packet_is_valid(0b001, [0b10001000, 0b00000000], 0, false);
+    }
+
+    #[test]
+    fn test_packet_is_valid_3() {
+        test_packet_is_valid(0b001, [0b10000011, 0b10000001], 1, false);
+    }
+
+    #[test]
+    fn test_packet_is_valid_4() {
+        test_packet_is_valid(0b011, [0b10000000, 0b00000001], 1, false);
+    }
+
+    #[test]
+    fn test_packet_is_valid_5() {
+        test_packet_is_valid(0b011, [0b10000000, 0b10000001], 0, false);
+    }
+
+    #[test]
+    fn test_packet_is_valid_6() {
+        test_packet_is_valid(0b101, [0b10000000, 0b00000001], 1, false);
+    }
+
+    #[test]
+    fn test_packet_is_valid_7() {
+        test_packet_is_valid(0b101, [0b10000000, 0b10000001], 0, false);
+    }
+
+    #[test]
+    fn test_packet_is_valid_8() {
+        test_packet_is_valid(0b110, [0b10000000, 0b00000001], 1, false);
+    }
+
+    #[test]
+    fn test_packet_is_valid_9() {
+        test_packet_is_valid(0b110, [0b10000000, 0b10000001], 0, false);
+    }
+
+    #[test]
+    fn test_packet_is_valid_10() {
+        test_packet_is_valid(0b111, [0b10000000, 0b00000001], 1, false);
+    }
+
+    #[test]
+    fn test_packet_is_valid_11() {
+        test_packet_is_valid(0b111, [0b10000000, 0b10000001], 0, false);
+    }
+
+    #[test]
+    fn test_packet_is_valid_12() {
+        test_packet_is_valid(0b100, [0b10000000, 0b00000001], 1, true);
+    }
+
+    #[test]
+    fn test_packet_is_valid_13() {
+        test_packet_is_valid(0b100, [0b10000000, 0b10000001], 0, true);
+    }
+
+    #[test]
+    fn test_packet_is_valid_14() {
+        test_packet_is_valid(0b100, [0b10000000, 0b00100000], 0, false);
+    }
+
+    #[test]
+    fn test_packet_is_valid_15() {
+        test_packet_is_valid(0b100, [0b10000001, 0b10000000], 1, false);
     }
 
     // ----------------------------------------------------------
@@ -482,60 +754,164 @@ mod tests {
     // ----------------------------------------------------------
     // Traits
 
-    #[rstest]
-    #[case(WordType::Command(CommandWord::new()), true)]
-    #[case(WordType::Status(StatusWord::new()), true)]
-    #[case(WordType::Data(DataWord::new()), true)]
-    #[case(WordType::None, false)]
-    fn test_packet_try_from_word(#[case] word: WordType, #[case] expected: bool) -> Result<()> {
+    fn test_packet_try_from_word(word: WordType, expected: bool) {
         let result = Packet::try_from(word);
         assert_eq!(result.is_ok(), expected);
-        Ok(())
     }
 
-    #[rstest]
-    #[case( &[0b00100000, 0b00000000, 0b00010000], false )]
-    #[case( &[0b01000000, 0b00000000, 0b00010000], false )]
-    #[case( &[0b01100000, 0b00000000, 0b00010000], false )]
-    #[case( &[0b10100000, 0b00000000, 0b00010000], false )]
-    #[case( &[0b11000000, 0b00000000, 0b00010000], false )]
-    #[case( &[0b10100000, 0b00000000, 0b00010000], false )]
-    #[case( &[0b10000000, 0b00000000, 0b00010000], true )]
-    #[case( &[0b10000000, 0b00000000, 0b00010000], true )]
-    fn test_command_try_from_packet(#[case] input: &[u8], #[case] expected: bool) -> Result<()> {
+    #[test]
+    fn test_packet_try_from_word_0() {
+        test_packet_try_from_word(WordType::Command(CommandWord::new()), true);
+    }
+
+    #[test]
+    fn test_packet_try_from_word_1() {
+        test_packet_try_from_word(WordType::Status(StatusWord::new()), true);
+    }
+
+    #[test]
+    fn test_packet_try_from_word_2() {
+        test_packet_try_from_word(WordType::Data(DataWord::new()), true);
+    }
+
+    #[test]
+    fn test_packet_try_from_word_3() {
+        test_packet_try_from_word(WordType::None, false);
+    }
+
+    fn test_command_try_from_packet(input: &[u8], expected: bool) {
         let result = CommandWord::try_from(Packet::read(input, 0).unwrap());
         assert_eq!(result.is_ok(), expected);
-        Ok(())
     }
 
-    #[rstest]
-    #[case( &[0b00100000, 0b00000000, 0b00010000], false )]
-    #[case( &[0b01000000, 0b00000000, 0b00010000], false )]
-    #[case( &[0b01100000, 0b00000000, 0b00010000], false )]
-    #[case( &[0b10100000, 0b00000000, 0b00010000], false )]
-    #[case( &[0b11000000, 0b00000000, 0b00010000], false )]
-    #[case( &[0b10100000, 0b00000000, 0b00010000], false )]
-    #[case( &[0b10000000, 0b00000000, 0b00010000], true )]
-    #[case( &[0b10000000, 0b00000000, 0b00010000], true )]
-    fn test_status_try_from_packet(#[case] input: &[u8], #[case] expected: bool) -> Result<()> {
+    #[test]
+    fn test_command_try_from_packet_0() {
+        test_command_try_from_packet(&[0b00100000, 0b00000000, 0b00010000], false);
+    }
+
+    #[test]
+    fn test_command_try_from_packet_1() {
+        test_command_try_from_packet(&[0b01000000, 0b00000000, 0b00010000], false);
+    }
+
+    #[test]
+    fn test_command_try_from_packet_2() {
+        test_command_try_from_packet(&[0b01100000, 0b00000000, 0b00010000], false);
+    }
+
+    #[test]
+    fn test_command_try_from_packet_3() {
+        test_command_try_from_packet(&[0b10100000, 0b00000000, 0b00010000], false);
+    }
+
+    #[test]
+    fn test_command_try_from_packet_4() {
+        test_command_try_from_packet(&[0b11000000, 0b00000000, 0b00010000], false);
+    }
+
+    #[test]
+    fn test_command_try_from_packet_5() {
+        test_command_try_from_packet(&[0b10100000, 0b00000000, 0b00010000], false);
+    }
+
+    #[test]
+    fn test_command_try_from_packet_6() {
+        test_command_try_from_packet(&[0b10000000, 0b00000000, 0b00010000], true);
+    }
+
+    #[test]
+    fn test_command_try_from_packet_7() {
+        test_command_try_from_packet(&[0b10000000, 0b00000000, 0b00010000], true);
+    }
+
+    fn test_status_try_from_packet(input: &[u8], expected: bool) {
         let result = StatusWord::try_from(Packet::read(input, 0).unwrap());
         assert_eq!(result.is_ok(), expected);
-        Ok(())
     }
 
-    #[rstest]
-    #[case( &[0b01000000, 0b00000000, 0b00010000], false )]
-    #[case( &[0b01100000, 0b00000000, 0b00010000], false )]
-    #[case( &[0b10000000, 0b00000000, 0b00010000], false )]
-    #[case( &[0b10100000, 0b00000000, 0b00010000], false )]
-    #[case( &[0b11000000, 0b00000000, 0b00010000], false )]
-    #[case( &[0b10100000, 0b00000000, 0b00010000], false )]
-    #[case( &[0b00100000, 0b00000000, 0b00010000], true )]
-    #[case( &[0b00100000, 0b00000000, 0b00010000], true )]
-    fn test_data_try_from_packet(#[case] input: &[u8], #[case] expected: bool) -> Result<()> {
+    #[test]
+    fn test_status_try_from_packet_0() {
+        test_status_try_from_packet(&[0b00100000, 0b00000000, 0b00010000], false);
+    }
+
+    #[test]
+    fn test_status_try_from_packet_1() {
+        test_status_try_from_packet(&[0b01000000, 0b00000000, 0b00010000], false);
+    }
+
+    #[test]
+    fn test_status_try_from_packet_2() {
+        test_status_try_from_packet(&[0b01100000, 0b00000000, 0b00010000], false);
+    }
+
+    #[test]
+    fn test_status_try_from_packet_3() {
+        test_status_try_from_packet(&[0b10100000, 0b00000000, 0b00010000], false);
+    }
+
+    #[test]
+    fn test_status_try_from_packet_4() {
+        test_status_try_from_packet(&[0b11000000, 0b00000000, 0b00010000], false);
+    }
+
+    #[test]
+    fn test_status_try_from_packet_5() {
+        test_status_try_from_packet(&[0b10100000, 0b00000000, 0b00010000], false);
+    }
+
+    #[test]
+    fn test_status_try_from_packet_6() {
+        test_status_try_from_packet(&[0b10000000, 0b00000000, 0b00010000], true);
+    }
+
+    #[test]
+    fn test_status_try_from_packet_7() {
+        test_status_try_from_packet(&[0b10000000, 0b00000000, 0b00010000], true);
+    }
+
+    fn test_data_try_from_packet(input: &[u8], expected: bool) {
         let result = DataWord::try_from(Packet::read(input, 0).unwrap());
         assert_eq!(result.is_ok(), expected);
-        Ok(())
+    }
+
+    #[test]
+    fn test_data_try_from_packet_0() {
+        test_data_try_from_packet(&[0b01000000, 0b00000000, 0b00010000], false);
+    }
+
+    #[test]
+    fn test_data_try_from_packet_1() {
+        test_data_try_from_packet(&[0b01100000, 0b00000000, 0b00010000], false);
+    }
+
+    #[test]
+    fn test_data_try_from_packet_2() {
+        test_data_try_from_packet(&[0b10000000, 0b00000000, 0b00010000], false);
+    }
+
+    #[test]
+    fn test_data_try_from_packet_3() {
+        test_data_try_from_packet(&[0b10100000, 0b00000000, 0b00010000], false);
+    }
+
+    #[test]
+    fn test_data_try_from_packet_4() {
+        test_data_try_from_packet(&[0b11000000, 0b00000000, 0b00010000], false);
+    }
+
+    #[test]
+    fn test_data_try_from_packet_5() {
+        test_data_try_from_packet(&[0b10100000, 0b00000000, 0b00010000], false);
+    }
+
+    #[test]
+    fn test_data_try_from_packet_6() {
+        test_data_try_from_packet(&[0b00100000, 0b00000000, 0b00010000], true);
+    }
+
+    #[test]
+    fn test_data_try_from_packet_7() {
+        test_data_try_from_packet(&[0b00100000, 0b00000000, 0b00010000], true);
     }
 
     // ----------------------------------------------------------

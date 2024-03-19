@@ -2,16 +2,140 @@ name: Validate
 
 on: pull_request
 
-env:
-  RUSTFLAGS: "-C instrument-coverage"
-  LLVM_PROFILE_FILE: "ms1553b-%p-%m.profraw"
-
 jobs:
+
+  build:
+
+    name: Build on ${{ matrix.system.source_name }} for ${{ matrix.system.target_name }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        system:
+          # ----------------------------------------
+          # Ubuntu
+          - source_name: Ubuntu
+            target_name: Ubuntu
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            test: True
+
+          - source_name: Ubuntu
+            target_name: Linux x86_64
+            os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            test: False
+
+          - source_name: Ubuntu
+            target_name: Linux x86_32
+            os: ubuntu-latest
+            target: i686-unknown-linux-musl
+            test: False
+
+          - source_name: Ubuntu
+            target_name: Linux ARM64
+            os: ubuntu-latest
+            target: aarch64-unknown-linux-musl
+            test: False
+
+          - source_name: Ubuntu
+            target_name: Linux ARM32
+            os: ubuntu-latest
+            target: armv7-unknown-linux-musleabi
+            test: False
+
+          # ----------------------------------------
+          # Windows
+          - source_name: Windows
+            target_name: Windows
+            os: windows-latest
+            target: x86_64-pc-windows-msvc
+            test: True
+
+          - source_name: Windows
+            target_name: Linux x86_64
+            os: windows-latest
+            target: x86_64-unknown-linux-musl
+            test: False
+
+          - source_name: Windows
+            target_name: Linux x86_32
+            os: windows-latest
+            target: i686-unknown-linux-musl
+            test: False
+
+          - source_name: Windows
+            target_name: Linux ARM64
+            os: windows-latest
+            target: aarch64-unknown-linux-musl
+            test: False
+
+          - source_name: Windows
+            target_name: Linux ARM32
+            os: windows-latest
+            target: armv7-unknown-linux-musleabi
+            test: False
+
+          # ----------------------------------------
+          # MacOS
+          - source_name: MacOS
+            target_name: MacOS
+            os: macos-latest
+            target: x86_64-apple-darwin
+            test: True
+
+          - source_name: MacOS
+            target_name: Linux x86_64
+            os: macos-latest
+            target: x86_64-unknown-linux-musl
+            test: False
+
+          - source_name: MacOS
+            target_name: Linux x86_32
+            os: macos-latest
+            target: i686-unknown-linux-musl
+            test: False
+
+          - source_name: MacOS
+            target_name: Linux ARM64
+            os: macos-latest
+            target: aarch64-unknown-linux-musl
+            test: False
+
+          - source_name: MacOS
+            target_name: Linux ARM32
+            os: macos-latest
+            target: armv7-unknown-linux-musleabi
+            test: False
+
+    runs-on: ${{ matrix.system.os }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install toolchain
+      run: rustup update --no-self-update stable
+
+    - name: Install target
+      run: rustup target add ${{ matrix.system.target }}
+
+    - name: Build the library
+      run: cargo test --no-run --target ${{ matrix.system.target }}
+
+    - name: Test the library
+      if: ${{ matrix.system.test }}
+      run: cargo test
 
   test:
 
     name: Test
+    needs: build
     runs-on: ubuntu-latest
+
+    env:
+      RUSTFLAGS: "-C instrument-coverage"
+      LLVM_PROFILE_FILE: "ms1553b-%p-%m.profraw"
 
     steps:
     - name: Checkout repository
@@ -20,10 +144,14 @@ jobs:
     - name: Install Rust toolchain
       run: rustup update --no-self-update stable
 
+    - name: Install llvm-tools-preview
+      run: rustup component add llvm-tools-preview
+
+    - name: Install binstall
+      uses: cargo-bins/cargo-binstall@main
+
     - name: Install grcov
-      run: |
-        rustup component add llvm-tools-preview &&
-        cargo install grcov
+      run: cargo binstall --no-confirm grcov
 
     - name: Build the library
       run: cargo test --no-run

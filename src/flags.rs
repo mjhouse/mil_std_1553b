@@ -744,7 +744,6 @@ impl From<DynamicBusAcceptance> for u8 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rstest::rstest;
 
     #[test]
     fn test_mode_code_clone() {
@@ -753,172 +752,680 @@ mod tests {
         assert_eq!(item1, item2);
     }
 
-    #[rstest]
-    #[case(ModeCode::DynamicBusControl, 0b00000)]
-    #[case(ModeCode::Synchronize, 0b00001)]
-    #[case(ModeCode::TransmitStatusWord, 0b00010)]
-    #[case(ModeCode::InitiateSelfTest, 0b00011)]
-    #[case(ModeCode::TransmitterShutdown, 0b00100)]
-    #[case(ModeCode::OverrideTransmitterShutdown, 0b00101)]
-    #[case(ModeCode::InhibitTerminalFlagBit, 0b00110)]
-    #[case(ModeCode::OverrideInhibitTerminalFlagBit, 0b00111)]
-    #[case(ModeCode::ResetRemoteTerminal, 0b01000)]
-    #[case(ModeCode::TransmitVectorWord, 0b10000)]
-    #[case(ModeCode::SynchronizeWithDataWord, 0b10001)]
-    #[case(ModeCode::TransmitLastCommandWord, 0b10010)]
-    #[case(ModeCode::TransmitBITWord, 0b10011)]
-    #[case(ModeCode::SelectedTransmitterShutdown, 0b10100)]
-    #[case(ModeCode::OverrideSelectedTransmitterShutdown, 0b10101)]
-    #[case(ModeCode::UnknownModeCode(0b11111), 0b11111)]
-    fn test_mode_code_value(#[case] code: ModeCode, #[case] expected: u8) {
-        assert_eq!(code.value(), expected);
+    #[test]
+    fn test_mode_code_value_0() {
+        assert_eq!(ModeCode::DynamicBusControl.value(), 0b00000);
     }
 
-    #[rstest]
-    #[case(ModeCode::DynamicBusControl, true)]
-    #[case(ModeCode::Synchronize, false)]
-    #[case(ModeCode::TransmitStatusWord, true)]
-    #[case(ModeCode::InitiateSelfTest, true)]
-    #[case(ModeCode::TransmitterShutdown, true)]
-    #[case(ModeCode::OverrideTransmitterShutdown, true)]
-    #[case(ModeCode::InhibitTerminalFlagBit, true)]
-    #[case(ModeCode::OverrideInhibitTerminalFlagBit, true)]
-    #[case(ModeCode::ResetRemoteTerminal, true)]
-    #[case(ModeCode::TransmitVectorWord, true)]
-    #[case(ModeCode::SynchronizeWithDataWord, true)]
-    #[case(ModeCode::TransmitLastCommandWord, true)]
-    #[case(ModeCode::TransmitBITWord, true)]
-    #[case(ModeCode::SelectedTransmitterShutdown, false)]
-    #[case(ModeCode::OverrideSelectedTransmitterShutdown, false)]
-    #[case(ModeCode::UnknownModeCode(0b11111), false)]
-    fn test_mode_code_is_transmit(#[case] code: ModeCode, #[case] expected: bool) {
-        assert_eq!(code.is_transmit(), expected);
+    #[test]
+    fn test_mode_code_value_1() {
+        assert_eq!(ModeCode::Synchronize.value(), 0b00001);
     }
 
-    #[rstest]
-    #[case(ModeCode::DynamicBusControl, false)]
-    #[case(ModeCode::Synchronize, true)]
-    #[case(ModeCode::TransmitStatusWord, false)]
-    #[case(ModeCode::InitiateSelfTest, false)]
-    #[case(ModeCode::TransmitterShutdown, false)]
-    #[case(ModeCode::OverrideTransmitterShutdown, false)]
-    #[case(ModeCode::InhibitTerminalFlagBit, false)]
-    #[case(ModeCode::OverrideInhibitTerminalFlagBit, false)]
-    #[case(ModeCode::ResetRemoteTerminal, false)]
-    #[case(ModeCode::TransmitVectorWord, false)]
-    #[case(ModeCode::SynchronizeWithDataWord, false)]
-    #[case(ModeCode::TransmitLastCommandWord, false)]
-    #[case(ModeCode::TransmitBITWord, false)]
-    #[case(ModeCode::SelectedTransmitterShutdown, true)]
-    #[case(ModeCode::OverrideSelectedTransmitterShutdown, true)]
-    #[case(ModeCode::UnknownModeCode(0b11111), false)]
-    fn test_mode_code_is_receive(#[case] code: ModeCode, #[case] expected: bool) {
-        assert_eq!(code.is_receive(), expected);
+    #[test]
+    fn test_mode_code_value_2() {
+        assert_eq!(ModeCode::TransmitStatusWord.value(), 0b00010);
     }
 
-    #[rstest]
-    #[case(ModeCode::DynamicBusControl, false)]
-    #[case(ModeCode::Synchronize, true)]
-    #[case(ModeCode::TransmitStatusWord, false)]
-    #[case(ModeCode::InitiateSelfTest, false)]
-    #[case(ModeCode::TransmitterShutdown, false)]
-    #[case(ModeCode::OverrideTransmitterShutdown, false)]
-    #[case(ModeCode::InhibitTerminalFlagBit, false)]
-    #[case(ModeCode::OverrideInhibitTerminalFlagBit, false)]
-    #[case(ModeCode::ResetRemoteTerminal, false)]
-    #[case(ModeCode::TransmitVectorWord, true)]
-    #[case(ModeCode::SynchronizeWithDataWord, false)]
-    #[case(ModeCode::TransmitLastCommandWord, true)]
-    #[case(ModeCode::TransmitBITWord, true)]
-    #[case(ModeCode::SelectedTransmitterShutdown, true)]
-    #[case(ModeCode::OverrideSelectedTransmitterShutdown, true)]
-    #[case(ModeCode::UnknownModeCode(0b11111), false)]
-    fn test_mode_code_has_data(#[case] code: ModeCode, #[case] expected: bool) {
-        assert_eq!(code.has_data(), expected);
+    #[test]
+    fn test_mode_code_value_3() {
+        assert_eq!(ModeCode::InitiateSelfTest.value(), 0b00011);
     }
 
-    #[rstest]
-    #[case(ModeCode::DynamicBusControl, false)]
-    #[case(ModeCode::Synchronize, true)]
-    #[case(ModeCode::TransmitStatusWord, false)]
-    #[case(ModeCode::InitiateSelfTest, true)]
-    #[case(ModeCode::TransmitterShutdown, true)]
-    #[case(ModeCode::OverrideTransmitterShutdown, true)]
-    #[case(ModeCode::InhibitTerminalFlagBit, true)]
-    #[case(ModeCode::OverrideInhibitTerminalFlagBit, true)]
-    #[case(ModeCode::ResetRemoteTerminal, true)]
-    #[case(ModeCode::TransmitVectorWord, false)]
-    #[case(ModeCode::SynchronizeWithDataWord, true)]
-    #[case(ModeCode::TransmitLastCommandWord, false)]
-    #[case(ModeCode::TransmitBITWord, false)]
-    #[case(ModeCode::SelectedTransmitterShutdown, true)]
-    #[case(ModeCode::OverrideSelectedTransmitterShutdown, true)]
-    #[case(ModeCode::UnknownModeCode(0b11111), false)]
-    fn test_mode_code_is_broadcast(#[case] code: ModeCode, #[case] expected: bool) {
-        assert_eq!(code.is_broadcast(), expected);
+    #[test]
+    fn test_mode_code_value_4() {
+        assert_eq!(ModeCode::TransmitterShutdown.value(), 0b00100);
     }
 
-    #[rstest]
-    #[case(ModeCode::DynamicBusControl, false)]
-    #[case(ModeCode::Synchronize, false)]
-    #[case(ModeCode::TransmitStatusWord, false)]
-    #[case(ModeCode::InitiateSelfTest, false)]
-    #[case(ModeCode::TransmitterShutdown, false)]
-    #[case(ModeCode::OverrideTransmitterShutdown, false)]
-    #[case(ModeCode::InhibitTerminalFlagBit, false)]
-    #[case(ModeCode::OverrideInhibitTerminalFlagBit, false)]
-    #[case(ModeCode::ResetRemoteTerminal, false)]
-    #[case(ModeCode::TransmitVectorWord, false)]
-    #[case(ModeCode::SynchronizeWithDataWord, false)]
-    #[case(ModeCode::TransmitLastCommandWord, false)]
-    #[case(ModeCode::TransmitBITWord, false)]
-    #[case(ModeCode::SelectedTransmitterShutdown, false)]
-    #[case(ModeCode::OverrideSelectedTransmitterShutdown, false)]
-    #[case(ModeCode::UnknownModeCode(0b11111), true)]
-    fn test_mode_code_is_unknown(#[case] code: ModeCode, #[case] expected: bool) {
-        assert_eq!(code.is_unknown(), expected);
+    #[test]
+    fn test_mode_code_value_5() {
+        assert_eq!(ModeCode::OverrideTransmitterShutdown.value(), 0b00101);
     }
 
-    #[rstest]
-    #[case(0b00000, ModeCode::DynamicBusControl)]
-    #[case(0b00001, ModeCode::Synchronize)]
-    #[case(0b00010, ModeCode::TransmitStatusWord)]
-    #[case(0b00011, ModeCode::InitiateSelfTest)]
-    #[case(0b00100, ModeCode::TransmitterShutdown)]
-    #[case(0b00101, ModeCode::OverrideTransmitterShutdown)]
-    #[case(0b00110, ModeCode::InhibitTerminalFlagBit)]
-    #[case(0b00111, ModeCode::OverrideInhibitTerminalFlagBit)]
-    #[case(0b01000, ModeCode::ResetRemoteTerminal)]
-    #[case(0b10000, ModeCode::TransmitVectorWord)]
-    #[case(0b10001, ModeCode::SynchronizeWithDataWord)]
-    #[case(0b10010, ModeCode::TransmitLastCommandWord)]
-    #[case(0b10011, ModeCode::TransmitBITWord)]
-    #[case(0b10100, ModeCode::SelectedTransmitterShutdown)]
-    #[case(0b10101, ModeCode::OverrideSelectedTransmitterShutdown)]
-    #[case(0b11111, ModeCode::UnknownModeCode(0b11111))]
-    fn test_mode_code_from_u8(#[case] value: u8, #[case] expected: ModeCode) {
-        assert_eq!(ModeCode::from(value), expected);
+    #[test]
+    fn test_mode_code_value_6() {
+        assert_eq!(ModeCode::InhibitTerminalFlagBit.value(), 0b00110);
     }
 
-    #[rstest]
-    #[case(0b00000, ModeCode::DynamicBusControl)]
-    #[case(0b00001, ModeCode::Synchronize)]
-    #[case(0b00010, ModeCode::TransmitStatusWord)]
-    #[case(0b00011, ModeCode::InitiateSelfTest)]
-    #[case(0b00100, ModeCode::TransmitterShutdown)]
-    #[case(0b00101, ModeCode::OverrideTransmitterShutdown)]
-    #[case(0b00110, ModeCode::InhibitTerminalFlagBit)]
-    #[case(0b00111, ModeCode::OverrideInhibitTerminalFlagBit)]
-    #[case(0b01000, ModeCode::ResetRemoteTerminal)]
-    #[case(0b10000, ModeCode::TransmitVectorWord)]
-    #[case(0b10001, ModeCode::SynchronizeWithDataWord)]
-    #[case(0b10010, ModeCode::TransmitLastCommandWord)]
-    #[case(0b10011, ModeCode::TransmitBITWord)]
-    #[case(0b10100, ModeCode::SelectedTransmitterShutdown)]
-    #[case(0b10101, ModeCode::OverrideSelectedTransmitterShutdown)]
-    #[case(0b11111, ModeCode::UnknownModeCode(0b11111))]
-    fn test_mode_code_to_u8(#[case] expected: u8, #[case] code: ModeCode) {
-        assert_eq!(u8::from(code), expected);
+    #[test]
+    fn test_mode_code_value_7() {
+        assert_eq!(ModeCode::OverrideInhibitTerminalFlagBit.value(), 0b00111);
+    }
+
+    #[test]
+    fn test_mode_code_value_8() {
+        assert_eq!(ModeCode::ResetRemoteTerminal.value(), 0b01000);
+    }
+
+    #[test]
+    fn test_mode_code_value_9() {
+        assert_eq!(ModeCode::TransmitVectorWord.value(), 0b10000);
+    }
+
+    #[test]
+    fn test_mode_code_value_10() {
+        assert_eq!(ModeCode::SynchronizeWithDataWord.value(), 0b10001);
+    }
+
+    #[test]
+    fn test_mode_code_value_11() {
+        assert_eq!(ModeCode::TransmitLastCommandWord.value(), 0b10010);
+    }
+
+    #[test]
+    fn test_mode_code_value_12() {
+        assert_eq!(ModeCode::TransmitBITWord.value(), 0b10011);
+    }
+
+    #[test]
+    fn test_mode_code_value_13() {
+        assert_eq!(ModeCode::SelectedTransmitterShutdown.value(), 0b10100);
+    }
+
+    #[test]
+    fn test_mode_code_value_14() {
+        assert_eq!(
+            ModeCode::OverrideSelectedTransmitterShutdown.value(),
+            0b10101
+        );
+    }
+
+    #[test]
+    fn test_mode_code_value_15() {
+        assert_eq!(ModeCode::UnknownModeCode(0b11111).value(), 0b11111);
+    }
+
+    #[test]
+    fn test_mode_code_is_transmit_0() {
+        assert_eq!(ModeCode::DynamicBusControl.is_transmit(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_transmit_1() {
+        assert_eq!(ModeCode::Synchronize.is_transmit(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_transmit_2() {
+        assert_eq!(ModeCode::TransmitStatusWord.is_transmit(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_transmit_3() {
+        assert_eq!(ModeCode::InitiateSelfTest.is_transmit(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_transmit_4() {
+        assert_eq!(ModeCode::TransmitterShutdown.is_transmit(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_transmit_5() {
+        assert_eq!(ModeCode::OverrideTransmitterShutdown.is_transmit(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_transmit_6() {
+        assert_eq!(ModeCode::InhibitTerminalFlagBit.is_transmit(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_transmit_7() {
+        assert_eq!(ModeCode::OverrideInhibitTerminalFlagBit.is_transmit(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_transmit_8() {
+        assert_eq!(ModeCode::ResetRemoteTerminal.is_transmit(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_transmit_9() {
+        assert_eq!(ModeCode::TransmitVectorWord.is_transmit(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_transmit_10() {
+        assert_eq!(ModeCode::SynchronizeWithDataWord.is_transmit(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_transmit_11() {
+        assert_eq!(ModeCode::TransmitLastCommandWord.is_transmit(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_transmit_12() {
+        assert_eq!(ModeCode::TransmitBITWord.is_transmit(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_transmit_13() {
+        assert_eq!(ModeCode::SelectedTransmitterShutdown.is_transmit(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_transmit_14() {
+        assert_eq!(
+            ModeCode::OverrideSelectedTransmitterShutdown.is_transmit(),
+            false
+        );
+    }
+
+    #[test]
+    fn test_mode_code_is_transmit_15() {
+        assert_eq!(ModeCode::UnknownModeCode(0b11111).is_transmit(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_receive_0() {
+        assert_eq!(ModeCode::DynamicBusControl.is_receive(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_receive_1() {
+        assert_eq!(ModeCode::Synchronize.is_receive(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_receive_2() {
+        assert_eq!(ModeCode::TransmitStatusWord.is_receive(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_receive_3() {
+        assert_eq!(ModeCode::InitiateSelfTest.is_receive(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_receive_4() {
+        assert_eq!(ModeCode::TransmitterShutdown.is_receive(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_receive_5() {
+        assert_eq!(ModeCode::OverrideTransmitterShutdown.is_receive(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_receive_6() {
+        assert_eq!(ModeCode::InhibitTerminalFlagBit.is_receive(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_receive_7() {
+        assert_eq!(ModeCode::OverrideInhibitTerminalFlagBit.is_receive(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_receive_8() {
+        assert_eq!(ModeCode::ResetRemoteTerminal.is_receive(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_receive_9() {
+        assert_eq!(ModeCode::TransmitVectorWord.is_receive(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_receive_10() {
+        assert_eq!(ModeCode::SynchronizeWithDataWord.is_receive(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_receive_11() {
+        assert_eq!(ModeCode::TransmitLastCommandWord.is_receive(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_receive_12() {
+        assert_eq!(ModeCode::TransmitBITWord.is_receive(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_receive_13() {
+        assert_eq!(ModeCode::SelectedTransmitterShutdown.is_receive(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_receive_14() {
+        assert_eq!(
+            ModeCode::OverrideSelectedTransmitterShutdown.is_receive(),
+            true
+        );
+    }
+
+    #[test]
+    fn test_mode_code_is_receive_15() {
+        assert_eq!(ModeCode::UnknownModeCode(0b11111).is_receive(), false);
+    }
+
+    #[test]
+    fn test_mode_code_has_data_0() {
+        assert_eq!(ModeCode::DynamicBusControl.has_data(), false);
+    }
+
+    #[test]
+    fn test_mode_code_has_data_1() {
+        assert_eq!(ModeCode::Synchronize.has_data(), true);
+    }
+
+    #[test]
+    fn test_mode_code_has_data_2() {
+        assert_eq!(ModeCode::TransmitStatusWord.has_data(), false);
+    }
+
+    #[test]
+    fn test_mode_code_has_data_3() {
+        assert_eq!(ModeCode::InitiateSelfTest.has_data(), false);
+    }
+
+    #[test]
+    fn test_mode_code_has_data_4() {
+        assert_eq!(ModeCode::TransmitterShutdown.has_data(), false);
+    }
+
+    #[test]
+    fn test_mode_code_has_data_5() {
+        assert_eq!(ModeCode::OverrideTransmitterShutdown.has_data(), false);
+    }
+
+    #[test]
+    fn test_mode_code_has_data_6() {
+        assert_eq!(ModeCode::InhibitTerminalFlagBit.has_data(), false);
+    }
+
+    #[test]
+    fn test_mode_code_has_data_7() {
+        assert_eq!(ModeCode::OverrideInhibitTerminalFlagBit.has_data(), false);
+    }
+
+    #[test]
+    fn test_mode_code_has_data_8() {
+        assert_eq!(ModeCode::ResetRemoteTerminal.has_data(), false);
+    }
+
+    #[test]
+    fn test_mode_code_has_data_9() {
+        assert_eq!(ModeCode::TransmitVectorWord.has_data(), true);
+    }
+
+    #[test]
+    fn test_mode_code_has_data_10() {
+        assert_eq!(ModeCode::SynchronizeWithDataWord.has_data(), false);
+    }
+
+    #[test]
+    fn test_mode_code_has_data_11() {
+        assert_eq!(ModeCode::TransmitLastCommandWord.has_data(), true);
+    }
+
+    #[test]
+    fn test_mode_code_has_data_12() {
+        assert_eq!(ModeCode::TransmitBITWord.has_data(), true);
+    }
+
+    #[test]
+    fn test_mode_code_has_data_13() {
+        assert_eq!(ModeCode::SelectedTransmitterShutdown.has_data(), true);
+    }
+
+    #[test]
+    fn test_mode_code_has_data_14() {
+        assert_eq!(
+            ModeCode::OverrideSelectedTransmitterShutdown.has_data(),
+            true
+        );
+    }
+
+    #[test]
+    fn test_mode_code_has_data_15() {
+        assert_eq!(ModeCode::UnknownModeCode(0b11111).has_data(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_broadcast_0() {
+        assert_eq!(ModeCode::DynamicBusControl.is_broadcast(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_broadcast_1() {
+        assert_eq!(ModeCode::Synchronize.is_broadcast(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_broadcast_2() {
+        assert_eq!(ModeCode::TransmitStatusWord.is_broadcast(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_broadcast_3() {
+        assert_eq!(ModeCode::InitiateSelfTest.is_broadcast(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_broadcast_4() {
+        assert_eq!(ModeCode::TransmitterShutdown.is_broadcast(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_broadcast_5() {
+        assert_eq!(ModeCode::OverrideTransmitterShutdown.is_broadcast(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_broadcast_6() {
+        assert_eq!(ModeCode::InhibitTerminalFlagBit.is_broadcast(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_broadcast_7() {
+        assert_eq!(
+            ModeCode::OverrideInhibitTerminalFlagBit.is_broadcast(),
+            true
+        );
+    }
+
+    #[test]
+    fn test_mode_code_is_broadcast_8() {
+        assert_eq!(ModeCode::ResetRemoteTerminal.is_broadcast(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_broadcast_9() {
+        assert_eq!(ModeCode::TransmitVectorWord.is_broadcast(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_broadcast_10() {
+        assert_eq!(ModeCode::SynchronizeWithDataWord.is_broadcast(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_broadcast_11() {
+        assert_eq!(ModeCode::TransmitLastCommandWord.is_broadcast(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_broadcast_12() {
+        assert_eq!(ModeCode::TransmitBITWord.is_broadcast(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_broadcast_13() {
+        assert_eq!(ModeCode::SelectedTransmitterShutdown.is_broadcast(), true);
+    }
+
+    #[test]
+    fn test_mode_code_is_broadcast_14() {
+        assert_eq!(
+            ModeCode::OverrideSelectedTransmitterShutdown.is_broadcast(),
+            true
+        );
+    }
+
+    #[test]
+    fn test_mode_code_is_broadcast_15() {
+        assert_eq!(ModeCode::UnknownModeCode(0b11111).is_broadcast(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_unknown_0() {
+        assert_eq!(ModeCode::DynamicBusControl.is_unknown(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_unknown_1() {
+        assert_eq!(ModeCode::Synchronize.is_unknown(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_unknown_2() {
+        assert_eq!(ModeCode::TransmitStatusWord.is_unknown(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_unknown_3() {
+        assert_eq!(ModeCode::InitiateSelfTest.is_unknown(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_unknown_4() {
+        assert_eq!(ModeCode::TransmitterShutdown.is_unknown(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_unknown_5() {
+        assert_eq!(ModeCode::OverrideTransmitterShutdown.is_unknown(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_unknown_6() {
+        assert_eq!(ModeCode::InhibitTerminalFlagBit.is_unknown(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_unknown_7() {
+        assert_eq!(ModeCode::OverrideInhibitTerminalFlagBit.is_unknown(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_unknown_8() {
+        assert_eq!(ModeCode::ResetRemoteTerminal.is_unknown(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_unknown_9() {
+        assert_eq!(ModeCode::TransmitVectorWord.is_unknown(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_unknown_10() {
+        assert_eq!(ModeCode::SynchronizeWithDataWord.is_unknown(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_unknown_11() {
+        assert_eq!(ModeCode::TransmitLastCommandWord.is_unknown(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_unknown_12() {
+        assert_eq!(ModeCode::TransmitBITWord.is_unknown(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_unknown_13() {
+        assert_eq!(ModeCode::SelectedTransmitterShutdown.is_unknown(), false);
+    }
+
+    #[test]
+    fn test_mode_code_is_unknown_14() {
+        assert_eq!(
+            ModeCode::OverrideSelectedTransmitterShutdown.is_unknown(),
+            false
+        );
+    }
+
+    #[test]
+    fn test_mode_code_is_unknown_15() {
+        assert_eq!(ModeCode::UnknownModeCode(0b11111).is_unknown(), true);
+    }
+
+    #[test]
+    fn test_mode_code_from_u8_0() {
+        assert_eq!(ModeCode::from(0b00000), ModeCode::DynamicBusControl);
+    }
+
+    #[test]
+    fn test_mode_code_from_u8_1() {
+        assert_eq!(ModeCode::from(0b00001), ModeCode::Synchronize);
+    }
+
+    #[test]
+    fn test_mode_code_from_u8_2() {
+        assert_eq!(ModeCode::from(0b00010), ModeCode::TransmitStatusWord);
+    }
+
+    #[test]
+    fn test_mode_code_from_u8_3() {
+        assert_eq!(ModeCode::from(0b00011), ModeCode::InitiateSelfTest);
+    }
+
+    #[test]
+    fn test_mode_code_from_u8_4() {
+        assert_eq!(ModeCode::from(0b00100), ModeCode::TransmitterShutdown);
+    }
+
+    #[test]
+    fn test_mode_code_from_u8_5() {
+        assert_eq!(
+            ModeCode::from(0b00101),
+            ModeCode::OverrideTransmitterShutdown
+        );
+    }
+
+    #[test]
+    fn test_mode_code_from_u8_6() {
+        assert_eq!(ModeCode::from(0b00110), ModeCode::InhibitTerminalFlagBit);
+    }
+
+    #[test]
+    fn test_mode_code_from_u8_7() {
+        assert_eq!(
+            ModeCode::from(0b00111),
+            ModeCode::OverrideInhibitTerminalFlagBit
+        );
+    }
+
+    #[test]
+    fn test_mode_code_from_u8_8() {
+        assert_eq!(ModeCode::from(0b01000), ModeCode::ResetRemoteTerminal);
+    }
+
+    #[test]
+    fn test_mode_code_from_u8_9() {
+        assert_eq!(ModeCode::from(0b10000), ModeCode::TransmitVectorWord);
+    }
+
+    #[test]
+    fn test_mode_code_from_u8_10() {
+        assert_eq!(ModeCode::from(0b10001), ModeCode::SynchronizeWithDataWord);
+    }
+
+    #[test]
+    fn test_mode_code_from_u8_11() {
+        assert_eq!(ModeCode::from(0b10010), ModeCode::TransmitLastCommandWord);
+    }
+
+    #[test]
+    fn test_mode_code_from_u8_12() {
+        assert_eq!(ModeCode::from(0b10011), ModeCode::TransmitBITWord);
+    }
+
+    #[test]
+    fn test_mode_code_from_u8_13() {
+        assert_eq!(
+            ModeCode::from(0b10100),
+            ModeCode::SelectedTransmitterShutdown
+        );
+    }
+
+    #[test]
+    fn test_mode_code_from_u8_14() {
+        assert_eq!(
+            ModeCode::from(0b10101),
+            ModeCode::OverrideSelectedTransmitterShutdown
+        );
+    }
+
+    #[test]
+    fn test_mode_code_from_u8_15() {
+        assert_eq!(ModeCode::from(0b11111), ModeCode::UnknownModeCode(0b11111));
+    }
+
+    #[test]
+    fn test_mode_code_to_u8_0() {
+        assert_eq!(u8::from(ModeCode::DynamicBusControl), 0b00000);
+    }
+
+    #[test]
+    fn test_mode_code_to_u8_1() {
+        assert_eq!(u8::from(ModeCode::Synchronize), 0b00001);
+    }
+
+    #[test]
+    fn test_mode_code_to_u8_2() {
+        assert_eq!(u8::from(ModeCode::TransmitStatusWord), 0b00010);
+    }
+
+    #[test]
+    fn test_mode_code_to_u8_3() {
+        assert_eq!(u8::from(ModeCode::InitiateSelfTest), 0b00011);
+    }
+
+    #[test]
+    fn test_mode_code_to_u8_4() {
+        assert_eq!(u8::from(ModeCode::TransmitterShutdown), 0b00100);
+    }
+
+    #[test]
+    fn test_mode_code_to_u8_5() {
+        assert_eq!(u8::from(ModeCode::OverrideTransmitterShutdown), 0b00101);
+    }
+
+    #[test]
+    fn test_mode_code_to_u8_6() {
+        assert_eq!(u8::from(ModeCode::InhibitTerminalFlagBit), 0b00110);
+    }
+
+    #[test]
+    fn test_mode_code_to_u8_7() {
+        assert_eq!(u8::from(ModeCode::OverrideInhibitTerminalFlagBit), 0b00111);
+    }
+
+    #[test]
+    fn test_mode_code_to_u8_8() {
+        assert_eq!(u8::from(ModeCode::ResetRemoteTerminal), 0b01000);
+    }
+
+    #[test]
+    fn test_mode_code_to_u8_9() {
+        assert_eq!(u8::from(ModeCode::TransmitVectorWord), 0b10000);
+    }
+
+    #[test]
+    fn test_mode_code_to_u8_10() {
+        assert_eq!(u8::from(ModeCode::SynchronizeWithDataWord), 0b10001);
+    }
+
+    #[test]
+    fn test_mode_code_to_u8_11() {
+        assert_eq!(u8::from(ModeCode::TransmitLastCommandWord), 0b10010);
+    }
+
+    #[test]
+    fn test_mode_code_to_u8_12() {
+        assert_eq!(u8::from(ModeCode::TransmitBITWord), 0b10011);
+    }
+
+    #[test]
+    fn test_mode_code_to_u8_13() {
+        assert_eq!(u8::from(ModeCode::SelectedTransmitterShutdown), 0b10100);
+    }
+
+    #[test]
+    fn test_mode_code_to_u8_14() {
+        assert_eq!(
+            u8::from(ModeCode::OverrideSelectedTransmitterShutdown),
+            0b10101
+        );
+    }
+
+    #[test]
+    fn test_mode_code_to_u8_15() {
+        assert_eq!(u8::from(ModeCode::UnknownModeCode(0b11111)), 0b11111);
     }
 
     #[test]
@@ -928,32 +1435,44 @@ mod tests {
         assert_eq!(item1, item2);
     }
 
-    #[rstest]
-    #[case(TransmitReceive::Receive, false)]
-    #[case(TransmitReceive::Transmit, true)]
-    fn test_transmit_receive_is_transmit(#[case] code: TransmitReceive, #[case] expected: bool) {
-        assert_eq!(code.is_transmit(), expected);
+    #[test]
+    fn test_transmit_receive_is_transmit_0() {
+        assert_eq!(TransmitReceive::Receive.is_transmit(), false);
     }
 
-    #[rstest]
-    #[case(TransmitReceive::Receive, true)]
-    #[case(TransmitReceive::Transmit, false)]
-    fn test_transmit_receive_is_receive(#[case] code: TransmitReceive, #[case] expected: bool) {
-        assert_eq!(code.is_receive(), expected);
+    #[test]
+    fn test_transmit_receive_is_transmit_1() {
+        assert_eq!(TransmitReceive::Transmit.is_transmit(), true);
     }
 
-    #[rstest]
-    #[case(TransmitReceive::Receive, 0)]
-    #[case(TransmitReceive::Transmit, 1)]
-    fn test_transmit_receive_from_u8(#[case] expected: TransmitReceive, #[case] input: u8) {
-        assert_eq!(TransmitReceive::from(input), expected);
+    #[test]
+    fn test_transmit_receive_is_receive_0() {
+        assert_eq!(TransmitReceive::Receive.is_receive(), true);
     }
 
-    #[rstest]
-    #[case(TransmitReceive::Receive, 0)]
-    #[case(TransmitReceive::Transmit, 1)]
-    fn test_transmit_receive_to_u8(#[case] input: TransmitReceive, #[case] expected: u8) {
-        assert_eq!(u8::from(input), expected);
+    #[test]
+    fn test_transmit_receive_is_receive_1() {
+        assert_eq!(TransmitReceive::Transmit.is_receive(), false);
+    }
+
+    #[test]
+    fn test_transmit_receive_from_u8_0() {
+        assert_eq!(TransmitReceive::from(0), TransmitReceive::Receive);
+    }
+
+    #[test]
+    fn test_transmit_receive_from_u8_1() {
+        assert_eq!(TransmitReceive::from(1), TransmitReceive::Transmit);
+    }
+
+    #[test]
+    fn test_transmit_receive_to_u8_0() {
+        assert_eq!(u8::from(TransmitReceive::Receive), 0);
+    }
+
+    #[test]
+    fn test_transmit_receive_to_u8_1() {
+        assert_eq!(u8::from(TransmitReceive::Transmit), 1);
     }
 
     #[test]
@@ -963,44 +1482,79 @@ mod tests {
         assert_eq!(item1, item2);
     }
 
-    #[rstest]
-    #[case(Address::Value(0b10101), true)]
-    #[case(Address::Unknown(0b1111111), false)]
-    #[case(Address::Broadcast(0b11111), false)]
-    fn test_address_is_value(#[case] input: Address, #[case] expected: bool) {
-        assert_eq!(input.is_value(), expected);
+    #[test]
+    fn test_address_is_value_0() {
+        assert_eq!(Address::Value(0b10101).is_value(), true);
     }
 
-    #[rstest]
-    #[case(Address::Value(0b10101), false)]
-    #[case(Address::Unknown(0b1111111), true)]
-    #[case(Address::Broadcast(0b11111), false)]
-    fn test_address_is_unknown(#[case] input: Address, #[case] expected: bool) {
-        assert_eq!(input.is_unknown(), expected);
+    #[test]
+    fn test_address_is_value_1() {
+        assert_eq!(Address::Unknown(0b1111111).is_value(), false);
     }
 
-    #[rstest]
-    #[case(Address::Value(0b10101), false)]
-    #[case(Address::Unknown(0b1111111), false)]
-    #[case(Address::Broadcast(0b11111), true)]
-    fn test_address_is_broadcast(#[case] input: Address, #[case] expected: bool) {
-        assert_eq!(input.is_broadcast(), expected);
+    #[test]
+    fn test_address_is_value_2() {
+        assert_eq!(Address::Broadcast(0b11111).is_value(), false);
     }
 
-    #[rstest]
-    #[case(Address::Value(0b10101), 0b10101)]
-    #[case(Address::Unknown(0b1111111), 0b1111111)]
-    #[case(Address::Broadcast(0b11111), 0b11111)]
-    fn test_address_to_u8(#[case] input: Address, #[case] expected: u8) {
-        assert_eq!(u8::from(input), expected);
+    #[test]
+    fn test_address_is_unknown_0() {
+        assert_eq!(Address::Value(0b10101).is_unknown(), false);
     }
 
-    #[rstest]
-    #[case(Address::Value(0b10101), 0b10101)]
-    #[case(Address::Unknown(0b1111111), 0b1111111)]
-    #[case(Address::Broadcast(0b11111), 0b11111)]
-    fn test_address_from_u8(#[case] expected: Address, #[case] input: u8) {
-        assert_eq!(Address::from(input), expected);
+    #[test]
+    fn test_address_is_unknown_1() {
+        assert_eq!(Address::Unknown(0b1111111).is_unknown(), true);
+    }
+
+    #[test]
+    fn test_address_is_unknown_2() {
+        assert_eq!(Address::Broadcast(0b11111).is_unknown(), false);
+    }
+
+    #[test]
+    fn test_address_is_broadcast_0() {
+        assert_eq!(Address::Value(0b10101).is_broadcast(), false);
+    }
+
+    #[test]
+    fn test_address_is_broadcast_1() {
+        assert_eq!(Address::Unknown(0b1111111).is_broadcast(), false);
+    }
+
+    #[test]
+    fn test_address_is_broadcast_2() {
+        assert_eq!(Address::Broadcast(0b11111).is_broadcast(), true);
+    }
+
+    #[test]
+    fn test_address_to_u8_0() {
+        assert_eq!(u8::from(Address::Value(0b10101)), 0b10101);
+    }
+
+    #[test]
+    fn test_address_to_u8_1() {
+        assert_eq!(u8::from(Address::Unknown(0b1111111)), 0b1111111);
+    }
+
+    #[test]
+    fn test_address_to_u8_2() {
+        assert_eq!(u8::from(Address::Broadcast(0b11111)), 0b11111);
+    }
+
+    #[test]
+    fn test_address_from_u8_0() {
+        assert_eq!(Address::from(0b10101), Address::Value(0b10101));
+    }
+
+    #[test]
+    fn test_address_from_u8_1() {
+        assert_eq!(Address::from(0b1111111), Address::Unknown(0b1111111));
+    }
+
+    #[test]
+    fn test_address_from_u8_2() {
+        assert_eq!(Address::from(0b11111), Address::Broadcast(0b11111));
     }
 
     #[test]
@@ -1010,49 +1564,104 @@ mod tests {
         assert_eq!(item1, item2);
     }
 
-    #[rstest]
-    #[case(SubAddress::Value(0b10101), true)]
-    #[case(SubAddress::Unknown(0b1111111), false)]
-    #[case(SubAddress::ModeCode(0b11111), false)]
-    #[case(SubAddress::ModeCode(0b00000), false)]
-    fn test_subaddress_is_value(#[case] input: SubAddress, #[case] expected: bool) {
-        assert_eq!(input.is_value(), expected);
+    #[test]
+    fn test_subaddress_is_value_0() {
+        assert_eq!(SubAddress::Value(0b10101).is_value(), true);
     }
 
-    #[rstest]
-    #[case(SubAddress::Value(0b10101), false)]
-    #[case(SubAddress::Unknown(0b1111111), true)]
-    #[case(SubAddress::ModeCode(0b11111), false)]
-    #[case(SubAddress::ModeCode(0b00000), false)]
-    fn test_subaddress_is_unknown(#[case] input: SubAddress, #[case] expected: bool) {
-        assert_eq!(input.is_unknown(), expected);
+    #[test]
+    fn test_subaddress_is_value_1() {
+        assert_eq!(SubAddress::Unknown(0b1111111).is_value(), false);
     }
 
-    #[rstest]
-    #[case(SubAddress::Value(0b10101), false)]
-    #[case(SubAddress::Unknown(0b1111111), false)]
-    #[case(SubAddress::ModeCode(0b11111), true)]
-    #[case(SubAddress::ModeCode(0b00000), true)]
-    fn test_subaddress_is_mode_code(#[case] input: SubAddress, #[case] expected: bool) {
-        assert_eq!(input.is_mode_code(), expected);
+    #[test]
+    fn test_subaddress_is_value_2() {
+        assert_eq!(SubAddress::ModeCode(0b11111).is_value(), false);
     }
 
-    #[rstest]
-    #[case(SubAddress::Value(0b10101), 0b10101)]
-    #[case(SubAddress::Unknown(0b1111111), 0b1111111)]
-    #[case(SubAddress::ModeCode(0b11111), 0b11111)]
-    #[case(SubAddress::ModeCode(0b00000), 0b00000)]
-    fn test_subaddress_to_u8(#[case] input: SubAddress, #[case] expected: u8) {
-        assert_eq!(u8::from(input), expected);
+    #[test]
+    fn test_subaddress_is_value_3() {
+        assert_eq!(SubAddress::ModeCode(0b00000).is_value(), false);
     }
 
-    #[rstest]
-    #[case(SubAddress::Value(0b10101), 0b10101)]
-    #[case(SubAddress::Unknown(0b1111111), 0b1111111)]
-    #[case(SubAddress::ModeCode(0b11111), 0b11111)]
-    #[case(SubAddress::ModeCode(0b00000), 0b00000)]
-    fn test_subaddress_from_u8(#[case] expected: SubAddress, #[case] input: u8) {
-        assert_eq!(SubAddress::from(input), expected);
+    #[test]
+    fn test_subaddress_is_unknown_0() {
+        assert_eq!(SubAddress::Value(0b10101).is_unknown(), false);
+    }
+
+    #[test]
+    fn test_subaddress_is_unknown_1() {
+        assert_eq!(SubAddress::Unknown(0b1111111).is_unknown(), true);
+    }
+
+    #[test]
+    fn test_subaddress_is_unknown_2() {
+        assert_eq!(SubAddress::ModeCode(0b11111).is_unknown(), false);
+    }
+
+    #[test]
+    fn test_subaddress_is_unknown_3() {
+        assert_eq!(SubAddress::ModeCode(0b00000).is_unknown(), false);
+    }
+
+    #[test]
+    fn test_subaddress_is_mode_code_0() {
+        assert_eq!(SubAddress::Value(0b10101).is_mode_code(), false);
+    }
+
+    #[test]
+    fn test_subaddress_is_mode_code_1() {
+        assert_eq!(SubAddress::Unknown(0b1111111).is_mode_code(), false);
+    }
+
+    #[test]
+    fn test_subaddress_is_mode_code_2() {
+        assert_eq!(SubAddress::ModeCode(0b11111).is_mode_code(), true);
+    }
+
+    #[test]
+    fn test_subaddress_is_mode_code_3() {
+        assert_eq!(SubAddress::ModeCode(0b00000).is_mode_code(), true);
+    }
+
+    #[test]
+    fn test_subaddress_to_u8_0() {
+        assert_eq!(u8::from(SubAddress::Value(0b10101)), 0b10101);
+    }
+
+    #[test]
+    fn test_subaddress_to_u8_1() {
+        assert_eq!(u8::from(SubAddress::Unknown(0b1111111)), 0b1111111);
+    }
+
+    #[test]
+    fn test_subaddress_to_u8_2() {
+        assert_eq!(u8::from(SubAddress::ModeCode(0b11111)), 0b11111);
+    }
+
+    #[test]
+    fn test_subaddress_to_u8_3() {
+        assert_eq!(u8::from(SubAddress::ModeCode(0b00000)), 0b00000);
+    }
+
+    #[test]
+    fn test_subaddress_from_u8_0() {
+        assert_eq!(SubAddress::from(0b10101), SubAddress::Value(0b10101));
+    }
+
+    #[test]
+    fn test_subaddress_from_u8_1() {
+        assert_eq!(SubAddress::from(0b1111111), SubAddress::Unknown(0b1111111));
+    }
+
+    #[test]
+    fn test_subaddress_from_u8_2() {
+        assert_eq!(SubAddress::from(0b11111), SubAddress::ModeCode(0b11111));
+    }
+
+    #[test]
+    fn test_subaddress_from_u8_3() {
+        assert_eq!(SubAddress::from(0b00000), SubAddress::ModeCode(0b00000));
     }
 
     #[test]
@@ -1062,32 +1671,44 @@ mod tests {
         assert_eq!(item1, item2);
     }
 
-    #[rstest]
-    #[case(Instrumentation::Status, true)]
-    #[case(Instrumentation::Command, false)]
-    fn test_instrumentation_is_status(#[case] input: Instrumentation, #[case] expected: bool) {
-        assert_eq!(input.is_status(), expected);
+    #[test]
+    fn test_instrumentation_is_status_0() {
+        assert_eq!(Instrumentation::Status.is_status(), true);
     }
 
-    #[rstest]
-    #[case(Instrumentation::Status, false)]
-    #[case(Instrumentation::Command, true)]
-    fn test_instrumentation_is_command(#[case] input: Instrumentation, #[case] expected: bool) {
-        assert_eq!(input.is_command(), expected);
+    #[test]
+    fn test_instrumentation_is_status_1() {
+        assert_eq!(Instrumentation::Command.is_status(), false);
     }
 
-    #[rstest]
-    #[case(Instrumentation::Status, 0)]
-    #[case(Instrumentation::Command, 1)]
-    fn test_instrumentation_from_u8(#[case] expected: Instrumentation, #[case] input: u8) {
-        assert_eq!(Instrumentation::from(input), expected);
+    #[test]
+    fn test_instrumentation_is_command_0() {
+        assert_eq!(Instrumentation::Status.is_command(), false);
     }
 
-    #[rstest]
-    #[case(Instrumentation::Status, 0)]
-    #[case(Instrumentation::Command, 1)]
-    fn test_instrumentation_to_u8(#[case] input: Instrumentation, #[case] expected: u8) {
-        assert_eq!(u8::from(input), expected);
+    #[test]
+    fn test_instrumentation_is_command_1() {
+        assert_eq!(Instrumentation::Command.is_command(), true);
+    }
+
+    #[test]
+    fn test_instrumentation_from_u8_0() {
+        assert_eq!(Instrumentation::from(0), Instrumentation::Status);
+    }
+
+    #[test]
+    fn test_instrumentation_from_u8_1() {
+        assert_eq!(Instrumentation::from(1), Instrumentation::Command);
+    }
+
+    #[test]
+    fn test_instrumentation_to_u8_0() {
+        assert_eq!(u8::from(Instrumentation::Status), 0);
+    }
+
+    #[test]
+    fn test_instrumentation_to_u8_1() {
+        assert_eq!(u8::from(Instrumentation::Command), 1);
     }
 
     #[test]
@@ -1097,32 +1718,44 @@ mod tests {
         assert_eq!(item1, item2);
     }
 
-    #[rstest]
-    #[case(ServiceRequest::NoService, true)]
-    #[case(ServiceRequest::Service, false)]
-    fn test_service_request_is_noservice(#[case] input: ServiceRequest, #[case] expected: bool) {
-        assert_eq!(input.is_noservice(), expected);
+    #[test]
+    fn test_service_request_is_noservice_0() {
+        assert_eq!(ServiceRequest::NoService.is_noservice(), true);
     }
 
-    #[rstest]
-    #[case(ServiceRequest::NoService, false)]
-    #[case(ServiceRequest::Service, true)]
-    fn test_service_request_is_service(#[case] input: ServiceRequest, #[case] expected: bool) {
-        assert_eq!(input.is_service(), expected);
+    #[test]
+    fn test_service_request_is_noservice_1() {
+        assert_eq!(ServiceRequest::Service.is_noservice(), false);
     }
 
-    #[rstest]
-    #[case(ServiceRequest::NoService, 0)]
-    #[case(ServiceRequest::Service, 1)]
-    fn test_service_request_from_u8(#[case] expected: ServiceRequest, #[case] input: u8) {
-        assert_eq!(ServiceRequest::from(input), expected);
+    #[test]
+    fn test_service_request_is_service_0() {
+        assert_eq!(ServiceRequest::NoService.is_service(), false);
     }
 
-    #[rstest]
-    #[case(ServiceRequest::NoService, 0)]
-    #[case(ServiceRequest::Service, 1)]
-    fn test_service_request_to_u8(#[case] input: ServiceRequest, #[case] expected: u8) {
-        assert_eq!(u8::from(input), expected);
+    #[test]
+    fn test_service_request_is_service_1() {
+        assert_eq!(ServiceRequest::Service.is_service(), true);
+    }
+
+    #[test]
+    fn test_service_request_from_u8_0() {
+        assert_eq!(ServiceRequest::from(0), ServiceRequest::NoService);
+    }
+
+    #[test]
+    fn test_service_request_from_u8_1() {
+        assert_eq!(ServiceRequest::from(1), ServiceRequest::Service);
+    }
+
+    #[test]
+    fn test_service_request_to_u8_0() {
+        assert_eq!(u8::from(ServiceRequest::NoService), 0);
+    }
+
+    #[test]
+    fn test_service_request_to_u8_1() {
+        assert_eq!(u8::from(ServiceRequest::Service), 1);
     }
 
     #[test]
@@ -1132,32 +1765,44 @@ mod tests {
         assert_eq!(item1, item2);
     }
 
-    #[rstest]
-    #[case(Reserved::None, true)]
-    #[case(Reserved::Value(0b111), false)]
-    fn test_reserved_is_none(#[case] input: Reserved, #[case] expected: bool) {
-        assert_eq!(input.is_none(), expected);
+    #[test]
+    fn test_reserved_is_none_0() {
+        assert_eq!(Reserved::None.is_none(), true);
     }
 
-    #[rstest]
-    #[case(Reserved::None, false)]
-    #[case(Reserved::Value(0b111), true)]
-    fn test_reserved_is_value(#[case] input: Reserved, #[case] expected: bool) {
-        assert_eq!(input.is_value(), expected);
+    #[test]
+    fn test_reserved_is_none_1() {
+        assert_eq!(Reserved::Value(0b111).is_none(), false);
     }
 
-    #[rstest]
-    #[case(Reserved::None, 0)]
-    #[case(Reserved::Value(0b111), 0b111)]
-    fn test_reserved_from_u8(#[case] expected: Reserved, #[case] input: u8) {
-        assert_eq!(Reserved::from(input), expected);
+    #[test]
+    fn test_reserved_is_value_0() {
+        assert_eq!(Reserved::None.is_value(), false);
     }
 
-    #[rstest]
-    #[case(Reserved::None, 0)]
-    #[case(Reserved::Value(0b111), 0b111)]
-    fn test_reserved_to_u8(#[case] input: Reserved, #[case] expected: u8) {
-        assert_eq!(u8::from(input), expected);
+    #[test]
+    fn test_reserved_is_value_1() {
+        assert_eq!(Reserved::Value(0b111).is_value(), true);
+    }
+
+    #[test]
+    fn test_reserved_from_u8_0() {
+        assert_eq!(Reserved::from(0), Reserved::None);
+    }
+
+    #[test]
+    fn test_reserved_from_u8_1() {
+        assert_eq!(Reserved::from(0b111), Reserved::Value(0b111));
+    }
+
+    #[test]
+    fn test_reserved_to_u8_0() {
+        assert_eq!(u8::from(Reserved::None), 0);
+    }
+
+    #[test]
+    fn test_reserved_to_u8_1() {
+        assert_eq!(u8::from(Reserved::Value(0b111)), 0b111);
     }
 
     #[test]
@@ -1167,38 +1812,44 @@ mod tests {
         assert_eq!(item1, item2);
     }
 
-    #[rstest]
-    #[case(BroadcastReceived::NotReceived, true)]
-    #[case(BroadcastReceived::Received, false)]
-    fn test_broadcast_received_is_notreceived(
-        #[case] input: BroadcastReceived,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(input.is_notreceived(), expected);
+    #[test]
+    fn test_broadcast_received_is_notreceived_0() {
+        assert_eq!(BroadcastReceived::NotReceived.is_notreceived(), true);
     }
 
-    #[rstest]
-    #[case(BroadcastReceived::NotReceived, false)]
-    #[case(BroadcastReceived::Received, true)]
-    fn test_broadcast_received_is_received(
-        #[case] input: BroadcastReceived,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(input.is_received(), expected);
+    #[test]
+    fn test_broadcast_received_is_notreceived_1() {
+        assert_eq!(BroadcastReceived::Received.is_notreceived(), false);
     }
 
-    #[rstest]
-    #[case(BroadcastReceived::NotReceived, 0)]
-    #[case(BroadcastReceived::Received, 1)]
-    fn test_broadcast_received_from_u8(#[case] expected: BroadcastReceived, #[case] input: u8) {
-        assert_eq!(BroadcastReceived::from(input), expected);
+    #[test]
+    fn test_broadcast_received_is_received_0() {
+        assert_eq!(BroadcastReceived::NotReceived.is_received(), false);
     }
 
-    #[rstest]
-    #[case(BroadcastReceived::NotReceived, 0)]
-    #[case(BroadcastReceived::Received, 1)]
-    fn test_broadcast_received_to_u8(#[case] input: BroadcastReceived, #[case] expected: u8) {
-        assert_eq!(u8::from(input), expected);
+    #[test]
+    fn test_broadcast_received_is_received_1() {
+        assert_eq!(BroadcastReceived::Received.is_received(), true);
+    }
+
+    #[test]
+    fn test_broadcast_received_from_u8_0() {
+        assert_eq!(BroadcastReceived::from(0), BroadcastReceived::NotReceived);
+    }
+
+    #[test]
+    fn test_broadcast_received_from_u8_1() {
+        assert_eq!(BroadcastReceived::from(1), BroadcastReceived::Received);
+    }
+
+    #[test]
+    fn test_broadcast_received_to_u8_0() {
+        assert_eq!(u8::from(BroadcastReceived::NotReceived), 0);
+    }
+
+    #[test]
+    fn test_broadcast_received_to_u8_1() {
+        assert_eq!(u8::from(BroadcastReceived::Received), 1);
     }
 
     #[test]
@@ -1208,32 +1859,44 @@ mod tests {
         assert_eq!(item1, item2);
     }
 
-    #[rstest]
-    #[case(TerminalBusy::NotBusy, true)]
-    #[case(TerminalBusy::Busy, false)]
-    fn test_terminal_busy_is_notbusy(#[case] input: TerminalBusy, #[case] expected: bool) {
-        assert_eq!(input.is_notbusy(), expected);
+    #[test]
+    fn test_terminal_busy_is_notbusy_0() {
+        assert_eq!(TerminalBusy::NotBusy.is_notbusy(), true);
     }
 
-    #[rstest]
-    #[case(TerminalBusy::NotBusy, false)]
-    #[case(TerminalBusy::Busy, true)]
-    fn test_terminal_busy_is_busy(#[case] input: TerminalBusy, #[case] expected: bool) {
-        assert_eq!(input.is_busy(), expected);
+    #[test]
+    fn test_terminal_busy_is_notbusy_1() {
+        assert_eq!(TerminalBusy::Busy.is_notbusy(), false);
     }
 
-    #[rstest]
-    #[case(TerminalBusy::NotBusy, 0)]
-    #[case(TerminalBusy::Busy, 1)]
-    fn test_terminal_busy_from_u8(#[case] expected: TerminalBusy, #[case] input: u8) {
-        assert_eq!(TerminalBusy::from(input), expected);
+    #[test]
+    fn test_terminal_busy_is_busy_0() {
+        assert_eq!(TerminalBusy::NotBusy.is_busy(), false);
     }
 
-    #[rstest]
-    #[case(TerminalBusy::NotBusy, 0)]
-    #[case(TerminalBusy::Busy, 1)]
-    fn test_terminal_busy_to_u8(#[case] input: TerminalBusy, #[case] expected: u8) {
-        assert_eq!(u8::from(input), expected);
+    #[test]
+    fn test_terminal_busy_is_busy_1() {
+        assert_eq!(TerminalBusy::Busy.is_busy(), true);
+    }
+
+    #[test]
+    fn test_terminal_busy_from_u8_0() {
+        assert_eq!(TerminalBusy::from(0), TerminalBusy::NotBusy);
+    }
+
+    #[test]
+    fn test_terminal_busy_from_u8_1() {
+        assert_eq!(TerminalBusy::from(1), TerminalBusy::Busy);
+    }
+
+    #[test]
+    fn test_terminal_busy_to_u8_0() {
+        assert_eq!(u8::from(TerminalBusy::NotBusy), 0);
+    }
+
+    #[test]
+    fn test_terminal_busy_to_u8_1() {
+        assert_eq!(u8::from(TerminalBusy::Busy), 1);
     }
 
     #[test]
@@ -1243,43 +1906,49 @@ mod tests {
         assert_eq!(item1, item2);
     }
 
-    #[rstest]
-    #[case(DynamicBusAcceptance::NotAccepted, true)]
-    #[case(DynamicBusAcceptance::Accepted, false)]
-    fn test_dynamic_bus_acceptance_is_notaccepted(
-        #[case] input: DynamicBusAcceptance,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(input.is_notaccepted(), expected);
+    #[test]
+    fn test_dynamic_bus_acceptance_is_notaccepted_0() {
+        assert_eq!(DynamicBusAcceptance::NotAccepted.is_notaccepted(), true);
     }
 
-    #[rstest]
-    #[case(DynamicBusAcceptance::NotAccepted, false)]
-    #[case(DynamicBusAcceptance::Accepted, true)]
-    fn test_dynamic_bus_acceptance_is_accepted(
-        #[case] input: DynamicBusAcceptance,
-        #[case] expected: bool,
-    ) {
-        assert_eq!(input.is_accepted(), expected);
+    #[test]
+    fn test_dynamic_bus_acceptance_is_notaccepted_1() {
+        assert_eq!(DynamicBusAcceptance::Accepted.is_notaccepted(), false);
     }
 
-    #[rstest]
-    #[case(DynamicBusAcceptance::NotAccepted, 0)]
-    #[case(DynamicBusAcceptance::Accepted, 1)]
-    fn test_dynamic_bus_acceptance_from_u8(
-        #[case] expected: DynamicBusAcceptance,
-        #[case] input: u8,
-    ) {
-        assert_eq!(DynamicBusAcceptance::from(input), expected);
+    #[test]
+    fn test_dynamic_bus_acceptance_is_accepted_0() {
+        assert_eq!(DynamicBusAcceptance::NotAccepted.is_accepted(), false);
     }
 
-    #[rstest]
-    #[case(DynamicBusAcceptance::NotAccepted, 0)]
-    #[case(DynamicBusAcceptance::Accepted, 1)]
-    fn test_dynamic_bus_acceptance_to_u8(
-        #[case] input: DynamicBusAcceptance,
-        #[case] expected: u8,
-    ) {
-        assert_eq!(u8::from(input), expected);
+    #[test]
+    fn test_dynamic_bus_acceptance_is_accepted_1() {
+        assert_eq!(DynamicBusAcceptance::Accepted.is_accepted(), true);
+    }
+
+    #[test]
+    fn test_dynamic_bus_acceptance_from_u8_0() {
+        assert_eq!(
+            DynamicBusAcceptance::from(0),
+            DynamicBusAcceptance::NotAccepted
+        );
+    }
+
+    #[test]
+    fn test_dynamic_bus_acceptance_from_u8_1() {
+        assert_eq!(
+            DynamicBusAcceptance::from(1),
+            DynamicBusAcceptance::Accepted
+        );
+    }
+
+    #[test]
+    fn test_dynamic_bus_acceptance_to_u8_0() {
+        assert_eq!(u8::from(DynamicBusAcceptance::NotAccepted), 0);
+    }
+
+    #[test]
+    fn test_dynamic_bus_acceptance_to_u8_1() {
+        assert_eq!(u8::from(DynamicBusAcceptance::Accepted), 1);
     }
 }
