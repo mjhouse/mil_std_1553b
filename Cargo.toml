@@ -20,3 +20,6 @@ categories = [
     "no-std::no-alloc", 
     "parser-implementations"
 ]
+
+[lib]
+crate-type = ["staticlib"]
