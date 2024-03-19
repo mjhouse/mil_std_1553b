@@ -35,7 +35,7 @@ jobs:
 
     - name: Test the library
       run: |
-        cargo test --target ${{ matrix.target }}
+        cargo test --target ${{ matrix.target }} --linker lld-link
 
   coverage:
     needs: test
