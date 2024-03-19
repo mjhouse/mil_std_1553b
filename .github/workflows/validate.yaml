@@ -38,7 +38,7 @@ jobs:
         command: "build"
         target: ${{ matrix.target }}
         toolchain: stable
-        args: "--locked --release"
+        args: "--release"
         strip: true
 
     - name: Test the library
@@ -47,7 +47,7 @@ jobs:
         command: "test"
         target: ${{ matrix.target }}
         toolchain: stable
-        args: "--locked --release"
+        args: "--release"
         strip: true
 
   coverage:
