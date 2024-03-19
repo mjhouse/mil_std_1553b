@@ -237,16 +237,29 @@ impl From<MessageError> for u8 {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rstest::rstest;
 
-    #[rstest]
-    #[case(0b1010101010101010, 1)]
-    #[case(0b1010101010101000, 0)]
-    #[case(0b1010101010100000, 1)]
-    #[case(0b1010101010000000, 0)]
-    fn test_parity(#[case] input: u16, #[case] expected: u8) {
-        let value = parity(input);
-        assert_eq!(value, expected);
+    #[test]
+    fn test_parity_0() {
+        let value = parity(0b1010101010101010);
+        assert_eq!(value, 1);
+    }
+
+    #[test]
+    fn test_parity_1() {
+        let value = parity(0b1010101010101000);
+        assert_eq!(value, 0);
+    }
+
+    #[test]
+    fn test_parity_2() {
+        let value = parity(0b1010101010100000);
+        assert_eq!(value, 1);
+    }
+
+    #[test]
+    fn test_parity_3() {
+        let value = parity(0b1010101010000000);
+        assert_eq!(value, 0);
     }
 
     #[test]

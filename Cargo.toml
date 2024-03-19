@@ -20,6 +20,3 @@ categories = [
     "no-std::no-alloc", 
     "parser-implementations"
 ]
-
-[dev-dependencies]
-rstest = "0.18.2"
