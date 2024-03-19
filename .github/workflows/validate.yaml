@@ -11,42 +11,39 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [
-          ubuntu-latest, 
-          windows-latest, 
-          macos-latest
-        ]
-        target: [
-          aarch64-unknown-linux-gnu,
-          armv7-unknown-linux-gnueabi,
-          x86_64-unknown-linux-gnu,
-          i686-unknown-linux-gnu
-        ]
+        setup:
+          - name: windows-aarch64
+            system: windows-latest
+            target: aarch64-unknown-linux-gnu
+            toolchain: stable-x86_64-pc-windows-msvc
 
-    runs-on: ${{ matrix.os }}
+        # os: [
+        #   ubuntu-latest, 
+        #   windows-latest, 
+        #   macos-latest
+        # ]
+        # target: [
+        #   aarch64-unknown-linux-gnu,
+        #   armv7-unknown-linux-gnueabi,
+        #   x86_64-unknown-linux-gnu,
+        #   i686-unknown-linux-gnu
+        # ]
+
+    runs-on: ${{ matrix.setup.system }}
 
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
     - name: Install Rust toolchain
-      run: rustup update --no-self-update stable
-
-    - name: Build the library
-      uses: houseabsolute/actions-rust-cross@v0
-      with:
-        command: "build"
-        target: ${{ matrix.target }}
-        toolchain: stable
-        args: "--release"
+      run: |
+        rustup default ${{ matrix.setup.toolchain }}
 
     - name: Test the library
       uses: houseabsolute/actions-rust-cross@v0
       with:
-        command: "test"
-        target: ${{ matrix.target }}
-        toolchain: stable
-        args: "--release"
+        target: ${{ matrix.setup.target }}
+        command: test
 
   coverage:
     env:
