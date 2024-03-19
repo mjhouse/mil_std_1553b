@@ -6,33 +6,39 @@ jobs:
 
   build:
 
-    name: Build ${{ matrix.system.name }}
+    name: Build on ${{ matrix.system.source_name }} for ${{ matrix.system.target_name }}
 
     strategy:
       fail-fast: false
       matrix:
         system:
-          - name: Windows
+        
+          - source_name: Windows
+            target_name: Linux
             os: windows-latest
             target: x86_64-pc-windows-msvc
             test: True
 
-          - name: Windows - x86_64
+          - source_name: Windows
+            target_name: Linux x86_64
             os: windows-latest
             target: x86_64-unknown-linux-musl
             test: False
 
-          - name: Windows - x86_32
+          - source_name: Windows
+            target_name: Linux x86_32
             os: windows-latest
             target: i686-unknown-linux-musl
             test: False
 
-          - name: Windows - ARM64
+          - source_name: Windows
+            target_name: Linux ARM64
             os: windows-latest
             target: aarch64-unknown-linux-musl
             test: False
 
-          - name: Windows - ARM32
+          - source_name: Windows
+            target_name: Linux ARM32
             os: windows-latest
             target: armv7-unknown-linux-musleabi
             test: False
@@ -41,12 +47,6 @@ jobs:
         #   - windows-latest 
         #   # - ubuntu-latest 
         #   # - macos-latest
-        # target:
-        #   - x86_64-unknown-linux-gnu
-
-        #   # - aarch64-unknown-linux-gnu
-        #   # - armv7-unknown-linux-gnueabi
-        #   # - i686-unknown-linux-gnu
 
     runs-on: ${{ matrix.system.os }}
 
