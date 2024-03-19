@@ -6,7 +6,7 @@ jobs:
 
   build:
 
-    name: Build
+    name: Build ${{ matrix.system.name }}
 
     strategy:
       fail-fast: false
@@ -16,9 +16,13 @@ jobs:
             os: windows-latest
             target: x86_64-pc-windows-msvc
 
-          - name: Windows - X86_64
-            os: windows-latest
-            target: x86_64-unknown-linux-musl
+          # - name: Windows - x86_64
+          #   os: windows-latest
+          #   target: x86_64-unknown-linux-musl
+
+          # - name: Windows - ARM64
+          #   os: windows-latest
+          #   target: aarch64-unknown-linux-musl
 
         # os:
         #   - windows-latest 
@@ -63,10 +67,17 @@ jobs:
     - name: Install Rust toolchain
       run: rustup update --no-self-update stable
 
+    - name: Install llvm-tools-preview
+      run: rustup component add llvm-tools-preview
+
+    - name: Install binstall
+      uses: cargo-bins/cargo-binstall@main
+
     - name: Install grcov
-      run: |
-        rustup component add llvm-tools-preview &&
-        cargo install grcov
+      run: cargo binstall --no-confirm grcov@latest
+
+    # - name: Install grcov
+    #   run: cargo install grcov
 
     - name: Build the library
       run: cargo test --no-run
