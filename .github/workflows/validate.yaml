@@ -37,9 +37,9 @@ jobs:
     - name: Install Rust toolchain
       run: |
         rustup update --no-self-update stable &&
-        rustup target add ${{ matrix.system.target }} &&
         rustup toolchain install ${{ matrix.system.toolchain }} &&
-        rustup default ${{ matrix.system.toolchain }}
+        rustup default ${{ matrix.system.toolchain }} &&
+        rustup target add ${{ matrix.system.target }}
 
     - name: Test the library
       run: |
