@@ -30,7 +30,8 @@ jobs:
 
     - name: Install Rust toolchain
       run: |
-        rustup update --no-self-update stable
+        rustup update --no-self-update stable &&
+        rustup target add ${{ matrix.target }}
 
     - name: Test the library
       run: |
