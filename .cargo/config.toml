@@ -11,7 +11,7 @@ linker = "rust-ldd"
 [target.i686-unknown-linux-gnu]
 linker = "rust-ldd"
 
-[target.x86_64-unknown-linux-musl]
+[target.x86_64-unknown-linux-gnu]
 linker = "rust-lld"
 
 # [target.x86_64-apple-darwin]
