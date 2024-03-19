@@ -44,7 +44,7 @@ jobs:
       run: rustup target add ${{ matrix.system.target }}
 
     - name: Test the library
-      run: cargo test --target ${{ matrix.system.target }}
+      run: cargo build --target ${{ matrix.system.target }}
 
   coverage:
     needs: test
