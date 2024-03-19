@@ -451,7 +451,6 @@ impl Default for Message {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rstest::rstest;
 
     #[test]
     fn test_message_default() {
@@ -635,34 +634,70 @@ mod tests {
         assert_eq!(message.size(), 2);
     }
 
-    #[rstest]
-    #[case(&[0b10000011, 0b00001100, 0b00100010, 0b11010000, 0b11010010], 2)]
-    #[case(&[0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101, 0b11100010, 0b11001110, 0b11011110], 4)]
-    fn test_message_read_write_command(#[case] input: &[u8], #[case] length: usize) -> Result<()> {
+    #[test]
+    fn test_message_read_write_command_0() {
+        let input = [0b10000011, 0b00001100, 0b00100010, 0b11010000, 0b11010010];
+        let length = 2;
+
         let l = input.len();
         let mut buffer = [0; 10];
 
-        let message = Message::<4>::read_command(&input)?;
-        message.write(&mut buffer)?;
+        let message = Message::<4>::read_command(&input).unwrap();
+        message.write(&mut buffer).unwrap();
 
         assert_eq!(&buffer[..l], input);
         assert_eq!(message.length(), length);
-        Ok(())
     }
 
-    #[rstest]
-    #[case(&[0b10000011, 0b00001100, 0b00100010, 0b11010000, 0b11010010], 2)]
-    #[case(&[0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101, 0b11100010, 0b11001110, 0b11011110], 4)]
-    fn test_message_read_write_status(#[case] input: &[u8], #[case] length: usize) -> Result<()> {
+    #[test]
+    fn test_message_read_write_command_1() {
+        let input = [
+            0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
+            0b11100010, 0b11001110, 0b11011110,
+        ];
+        let length = 4;
+
         let l = input.len();
         let mut buffer = [0; 10];
 
-        let message = Message::<4>::read_status(&input)?;
-        message.write(&mut buffer)?;
+        let message = Message::<4>::read_command(&input).unwrap();
+        message.write(&mut buffer).unwrap();
 
         assert_eq!(&buffer[..l], input);
         assert_eq!(message.length(), length);
-        Ok(())
+    }
+
+    #[test]
+    fn test_message_read_write_status_0() {
+        let input = [0b10000011, 0b00001100, 0b00100010, 0b11010000, 0b11010010];
+        let length = 2;
+
+        let l = input.len();
+        let mut buffer = [0; 10];
+
+        let message = Message::<4>::read_status(&input).unwrap();
+        message.write(&mut buffer).unwrap();
+
+        assert_eq!(&buffer[..l], input);
+        assert_eq!(message.length(), length);
+    }
+
+    #[test]
+    fn test_message_read_write_status_1() {
+        let input = [
+            0b10000011, 0b00001100, 0b01110010, 0b11010000, 0b11010010, 0b00101111, 0b00101101,
+            0b11100010, 0b11001110, 0b11011110,
+        ];
+        let length = 4;
+
+        let l = input.len();
+        let mut buffer = [0; 10];
+
+        let message = Message::<4>::read_status(&input).unwrap();
+        message.write(&mut buffer).unwrap();
+
+        assert_eq!(&buffer[..l], input);
+        assert_eq!(message.length(), length);
     }
 
     #[test]

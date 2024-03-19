@@ -154,10 +154,8 @@ pub(crate) const STATUS_TERMINAL_ERROR_FIELD: Field = Field::from(STATUS_TERMINA
 
 #[cfg(test)]
 mod tests {
-    use crate::DataWord;
-
     use super::*;
-    use rstest::rstest;
+    use crate::DataWord;
 
     #[test]
     fn test_field_clone() {
@@ -187,47 +185,182 @@ mod tests {
         assert_eq!(field.offset, 2);
     }
 
-    #[rstest]
-    #[case(0b1010101010101010, 1)]
-    #[case(0b1010101010101000, 3)]
-    #[case(0b1010101010100000, 5)]
-    #[case(0b1010101010000000, 7)]
-    fn test_field_with_calculated_offset(#[case] input: u16, #[case] expected: u32) {
-        let field = Field::new().with_mask(input).with_calculated_offset();
-        assert_eq!(field.offset, expected);
+    #[test]
+    fn test_field_with_calculated_offset_0() {
+        let field = Field::new()
+            .with_mask(0b1010101010101010)
+            .with_calculated_offset();
+        assert_eq!(field.offset, 1);
     }
 
-    #[rstest]
-    #[case(0b1010101010101010, 1)]
-    #[case(0b1010101010101000, 3)]
-    #[case(0b1010101010100000, 5)]
-    #[case(0b1010101010000000, 7)]
-    fn test_field_from_u16(#[case] input: u16, #[case] expected: u32) {
+    #[test]
+    fn test_field_with_calculated_offset_1() {
+        let field = Field::new()
+            .with_mask(0b1010101010101000)
+            .with_calculated_offset();
+        assert_eq!(field.offset, 3);
+    }
+
+    #[test]
+    fn test_field_with_calculated_offset_2() {
+        let field = Field::new()
+            .with_mask(0b1010101010100000)
+            .with_calculated_offset();
+        assert_eq!(field.offset, 5);
+    }
+
+    #[test]
+    fn test_field_with_calculated_offset_3() {
+        let field = Field::new()
+            .with_mask(0b1010101010000000)
+            .with_calculated_offset();
+        assert_eq!(field.offset, 7);
+    }
+
+    #[test]
+    fn test_field_from_u16_0() {
+        let input = 0b1010101010101010;
+        let expected = 1;
         let field = Field::from(input);
         assert_eq!(field.mask, input);
         assert_eq!(field.offset, expected);
     }
 
-    #[rstest]
-    #[case(0b1110000000000000, 0b1010000000000000, 0b101)]
-    #[case(0b0011110000000000, 0b0010110000000000, 0b1011)]
-    #[case(0b0000011111000000, 0b0000010101000000, 0b10101)]
-    #[case(0b0000000001111110, 0b0000000001011010, 0b101101)]
-    #[case(0b0000000000000011, 0b0000000000000011, 0b0000011)]
-    fn test_field_get(#[case] mask: u16, #[case] input: u16, #[case] expected: u8) {
+    #[test]
+    fn test_field_from_u16_1() {
+        let input = 0b1010101010101000;
+        let expected = 3;
+        let field = Field::from(input);
+        assert_eq!(field.mask, input);
+        assert_eq!(field.offset, expected);
+    }
+
+    #[test]
+    fn test_field_from_u16_2() {
+        let input = 0b1010101010100000;
+        let expected = 5;
+        let field = Field::from(input);
+        assert_eq!(field.mask, input);
+        assert_eq!(field.offset, expected);
+    }
+
+    #[test]
+    fn test_field_from_u16_3() {
+        let input = 0b1010101010000000;
+        let expected = 7;
+        let field = Field::from(input);
+        assert_eq!(field.mask, input);
+        assert_eq!(field.offset, expected);
+    }
+
+    #[test]
+    fn test_field_get_0() {
+        let mask = 0b1110000000000000;
+        let input = 0b1010000000000000;
+        let expected = 0b101;
         let field = Field::from(mask);
         let word = DataWord::from(input);
         let value = field.get(&word);
         assert_eq!(value, expected);
     }
 
-    #[rstest]
-    #[case(0b1110000000000000, 0b101, 0b1010000000000000)]
-    #[case(0b0011110000000000, 0b1011, 0b0010110000000000)]
-    #[case(0b0000011111000000, 0b10101, 0b0000010101000000)]
-    #[case(0b0000000001111110, 0b101101, 0b0000000001011010)]
-    #[case(0b0000000000000011, 0b0000011, 0b0000000000000011)]
-    fn test_field_set(#[case] mask: u16, #[case] input: u8, #[case] expected: u16) {
+    #[test]
+    fn test_field_get_1() {
+        let mask = 0b0011110000000000;
+        let input = 0b0010110000000000;
+        let expected = 0b1011;
+        let field = Field::from(mask);
+        let word = DataWord::from(input);
+        let value = field.get(&word);
+        assert_eq!(value, expected);
+    }
+
+    #[test]
+    fn test_field_get_2() {
+        let mask = 0b0000011111000000;
+        let input = 0b0000010101000000;
+        let expected = 0b10101;
+        let field = Field::from(mask);
+        let word = DataWord::from(input);
+        let value = field.get(&word);
+        assert_eq!(value, expected);
+    }
+
+    #[test]
+    fn test_field_get_3() {
+        let mask = 0b0000000001111110;
+        let input = 0b0000000001011010;
+        let expected = 0b101101;
+        let field = Field::from(mask);
+        let word = DataWord::from(input);
+        let value = field.get(&word);
+        assert_eq!(value, expected);
+    }
+
+    #[test]
+    fn test_field_get_4() {
+        let mask = 0b0000000000000011;
+        let input = 0b0000000000000011;
+        let expected = 0b0000011;
+        let field = Field::from(mask);
+        let word = DataWord::from(input);
+        let value = field.get(&word);
+        assert_eq!(value, expected);
+    }
+
+    #[test]
+    fn test_field_set_0() {
+        let mask = 0b1110000000000000;
+        let input = 0b101;
+        let expected = 0b1010000000000000;
+        let field = Field::from(mask);
+        let mut word = DataWord::from(0);
+
+        field.set(&mut word, input);
+        assert_eq!(word.as_value(), expected);
+    }
+
+    #[test]
+    fn test_field_set_1() {
+        let mask = 0b0011110000000000;
+        let input = 0b1011;
+        let expected = 0b0010110000000000;
+        let field = Field::from(mask);
+        let mut word = DataWord::from(0);
+
+        field.set(&mut word, input);
+        assert_eq!(word.as_value(), expected);
+    }
+
+    #[test]
+    fn test_field_set_2() {
+        let mask = 0b0000011111000000;
+        let input = 0b10101;
+        let expected = 0b0000010101000000;
+        let field = Field::from(mask);
+        let mut word = DataWord::from(0);
+
+        field.set(&mut word, input);
+        assert_eq!(word.as_value(), expected);
+    }
+
+    #[test]
+    fn test_field_set_3() {
+        let mask = 0b0000000001111110;
+        let input = 0b101101;
+        let expected = 0b0000000001011010;
+        let field = Field::from(mask);
+        let mut word = DataWord::from(0);
+
+        field.set(&mut word, input);
+        assert_eq!(word.as_value(), expected);
+    }
+
+    #[test]
+    fn test_field_set_4() {
+        let mask = 0b0000000000000011;
+        let input = 0b0000011;
+        let expected = 0b0000000000000011;
         let field = Field::from(mask);
         let mut word = DataWord::from(0);
 
