@@ -11,18 +11,24 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - windows-latest 
-          # - ubuntu-latest 
-          # - macos-latest
-        target:
-          - x86_64-unknown-linux-gnu
+        system:
+          - name: Windows - X86_64
+            os: windows-latest
+            target: x86_64-unknown-linux-gnu
+            toolchain: x86_64-pc-windows-gnu
 
-          # - aarch64-unknown-linux-gnu
-          # - armv7-unknown-linux-gnueabi
-          # - i686-unknown-linux-gnu
+        # os:
+        #   - windows-latest 
+        #   # - ubuntu-latest 
+        #   # - macos-latest
+        # target:
+        #   - x86_64-unknown-linux-gnu
 
-    runs-on: ${{ matrix.os }}
+        #   # - aarch64-unknown-linux-gnu
+        #   # - armv7-unknown-linux-gnueabi
+        #   # - i686-unknown-linux-gnu
+
+    runs-on: ${{ matrix.system.os }}
 
     steps:
     - name: Checkout repository
@@ -31,11 +37,12 @@ jobs:
     - name: Install Rust toolchain
       run: |
         rustup update --no-self-update stable &&
-        rustup target add ${{ matrix.target }}
+        rustup target add ${{ matrix.system.target }}
+        rustup default ${{ matrix.system.toolchain }}
 
     - name: Test the library
       run: |
-        cargo test --target ${{ matrix.target }} --linker lld-link
+        cargo test --target ${{ matrix.target }}
 
   coverage:
     needs: test
