@@ -34,6 +34,10 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    - name: Set up MinGW
+      if: ${{ runner.os == 'Windows' }}
+      uses: egor-tensin/setup-mingw@v2
+
     - name: Install Rust toolchain
       run: |
         rustup update --no-self-update stable &&
