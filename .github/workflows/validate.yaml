@@ -39,7 +39,6 @@ jobs:
         target: ${{ matrix.target }}
         toolchain: stable
         args: "--release"
-        strip: true
 
     - name: Test the library
       uses: houseabsolute/actions-rust-cross@v0
@@ -48,7 +47,6 @@ jobs:
         target: ${{ matrix.target }}
         toolchain: stable
         args: "--release"
-        strip: true
 
   coverage:
     env:
