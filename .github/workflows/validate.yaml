@@ -32,17 +32,23 @@ jobs:
     - name: Install Rust toolchain
       run: rustup update --no-self-update stable
 
-    - name: Install build tools
-      if: ${{ runner.os == 'Windows' }}
-      uses: rlalik/setup-cpp-compiler@master
+    - name: Build the library
+      uses: houseabsolute/actions-rust-cross@v0
       with:
-        compiler: gcc-latest
+        command: "build"
+        target: ${{ matrix.target }}
+        toolchain: stable
+        args: "--locked --release"
+        strip: true
 
     - name: Test the library
       uses: houseabsolute/actions-rust-cross@v0
       with:
+        command: "test"
         target: ${{ matrix.target }}
-        command: test
+        toolchain: stable
+        args: "--locked --release"
+        strip: true
 
   coverage:
     env:
