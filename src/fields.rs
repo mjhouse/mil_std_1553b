@@ -7,7 +7,7 @@ use crate::Word;
 /// Given a mask and offset, the Field struct can get
 /// or set between 1 and 8 bits in a u16 word.
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
-pub(crate) struct Field {
+pub struct Field {
     /// The mask used to isolate the value
     mask: u16,
 
@@ -17,44 +17,37 @@ pub(crate) struct Field {
 
 impl Field {
     /// Create a new field
-    pub(crate) const fn new() -> Self {
+    pub const fn new() -> Self {
         Self { mask: 0, offset: 0 }
     }
 
     /// Constructor method to add a mask to the field
-    pub(crate) const fn with_mask(mut self, mask: u16) -> Self {
+    pub const fn with_mask(mut self, mask: u16) -> Self {
         self.mask = mask;
         self
     }
 
-    /// Constructor method to set an offset explicitly
-    pub(crate) const fn with_offset(mut self, offset: u32) -> Self {
-        self.offset = offset;
-        self
-    }
-
     /// Constructor method to calculate an offset
-    pub(crate) const fn with_calculated_offset(mut self) -> Self {
+    pub const fn with_offset(mut self) -> Self {
         self.offset = self.mask.trailing_zeros();
         self
     }
 
     /// Create a new field from a mask
-    pub(crate) const fn from(mask: u16) -> Self {
+    pub const fn from(mask: u16) -> Self {
         Self::new()
             .with_mask(mask)
-            .with_offset(0)
-            .with_calculated_offset()
+            .with_offset()
     }
 
     /// Read the value of the field from a data word
-    pub(crate) fn get<T: Word>(&self, word: &T) -> u8 {
+    pub fn get<T: Word>(&self, word: &T) -> u8 {
         let value = word.as_value() & self.mask;
         (value >> self.offset) as u8
     }
 
     /// Write the value of the field to a data word
-    pub(crate) fn set<T: Word>(&self, word: &mut T, value: u8) {
+    pub fn set<T: Word>(&self, word: &mut T, value: u8) {
         let value = (value as u16) << self.offset;
         let data = word.as_value() & !self.mask;
         word.set_value(data | (value & self.mask));
@@ -179,41 +172,34 @@ mod tests {
     }
 
     #[test]
-    fn test_field_with_offset() {
-        let field = Field::new().with_offset(2);
-        assert_eq!(field.mask, 0);
-        assert_eq!(field.offset, 2);
-    }
-
-    #[test]
-    fn test_field_with_calculated_offset_0() {
+    fn test_field_with_offset_0() {
         let field = Field::new()
             .with_mask(0b1010101010101010)
-            .with_calculated_offset();
+            .with_offset();
         assert_eq!(field.offset, 1);
     }
 
     #[test]
-    fn test_field_with_calculated_offset_1() {
+    fn test_field_with_offset_1() {
         let field = Field::new()
             .with_mask(0b1010101010101000)
-            .with_calculated_offset();
+            .with_offset();
         assert_eq!(field.offset, 3);
     }
 
     #[test]
-    fn test_field_with_calculated_offset_2() {
+    fn test_field_with_offset_2() {
         let field = Field::new()
             .with_mask(0b1010101010100000)
-            .with_calculated_offset();
+            .with_offset();
         assert_eq!(field.offset, 5);
     }
 
     #[test]
-    fn test_field_with_calculated_offset_3() {
+    fn test_field_with_offset_3() {
         let field = Field::new()
             .with_mask(0b1010101010000000)
-            .with_calculated_offset();
+            .with_offset();
         assert_eq!(field.offset, 7);
     }
 

@@ -42,8 +42,9 @@ mod errors;
 mod flags;
 mod message;
 mod word;
+mod fields;
 
-pub(crate) mod fields;
+pub use crate::fields::Field;
 
 pub use crate::message::{Message, Packet};
 
