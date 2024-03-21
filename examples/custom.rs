@@ -3,17 +3,17 @@ use mil_std_1553b::{word,Field, Message};
 
 word!(CustomWord);
 
-/// Mask for parsing a status light flag
-pub const STATUS_LIGHT: u16 = 0b1000000000000000;
-
-/// Field definition for the status light flag
-pub const STATUS_LIGHT_FIELD: Field = Field::from(STATUS_LIGHT);
-
 impl CustomWord {
+
+    /// Mask for parsing a status light flag
+    pub const STATUS_LIGHT: u16 = 0b1000000000000000;
+
+    /// Field definition for the status light flag
+    pub const STATUS_LIGHT_FIELD: Field = Field::from(Self::STATUS_LIGHT);
 
     /// A status light field on the custom word
     pub fn status_light_on(&self) -> bool {
-        STATUS_LIGHT_FIELD.get(self) == 1
+        Self::STATUS_LIGHT_FIELD.get(self) == 1
     }
 
 }
