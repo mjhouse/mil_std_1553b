@@ -1,89 +1,168 @@
-use proc_macro::{Span, TokenStream, TokenTree};
-use proc_macro_error::{abort_call_site, OptionExt};
+use proc_macro::{Span, TokenStream};
+use proc_macro_error::{abort, abort_call_site};
 use quote::{quote, ToTokens};
-use std::collections::HashSet as Set;
-use std::fmt::format;
-use syn::parse::{Parse, ParseStream, Result};
-use syn::punctuated::Punctuated;
-use syn::{parse_macro_input, Ident, ItemFn, LitInt, LitStr, MetaNameValue, Token};
-use std::str::FromStr;
+use syn::{parse_macro_input, DeriveInput, Ident, ItemFn};
 
-// fn impl_word(ast: &syn::DeriveInput) -> TokenStream {
-//     let name = &ast.ident;
-//     let gen = quote! {
-//         impl HelloMacro for #name {
-//             fn hello_macro() {
-//                 println!("Hello, Macro! My name is {}!", stringify!(#name));
-//             }
-//         }
-//     };
-//     gen.into()
-// }
+mod word;
+mod field;
 
+use field::FieldArgs;
+use word::FieldKind;
+
+/// Derive the `Word` trait and associated From implementations
+/// 
+/// This trait requires that the `Default` trait is implemented
+/// as well. To avoid this, implement the Word trait manually.
+/// 
+/// ### Example
+/// 
+/// ```rust
+/// #[derive(Default, Word)]
+/// struct MyWord {
+///  
+///     #[data]
+///     buffer: [u8; 2],
+///
+///     #[parity]
+///     parity_bit: u8,
+///
+///     // you can have any other
+///     // fields you need
+///     count: u8,
+/// }
+/// ```
 #[proc_macro_derive(Word, attributes(data,parity))]
-pub fn word_derive(_input: TokenStream) -> TokenStream {
-    TokenStream::new()
+#[proc_macro_error::proc_macro_error]
+pub fn word_derive(input: TokenStream) -> TokenStream {
+    let input = parse_macro_input!(input as DeriveInput);
 
-    // // Construct a representation of Rust code as a syntax tree
-    // // that we can manipulate
-    // let ast = syn::parse(input).unwrap();
+    let item = match input.data {
+        syn::Data::Struct(s) => s,
+        _ => abort_call_site!("Word derive is only valid on a struct")
+    };
 
-    // // Build the trait implementation
-    // impl_word(&ast)
-}
+    let fields = match item.fields {
+        syn::Fields::Named(n) => n,
+        _ => abort_call_site!("Word derive requires named fields")
+    };
 
-struct FieldArgs {
-    name: Option<String>,
-    value: Option<String>
-}
+    let mut data_field: FieldKind = FieldKind::None;
+    let mut parity_field: FieldKind = FieldKind::None;
 
-impl FieldArgs {
-    fn new(input: TokenStream) -> Self {
-        let mut items = input.into_iter();
+    for named in fields.named {
+        match word::parse_field(&named) {
+            
+            word::FieldKind::Data(v) if data_field.is_some() => 
+                abort!(v, "Duplicate #[data] fields"),
+            
+            word::FieldKind::Parity(v) if parity_field.is_some() => 
+                abort!(v, "Duplicate #[parity] fields"),
 
-        let name = items
-            .next()
-            .map(|t| t.to_string());
-
-        // skip the comma
-        items.next();
-
-        let value = items
-            .next()
-            .map(|t| t
-                .to_string()
-                .trim_start_matches("0b")
-                .to_string());
-        
-        Self { name, value }
+            k if k.is_data() => data_field = k,
+            k if k.is_parity() => parity_field = k,
+            _ => continue
+        }
     }
 
-    fn name(&self) -> String {
-        self.name
-            .clone()
-            .expect_or_abort("Need an identifier for the field")
+    if data_field.is_none() {
+        abort!(data_field.ident(),"Need a '#[data]' field with type '[u8;2]'");
     }
 
-    fn mask(&self) -> u16 {
-        self.value
-            .clone()
-            .and_then(|v| u16::from_str_radix(&v,2).ok())
-            .expect_or_abort("Need a mask for the field")
+    if parity_field.is_none() {
+        abort!(parity_field.ident(),"Need a '#[parity]' field with type 'u8'");
     }
 
+    let self_type = input.ident;
+
+    let data_ident = data_field.ident();
+
+
+    let word_impl = word::impl_word(&data_field, &parity_field, &self_type);
+
+    quote!(
+        #word_impl
+
+        impl From<&mil_std_1553b::DataWord> for #self_type {
+            fn from(word: &mil_std_1553b::DataWord) -> Self {
+                use mil_std_1553b::Word;
+                #self_type::new()
+                    .with_bytes(word.as_bytes())
+                    .with_parity(word.parity())
+            }
+        }
+
+        impl From<&#self_type> for  mil_std_1553b::DataWord {
+            fn from(word: &#self_type) -> Self {
+                use mil_std_1553b::Word;
+                mil_std_1553b::DataWord::new()
+                    .with_bytes(word.as_bytes())
+                    .with_parity(word.parity())
+            }
+        }
+
+        impl From<mil_std_1553b::DataWord> for #self_type {
+            fn from(word: mil_std_1553b::DataWord) -> Self {
+                Self::from(&word)
+            }
+        }
+
+        impl From<#self_type> for  mil_std_1553b::DataWord {
+            fn from(word: #self_type) -> Self {
+                Self::from(&word)
+            }
+        }
+
+        impl From<&#self_type> for  u16 {
+            fn from(word: &#self_type) -> Self {
+                u16::from_be_bytes(word.#data_ident)
+            }
+        }
+
+        impl From<#self_type> for  u16 {
+            fn from(word: #self_type) -> Self {
+                u16::from_be_bytes(word.#data_ident)
+            }
+        }
+    ).to_token_stream().into()
 }
 
+/// Implement a parser for a word field
+/// 
+/// ### Arguments
+/// 
+/// * name - A const name for the field (e.g. 'MY_FIELD')
+/// * mask - A u16 bit mask for the field (e.g. '0b10000000000000000')
+/// 
+/// ### Example
+/// 
+/// ```rust
+/// 
+/// #[field(MY_FIELD, 0b1000000000000000)]
+/// pub fn get_my_field_value(&self) -> u8 { 
+///     Self::MY_FIELD.get(self)
+/// }
+/// 
+/// ```
+/// 
+/// Will generate the following code:
+/// 
+/// ```rust
+/// 
+/// pub const MY_FIELD_MASK: u16 = 32768u16;
+/// pub const MY_FIELD: Field = Field::from(Self::MY_FIELD_MASK);
+/// pub fn get_my_field_value(&self) -> u8 {
+///     Self::MY_FIELD.get(self)
+/// }
+/// 
+/// ```
 #[proc_macro_attribute]
 #[proc_macro_error::proc_macro_error]
-pub fn word_field(attr: TokenStream, item: TokenStream) -> TokenStream {
+pub fn field(attr: TokenStream, item: TokenStream) -> TokenStream {
     let args = FieldArgs::new(attr);
     let item = parse_macro_input!(item as ItemFn);
 
     let name = args.name();
     let mask = args.mask();
-
-    // println!("NAME: {}",name);
-    // println!("MASK: {:016b}",mask);
 
     let mask_label = format!("{}_MASK",name);
     let mask_ident = Ident::new(&mask_label, Span::call_site().into());

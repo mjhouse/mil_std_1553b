@@ -1,4 +1,4 @@
-use crate::{WordType, Result};
+use crate::{Result, WordType};
 
 /// Common functionality for service words
 pub trait Header
@@ -62,4 +62,3 @@ where
     /// Check if the current parity bit is correct
     fn check_parity(&self) -> bool;
 }
-

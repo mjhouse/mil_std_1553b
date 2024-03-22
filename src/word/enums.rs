@@ -81,8 +81,8 @@ impl WordType {
 }
 
 impl<T> From<T> for WordType
-where 
-    T: Into<DataWord>
+where
+    T: Into<DataWord>,
 {
     fn from(value: T) -> Self {
         WordType::Data(value.into())

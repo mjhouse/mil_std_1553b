@@ -1,6 +1,6 @@
 use crate::errors::{parity, Error, MessageError, Result, SubsystemError, TerminalError};
-use crate::{flags::*, Header, Word};
 use crate::fields::*;
+use crate::{flags::*, Header, Word};
 
 #[cfg(feature = "derive")]
 use mil_std_1553b_derive as _;

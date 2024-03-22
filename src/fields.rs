@@ -35,9 +35,7 @@ impl Field {
 
     /// Create a new field from a mask
     pub const fn from(mask: u16) -> Self {
-        Self::new()
-            .with_mask(mask)
-            .with_offset()
+        Self::new().with_mask(mask).with_offset()
     }
 
     /// Read the value of the field from a data word
@@ -173,33 +171,25 @@ mod tests {
 
     #[test]
     fn test_field_with_offset_0() {
-        let field = Field::new()
-            .with_mask(0b1010101010101010)
-            .with_offset();
+        let field = Field::new().with_mask(0b1010101010101010).with_offset();
         assert_eq!(field.offset, 1);
     }
 
     #[test]
     fn test_field_with_offset_1() {
-        let field = Field::new()
-            .with_mask(0b1010101010101000)
-            .with_offset();
+        let field = Field::new().with_mask(0b1010101010101000).with_offset();
         assert_eq!(field.offset, 3);
     }
 
     #[test]
     fn test_field_with_offset_2() {
-        let field = Field::new()
-            .with_mask(0b1010101010100000)
-            .with_offset();
+        let field = Field::new().with_mask(0b1010101010100000).with_offset();
         assert_eq!(field.offset, 5);
     }
 
     #[test]
     fn test_field_with_offset_3() {
-        let field = Field::new()
-            .with_mask(0b1010101010000000)
-            .with_offset();
+        let field = Field::new().with_mask(0b1010101010000000).with_offset();
         assert_eq!(field.offset, 7);
     }
 
