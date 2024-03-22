@@ -2,9 +2,6 @@ use crate::errors::{parity, Error, MessageError, Result, SubsystemError, Termina
 use crate::fields::*;
 use crate::{flags::*, Header, Word};
 
-#[cfg(feature = "derive")]
-use mil_std_1553b_derive as _;
-
 /// Specifies the function that a remote terminal is to perform
 ///
 /// This word is parsed from a packet that includes an initial service
