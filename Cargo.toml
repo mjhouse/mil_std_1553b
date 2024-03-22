@@ -20,3 +20,10 @@ categories = [
     "no-std::no-alloc", 
     "parser-implementations"
 ]
+
+[features]
+default = [ "derive" ]
+derive = [ "dep:mil_std_1553b_derive" ]
+
+[dependencies]
+mil_std_1553b_derive = { path = "crates/mil_std_1553b_derive", optional = true }

@@ -80,6 +80,15 @@ impl WordType {
     }
 }
 
+impl<T> From<T> for WordType
+where
+    T: Into<DataWord>,
+{
+    fn from(value: T) -> Self {
+        WordType::Data(value.into())
+    }
+}
+
 impl From<CommandWord> for WordType {
     fn from(value: CommandWord) -> Self {
         WordType::Command(value)
@@ -89,12 +98,6 @@ impl From<CommandWord> for WordType {
 impl From<StatusWord> for WordType {
     fn from(value: StatusWord) -> Self {
         WordType::Status(value)
-    }
-}
-
-impl From<DataWord> for WordType {
-    fn from(value: DataWord) -> Self {
-        WordType::Data(value)
     }
 }
 
