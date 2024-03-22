@@ -1,7 +1,6 @@
 //! Words transmitted across a bus
 
 mod enums;
-mod macros;
 mod traits;
 mod words;
 
