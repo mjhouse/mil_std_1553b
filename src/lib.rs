@@ -39,11 +39,14 @@
 #![doc = include_str!("../README.md")]
 
 mod errors;
+mod fields;
 mod flags;
 mod message;
 mod word;
 
-pub(crate) mod fields;
+pub use mil_std_1553b_derive as derive;
+
+pub use crate::fields::Field;
 
 pub use crate::message::{Message, Packet};
 

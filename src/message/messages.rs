@@ -260,9 +260,29 @@ impl<const WORDS: usize> Message<WORDS> {
     ///
     /// * `index` - An index
     ///
-    pub fn get(&self, index: usize) -> Option<&DataWord> {
+    pub fn get(&self, index: usize) -> Option<DataWord> {
         if let Some(WordType::Data(w)) = &self.words.get(index + 1) {
-            Some(w)
+            Some(*w)
+        } else {
+            None
+        }
+    }
+
+    /// Get a custom data word from the message by index
+    ///
+    /// An index of 0 will return the first *data word*, not
+    /// the leading command or status word.
+    ///
+    /// # Arguments
+    ///
+    /// * `index` - An index
+    ///
+    pub fn get_as<T>(&self, index: usize) -> Option<T>
+    where
+        T: From<DataWord>,
+    {
+        if let Some(WordType::Data(w)) = &self.words.get(index + 1) {
+            Some((*w).into())
         } else {
             None
         }
@@ -786,9 +806,9 @@ mod tests {
         let word3 = message.get(2);
         let word4 = message.get(3);
 
-        assert_eq!(word1, Some(&data1));
-        assert_eq!(word2, Some(&data2));
-        assert_eq!(word3, Some(&data3));
+        assert_eq!(word1, Some(data1));
+        assert_eq!(word2, Some(data2));
+        assert_eq!(word3, Some(data3));
         assert_eq!(word4, None);
     }
 
