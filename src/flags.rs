@@ -1,17 +1,5 @@
 //! Flags parsed from fields
 
-macro_rules! fit {
-    ( $v: expr, $p: expr ) => {
-        $v <= $p
-    };
-}
-
-macro_rules! eqs {
-    ( $v: expr, $p: expr ) => {
-        $v == $p
-    };
-}
-
 /// A flag used by the bus controller to manage remote terminals on the bus.
 ///
 /// Mode Codes are flags defined by the 1553 standard to provide the Bus
@@ -109,6 +97,7 @@ impl ModeCode {
     ///
     /// If the TR bit is cleared, but this function returns true,
     /// then the message is illegal.
+    #[must_use = "Returned value is not used"]
     pub const fn is_transmit(&self) -> bool {
         matches!(
             self,
@@ -264,24 +253,24 @@ pub enum TransmitReceive {
 }
 
 impl TransmitReceive {
-    /// Check if this enum is the transmit variant
-    #[must_use = "Returned value is not used"]
-    pub const fn is_transmit(&self) -> bool {
-        matches!(self, Self::Transmit)
-    }
-
     /// Check if this enum is the receive variant
     #[must_use = "Returned value is not used"]
     pub const fn is_receive(&self) -> bool {
         matches!(self, Self::Receive)
+    }
+
+    /// Check if this enum is the transmit variant
+    #[must_use = "Returned value is not used"]
+    pub const fn is_transmit(&self) -> bool {
+        matches!(self, Self::Transmit)
     }
 }
 
 impl From<u8> for TransmitReceive {
     fn from(value: u8) -> Self {
         match value {
-            1 => Self::Transmit,
-            _ => Self::Receive,
+            0 => Self::Receive,
+            _ => Self::Transmit,
         }
     }
 }
@@ -289,8 +278,8 @@ impl From<u8> for TransmitReceive {
 impl From<TransmitReceive> for u8 {
     fn from(value: TransmitReceive) -> Self {
         match value {
-            TransmitReceive::Transmit => 1,
             TransmitReceive::Receive => 0,
+            TransmitReceive::Transmit => 1,
         }
     }
 }
@@ -298,7 +287,8 @@ impl From<TransmitReceive> for u8 {
 /// The address of a remote terminal
 ///
 /// This 5-bit address is found in the Terminal Address (TA) field located at bit times 4-8
-/// (index 0-4). A value of 0b11111 is reserved in the TA field as a broadcast address.
+/// (index 0-4). A value of 0b11111 is reserved in the TA field as a broadcast address. If
+/// a value larger than 0b11111 is parsed, it will be truncated to 0b11111.
 ///
 /// This field is described on page 28 of the MIL-STD-1553 Tutorial[^1].
 ///
@@ -308,9 +298,6 @@ impl From<TransmitReceive> for u8 {
 pub enum Address {
     /// The address references a terminal
     Value(u8),
-
-    /// The address doesn't have a valid value
-    Unknown(u8),
 
     /// The address is a reserved broadcast value
     Broadcast(u8),
@@ -323,12 +310,6 @@ impl Address {
         matches!(self, Self::Value(_))
     }
 
-    /// Check if this enum contains an unknown address
-    #[must_use = "Returned value is not used"]
-    pub const fn is_unknown(&self) -> bool {
-        matches!(self, Self::Unknown(_))
-    }
-
     /// Check if this address is a reserved broadcast value
     #[must_use = "Returned value is not used"]
     pub const fn is_broadcast(&self) -> bool {
@@ -339,9 +320,8 @@ impl Address {
 impl From<u8> for Address {
     fn from(v: u8) -> Address {
         match v {
-            k if eqs!(k, 0b0001_1111) => Address::Broadcast(k),
-            k if fit!(k, 0b0001_1111) => Address::Value(k),
-            k => Address::Unknown(k),
+            k if k < 0b11111 => Address::Value(k),
+            k => Address::Broadcast(k),
         }
     }
 }
@@ -350,7 +330,6 @@ impl From<Address> for u8 {
     fn from(v: Address) -> u8 {
         match v {
             Address::Value(k) => k,
-            Address::Unknown(k) => k,
             Address::Broadcast(k) => k,
         }
     }
@@ -371,9 +350,6 @@ pub enum SubAddress {
     /// The address references a subsystem
     Value(u8),
 
-    /// The address doesn't have a valid value
-    Unknown(u8),
-
     /// The address is a reserved mode code flag
     ModeCode(u8),
 }
@@ -382,11 +358,6 @@ impl SubAddress {
     /// Check if this enum contains an address
     pub const fn is_value(&self) -> bool {
         matches!(self, Self::Value(_))
-    }
-
-    /// Check if this enum contains an invalid/unkown address
-    pub const fn is_unknown(&self) -> bool {
-        matches!(self, Self::Unknown(_))
     }
 
     /// Check if this address is a reserved mode code value
@@ -398,10 +369,8 @@ impl SubAddress {
 impl From<u8> for SubAddress {
     fn from(v: u8) -> SubAddress {
         match v {
-            k if eqs!(k, 0b0000_0000) => SubAddress::ModeCode(k),
-            k if eqs!(k, 0b0001_1111) => SubAddress::ModeCode(k),
-            k if fit!(k, 0b0001_1111) => SubAddress::Value(k),
-            k => SubAddress::Unknown(k),
+            k if k < 0b11111 && k > 0 => SubAddress::Value(k),        
+            k => SubAddress::ModeCode(k),
         }
     }
 }
@@ -410,7 +379,6 @@ impl From<SubAddress> for u8 {
     fn from(v: SubAddress) -> u8 {
         match v {
             SubAddress::Value(k) => k,
-            SubAddress::Unknown(k) => k,
             SubAddress::ModeCode(k) => k,
         }
     }
@@ -1488,38 +1456,13 @@ mod tests {
     }
 
     #[test]
-    fn test_address_is_value_1() {
-        assert_eq!(Address::Unknown(0b1111111).is_value(), false);
-    }
-
-    #[test]
     fn test_address_is_value_2() {
         assert_eq!(Address::Broadcast(0b11111).is_value(), false);
     }
 
     #[test]
-    fn test_address_is_unknown_0() {
-        assert_eq!(Address::Value(0b10101).is_unknown(), false);
-    }
-
-    #[test]
-    fn test_address_is_unknown_1() {
-        assert_eq!(Address::Unknown(0b1111111).is_unknown(), true);
-    }
-
-    #[test]
-    fn test_address_is_unknown_2() {
-        assert_eq!(Address::Broadcast(0b11111).is_unknown(), false);
-    }
-
-    #[test]
     fn test_address_is_broadcast_0() {
         assert_eq!(Address::Value(0b10101).is_broadcast(), false);
-    }
-
-    #[test]
-    fn test_address_is_broadcast_1() {
-        assert_eq!(Address::Unknown(0b1111111).is_broadcast(), false);
     }
 
     #[test]
@@ -1533,11 +1476,6 @@ mod tests {
     }
 
     #[test]
-    fn test_address_to_u8_1() {
-        assert_eq!(u8::from(Address::Unknown(0b1111111)), 0b1111111);
-    }
-
-    #[test]
     fn test_address_to_u8_2() {
         assert_eq!(u8::from(Address::Broadcast(0b11111)), 0b11111);
     }
@@ -1545,11 +1483,6 @@ mod tests {
     #[test]
     fn test_address_from_u8_0() {
         assert_eq!(Address::from(0b10101), Address::Value(0b10101));
-    }
-
-    #[test]
-    fn test_address_from_u8_1() {
-        assert_eq!(Address::from(0b1111111), Address::Unknown(0b1111111));
     }
 
     #[test]
@@ -1570,11 +1503,6 @@ mod tests {
     }
 
     #[test]
-    fn test_subaddress_is_value_1() {
-        assert_eq!(SubAddress::Unknown(0b1111111).is_value(), false);
-    }
-
-    #[test]
     fn test_subaddress_is_value_2() {
         assert_eq!(SubAddress::ModeCode(0b11111).is_value(), false);
     }
@@ -1585,33 +1513,8 @@ mod tests {
     }
 
     #[test]
-    fn test_subaddress_is_unknown_0() {
-        assert_eq!(SubAddress::Value(0b10101).is_unknown(), false);
-    }
-
-    #[test]
-    fn test_subaddress_is_unknown_1() {
-        assert_eq!(SubAddress::Unknown(0b1111111).is_unknown(), true);
-    }
-
-    #[test]
-    fn test_subaddress_is_unknown_2() {
-        assert_eq!(SubAddress::ModeCode(0b11111).is_unknown(), false);
-    }
-
-    #[test]
-    fn test_subaddress_is_unknown_3() {
-        assert_eq!(SubAddress::ModeCode(0b00000).is_unknown(), false);
-    }
-
-    #[test]
     fn test_subaddress_is_mode_code_0() {
         assert_eq!(SubAddress::Value(0b10101).is_mode_code(), false);
-    }
-
-    #[test]
-    fn test_subaddress_is_mode_code_1() {
-        assert_eq!(SubAddress::Unknown(0b1111111).is_mode_code(), false);
     }
 
     #[test]
@@ -1630,11 +1533,6 @@ mod tests {
     }
 
     #[test]
-    fn test_subaddress_to_u8_1() {
-        assert_eq!(u8::from(SubAddress::Unknown(0b1111111)), 0b1111111);
-    }
-
-    #[test]
     fn test_subaddress_to_u8_2() {
         assert_eq!(u8::from(SubAddress::ModeCode(0b11111)), 0b11111);
     }
@@ -1647,11 +1545,6 @@ mod tests {
     #[test]
     fn test_subaddress_from_u8_0() {
         assert_eq!(SubAddress::from(0b10101), SubAddress::Value(0b10101));
-    }
-
-    #[test]
-    fn test_subaddress_from_u8_1() {
-        assert_eq!(SubAddress::from(0b1111111), SubAddress::Unknown(0b1111111));
     }
 
     #[test]
