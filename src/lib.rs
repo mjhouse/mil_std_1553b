@@ -44,6 +44,7 @@ mod flags;
 mod message;
 mod word;
 
+#[cfg(feature = "derive")]
 pub use mil_std_1553b_derive as derive;
 
 pub use crate::fields::Field;
