@@ -260,7 +260,7 @@ impl<const WORDS: usize> Message<WORDS> {
     ///
     /// * `index` - An index
     ///
-    pub fn get(&self, index: usize) -> Option<DataWord> {
+    pub fn at(&self, index: usize) -> Option<DataWord> {
         if let Some(WordType::Data(w)) = &self.words.get(index + 1) {
             Some(*w)
         } else {
@@ -277,7 +277,7 @@ impl<const WORDS: usize> Message<WORDS> {
     ///
     /// * `index` - An index
     ///
-    pub fn get_as<T>(&self, index: usize) -> Option<T>
+    pub fn get<T>(&self, index: usize) -> Option<T>
     where
         T: From<DataWord>,
     {
@@ -507,6 +507,7 @@ mod tests {
             .with_data(0b0000000000000001)
             .build()
             .unwrap();
+        assert!(message.is_full());
         assert_eq!(message.length(), 2);
         assert_eq!(message.count(), 1);
         assert_eq!(message.size(), 2);
@@ -558,6 +559,7 @@ mod tests {
             .with_data(0b0000000000000001)
             .build()
             .unwrap();
+        assert!(message.is_full());
         assert_eq!(message.length(), 2);
         assert_eq!(message.count(), 1);
         assert_eq!(message.size(), 2);
@@ -788,7 +790,7 @@ mod tests {
     }
 
     #[test]
-    fn test_message_get() {
+    fn test_message_at() {
         let data1: DataWord = 0b0000000000000101.into();
         let data2: DataWord = 0b0000000000010101.into();
         let data3: DataWord = 0b0000000001010101.into();
@@ -801,10 +803,35 @@ mod tests {
             .build()
             .unwrap();
 
-        let word1 = message.get(0);
-        let word2 = message.get(1);
-        let word3 = message.get(2);
-        let word4 = message.get(3);
+        let word1 = message.at(0);
+        let word2 = message.at(1);
+        let word3 = message.at(2);
+        let word4 = message.at(3);
+
+        assert_eq!(word1, Some(data1));
+        assert_eq!(word2, Some(data2));
+        assert_eq!(word3, Some(data3));
+        assert_eq!(word4, None);
+    }
+
+    #[test]
+    fn test_message_get() {
+        let data1: u16 = 0b0000000000000101;
+        let data2: u16 = 0b0000000000010101;
+        let data3: u16 = 0b0000000001010101;
+
+        let message = Message::<4>::new()
+            .with_command(0b0000000000000011)
+            .with_data(data1)
+            .with_data(data2)
+            .with_data(data3)
+            .build()
+            .unwrap();
+
+        let word1 = message.get::<u16>(0);
+        let word2 = message.get::<u16>(1);
+        let word3 = message.get::<u16>(2);
+        let word4 = message.get::<u16>(3);
 
         assert_eq!(word1, Some(data1));
         assert_eq!(word2, Some(data2));

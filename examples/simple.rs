@@ -16,9 +16,9 @@ fn main() -> Result<()> {
         .with_data(DataWord::try_from("Y ")?)
         .build()?;
 
-    let word0 = message.get(0).unwrap();
-    let word1 = message.get(1).unwrap();
-    let word2 = message.get(2).unwrap();
+    let word0 = message.at(0).unwrap();
+    let word1 = message.at(1).unwrap();
+    let word2 = message.at(2).unwrap();
 
     println!("{}", word0.as_string().unwrap());
     println!("{}", word1.as_string().unwrap());

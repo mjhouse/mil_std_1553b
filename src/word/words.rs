@@ -1140,7 +1140,7 @@ impl From<&DataWord> for u16 {
 
 impl From<DataWord> for u16 {
     fn from(value: DataWord) -> Self {
-        u16::from_be_bytes(value.data)
+        u16::from(&value)
     }
 }
 
@@ -1152,7 +1152,7 @@ impl From<&DataWord> for i16 {
 
 impl From<DataWord> for i16 {
     fn from(value: DataWord) -> Self {
-        u16::from(value) as i16
+        i16::from(&value)
     }
 }
 
@@ -1164,7 +1164,7 @@ impl From<&DataWord> for u32 {
 
 impl From<DataWord> for u32 {
     fn from(value: DataWord) -> Self {
-        u16::from(value) as u32
+        u32::from(&value)
     }
 }
 
@@ -1176,7 +1176,7 @@ impl From<&DataWord> for i32 {
 
 impl From<DataWord> for i32 {
     fn from(value: DataWord) -> Self {
-        u16::from(value) as i32
+        i32::from(&value)
     }
 }
 
@@ -1188,7 +1188,7 @@ impl From<&DataWord> for u64 {
 
 impl From<DataWord> for u64 {
     fn from(value: DataWord) -> Self {
-        u16::from(value) as u64
+        u64::from(&value)
     }
 }
 
@@ -1200,7 +1200,7 @@ impl From<&DataWord> for i64 {
 
 impl From<DataWord> for i64 {
     fn from(value: DataWord) -> Self {
-        u16::from(value) as i64
+        i64::from(&value)
     }
 }
 

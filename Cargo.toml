@@ -22,8 +22,14 @@ categories = [
 ]
 
 [features]
-default = [ "derive" ]
 derive = [ "dep:mil_std_1553b_derive" ]
 
 [dependencies]
 mil_std_1553b_derive = { path = "crates/mil_std_1553b_derive", optional = true }
+
+[[example]]
+name = "custom"
+required-features = [ "derive" ]
+
+[[example]]
+name = "simple"

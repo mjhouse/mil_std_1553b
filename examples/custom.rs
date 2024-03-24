@@ -47,8 +47,8 @@ fn main() {
 
     // Get words by getting the appropriate data word and mapping
     // them to our custom word.
-    let word1 = message.get_as::<CustomWord>(0);
-    let word2 = message.get_as::<CustomWord>(1);
+    let word1 = message.get::<CustomWord>(0);
+    let word2 = message.get::<CustomWord>(1);
 
     // Access the 'status light on' flag of the custom word
     let status_light_on_1 = word1.unwrap().status_light_on();
