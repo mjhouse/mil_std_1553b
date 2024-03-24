@@ -304,6 +304,9 @@ pub enum Address {
 }
 
 impl Address {
+    /// The maximum real value that can be addressed
+    const MAX: u8 = 0b11111;
+
     /// Check if this enum contains an address
     #[must_use = "Returned value is not used"]
     pub const fn is_value(&self) -> bool {
@@ -320,8 +323,8 @@ impl Address {
 impl From<u8> for Address {
     fn from(v: u8) -> Address {
         match v {
-            k if k < 0b11111 => Address::Value(k),
-            k => Address::Broadcast(k),
+            k if k < Self::MAX => Address::Value(k),
+            k => Address::Broadcast(k & Self::MAX),
         }
     }
 }
@@ -355,12 +358,17 @@ pub enum SubAddress {
 }
 
 impl SubAddress {
+    /// The maximum real value that can be addressed
+    const MAX: u8 = 0b11111;
+
     /// Check if this enum contains an address
+    #[must_use = "Returned value is not used"]
     pub const fn is_value(&self) -> bool {
         matches!(self, Self::Value(_))
     }
 
     /// Check if this address is a reserved mode code value
+    #[must_use = "Returned value is not used"]
     pub const fn is_mode_code(&self) -> bool {
         matches!(self, Self::ModeCode(_))
     }
@@ -369,8 +377,8 @@ impl SubAddress {
 impl From<u8> for SubAddress {
     fn from(v: u8) -> SubAddress {
         match v {
-            k if k < 0b11111 && k > 0 => SubAddress::Value(k),        
-            k => SubAddress::ModeCode(k),
+            k if k < Self::MAX && k > 0 => SubAddress::Value(k),        
+            k => SubAddress::ModeCode(k & Self::MAX),
         }
     }
 }
@@ -427,8 +435,8 @@ impl Instrumentation {
 impl From<u8> for Instrumentation {
     fn from(value: u8) -> Self {
         match value {
-            1 => Self::Command,
-            _ => Self::Status,
+            0 => Self::Status,
+            _ => Self::Command,
         }
     }
 }
@@ -436,8 +444,8 @@ impl From<u8> for Instrumentation {
 impl From<Instrumentation> for u8 {
     fn from(value: Instrumentation) -> Self {
         match value {
-            Instrumentation::Command => 1,
             Instrumentation::Status => 0,
+            Instrumentation::Command => 1,
         }
     }
 }
@@ -481,8 +489,8 @@ impl ServiceRequest {
 impl From<u8> for ServiceRequest {
     fn from(value: u8) -> Self {
         match value {
-            1 => Self::Service,
-            _ => Self::NoService,
+            0 => Self::NoService,
+            _ => Self::Service,
         }
     }
 }
@@ -490,8 +498,8 @@ impl From<u8> for ServiceRequest {
 impl From<ServiceRequest> for u8 {
     fn from(value: ServiceRequest) -> Self {
         match value {
-            ServiceRequest::Service => 1,
             ServiceRequest::NoService => 0,
+            ServiceRequest::Service => 1,
         }
     }
 }
@@ -587,8 +595,8 @@ impl BroadcastReceived {
 impl From<u8> for BroadcastReceived {
     fn from(value: u8) -> Self {
         match value {
-            1 => Self::Received,
-            _ => Self::NotReceived,
+            0 => Self::NotReceived,
+            _ => Self::Received,
         }
     }
 }
@@ -596,8 +604,8 @@ impl From<u8> for BroadcastReceived {
 impl From<BroadcastReceived> for u8 {
     fn from(value: BroadcastReceived) -> Self {
         match value {
-            BroadcastReceived::Received => 1,
             BroadcastReceived::NotReceived => 0,
+            BroadcastReceived::Received => 1,
         }
     }
 }
@@ -640,8 +648,8 @@ impl TerminalBusy {
 impl From<u8> for TerminalBusy {
     fn from(value: u8) -> Self {
         match value {
-            1 => Self::Busy,
-            _ => Self::NotBusy,
+            0 => Self::NotBusy,
+            _ => Self::Busy,
         }
     }
 }
@@ -649,8 +657,8 @@ impl From<u8> for TerminalBusy {
 impl From<TerminalBusy> for u8 {
     fn from(value: TerminalBusy) -> Self {
         match value {
-            TerminalBusy::Busy => 1,
             TerminalBusy::NotBusy => 0,
+            TerminalBusy::Busy => 1,
         }
     }
 }
@@ -694,8 +702,8 @@ impl DynamicBusAcceptance {
 impl From<u8> for DynamicBusAcceptance {
     fn from(value: u8) -> Self {
         match value {
-            1 => Self::Accepted,
-            _ => Self::NotAccepted,
+            0 => Self::NotAccepted,
+            _ => Self::Accepted,
         }
     }
 }
@@ -703,8 +711,8 @@ impl From<u8> for DynamicBusAcceptance {
 impl From<DynamicBusAcceptance> for u8 {
     fn from(value: DynamicBusAcceptance) -> Self {
         match value {
-            DynamicBusAcceptance::Accepted => 1,
             DynamicBusAcceptance::NotAccepted => 0,
+            DynamicBusAcceptance::Accepted => 1,
         }
     }
 }
@@ -1434,6 +1442,11 @@ mod tests {
     }
 
     #[test]
+    fn test_transmit_receive_from_u8_2() {
+        assert_eq!(TransmitReceive::from(2), TransmitReceive::Transmit);
+    }
+
+    #[test]
     fn test_transmit_receive_to_u8_0() {
         assert_eq!(u8::from(TransmitReceive::Receive), 0);
     }
@@ -1488,6 +1501,11 @@ mod tests {
     #[test]
     fn test_address_from_u8_2() {
         assert_eq!(Address::from(0b11111), Address::Broadcast(0b11111));
+    }
+
+    #[test]
+    fn test_address_from_u8_3() {
+        assert_eq!(Address::from(0b11111111), Address::Broadcast(0b11111));
     }
 
     #[test]
@@ -1549,12 +1567,17 @@ mod tests {
 
     #[test]
     fn test_subaddress_from_u8_2() {
-        assert_eq!(SubAddress::from(0b11111), SubAddress::ModeCode(0b11111));
+        assert_eq!(SubAddress::from(0b00000), SubAddress::ModeCode(0b00000));
     }
 
     #[test]
     fn test_subaddress_from_u8_3() {
-        assert_eq!(SubAddress::from(0b00000), SubAddress::ModeCode(0b00000));
+        assert_eq!(SubAddress::from(0b11111), SubAddress::ModeCode(0b11111));
+    }
+
+    #[test]
+    fn test_subaddress_from_u8_4() {
+        assert_eq!(SubAddress::from(0b11111111), SubAddress::ModeCode(0b11111));
     }
 
     #[test]
@@ -1592,6 +1615,11 @@ mod tests {
     #[test]
     fn test_instrumentation_from_u8_1() {
         assert_eq!(Instrumentation::from(1), Instrumentation::Command);
+    }
+
+    #[test]
+    fn test_instrumentation_from_u8_2() {
+        assert_eq!(Instrumentation::from(2), Instrumentation::Command);
     }
 
     #[test]
@@ -1639,6 +1667,11 @@ mod tests {
     #[test]
     fn test_service_request_from_u8_1() {
         assert_eq!(ServiceRequest::from(1), ServiceRequest::Service);
+    }
+
+    #[test]
+    fn test_service_request_from_u8_2() {
+        assert_eq!(ServiceRequest::from(2), ServiceRequest::Service);
     }
 
     #[test]
@@ -1736,6 +1769,11 @@ mod tests {
     }
 
     #[test]
+    fn test_broadcast_received_from_u8_2() {
+        assert_eq!(BroadcastReceived::from(2), BroadcastReceived::Received);
+    }
+
+    #[test]
     fn test_broadcast_received_to_u8_0() {
         assert_eq!(u8::from(BroadcastReceived::NotReceived), 0);
     }
@@ -1780,6 +1818,11 @@ mod tests {
     #[test]
     fn test_terminal_busy_from_u8_1() {
         assert_eq!(TerminalBusy::from(1), TerminalBusy::Busy);
+    }
+
+    #[test]
+    fn test_terminal_busy_from_u8_2() {
+        assert_eq!(TerminalBusy::from(2), TerminalBusy::Busy);
     }
 
     #[test]
@@ -1831,6 +1874,14 @@ mod tests {
     fn test_dynamic_bus_acceptance_from_u8_1() {
         assert_eq!(
             DynamicBusAcceptance::from(1),
+            DynamicBusAcceptance::Accepted
+        );
+    }
+
+    #[test]
+    fn test_dynamic_bus_acceptance_from_u8_2() {
+        assert_eq!(
+            DynamicBusAcceptance::from(2),
             DynamicBusAcceptance::Accepted
         );
     }
