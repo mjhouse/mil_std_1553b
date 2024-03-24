@@ -377,7 +377,7 @@ impl SubAddress {
 impl From<u8> for SubAddress {
     fn from(v: u8) -> SubAddress {
         match v {
-            k if k < Self::MAX && k > 0 => SubAddress::Value(k),        
+            k if k < Self::MAX && k > 0 => SubAddress::Value(k),
             k => SubAddress::ModeCode(k & Self::MAX),
         }
     }

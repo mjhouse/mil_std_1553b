@@ -1,5 +1,6 @@
 #![no_std]
 #![forbid(
+    dead_code,
     arithmetic_overflow,
     absolute_paths_not_starting_with_crate,
     box_pointers,
@@ -33,7 +34,6 @@
     unused_macro_rules,
     unused_qualifications,
     unused_results,
-    unused_tuple_struct_fields,
     variant_size_differences
 )]
 #![doc = include_str!("../README.md")]
