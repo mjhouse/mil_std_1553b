@@ -13,10 +13,13 @@ the MIL STD 1553B communication protocal.
 The following features make this library useable in constrained embedded systems for government, commercial, 
 or military projects that can't have virally licensed dependencies.
 
-* Does not use the standard library (`no_std`).
-* Does not allocate dynamic memory.
-* Has no dependencies.
-* MIT licensed.
+* Does not use the standard library (`no_std`)
+* Does not allocate dynamic memory
+* Has no dependencies **\***
+* MIT licensed
+
+**\*** *No runtime dependencies. If you use the `derive` feature flag, you will have to build proc-macro 
+dependencies, but these are built and used on the host, not on the target system.*
 
 ## Basic usage
 
@@ -117,7 +120,13 @@ from strings.
     - [x] Messages have parsing tests
     - [x] Messages have conversion tests
     - [x] Documentation exists for messages
+- [ ] Conveniance, standardization, documentation
+    - [x] Derive/macro creation of custom words for a message
+    - [x] Small fixes for enum and flag standardization
+    - [x] Fully documented code base
+    - [x] Maximum lints enforced and no unsafe code
 - [ ] Integration tests implemented
+    - [x] CI/CD pipelines building for all host -> cross compile targets
     - [x] Round-trip tests (binary -> struct -> binary) exist for messages
     - [x] Round-trip tests (binary -> struct -> binary) exist for words
     - [ ] Configuration tests (JSON) exist for words
