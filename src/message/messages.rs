@@ -42,16 +42,16 @@ const ARRAY_NONE: WordType = WordType::None;
 ///
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct Message<const WORDS: usize = 33> {
-    count: usize,
     words: [WordType; WORDS],
+    error: Option<Error>,
 }
 
 impl<const WORDS: usize> Message<WORDS> {
     /// Create a new message struct
     pub fn new() -> Self {
         Self {
-            count: 0,
             words: [ARRAY_NONE; WORDS],
+            error: None,
         }
     }
 
@@ -110,27 +110,7 @@ impl<const WORDS: usize> Message<WORDS> {
     /// * If the first word is a data word
     ///
     pub fn build(self) -> Result<Self> {
-        // fail if the wrong number of words were added
-        if self.count != self.size() {
-            return Err(Error::OutOfBounds);
-        }
-
-        // fail if there are multiple header words
-        if self.count() != (self.length() - 1) {
-            return Err(Error::InvalidWord);
-        }
-
-        // fail if any word has a bad parity bit
-        if self.words.iter().any(|w| !w.check_parity()) {
-            return Err(Error::InvalidWord);
-        }
-
-        // fail if the first word is a data word
-        if self.words.first().map(|w| w.is_data()).unwrap_or(false) {
-            return Err(Error::HeaderNotFirst);
-        }
-
-        Ok(self)
+        self.validate().map(|_| self)
     }
 
     /// Parse a slice of bytes into a command message
@@ -295,11 +275,16 @@ impl<const WORDS: usize> Message<WORDS> {
     /// * `word` - A word to add
     ///
     pub fn add<T: Word>(&mut self, word: T) {
-        let index = self.count;
-        self.count += 1;
+        let index = self
+            .words
+            .iter()
+            .position(WordType::is_none)
+            .unwrap_or(self.words.len());
 
         if index < self.words.len() {
             self.words[index] = word.into();
+        } else {
+            self.error = Some(Error::OutOfBounds);
         }
     }
 
@@ -361,13 +346,53 @@ impl<const WORDS: usize> Message<WORDS> {
     /// Check if the message is empty
     #[must_use = "Returned value is not used"]
     pub fn is_empty(&self) -> bool {
-        self.count == 0
+        self.length() == 0
+    }
+
+    /// Check if the message is valid
+    #[must_use = "Returned value is not used"]
+    pub fn is_valid(&self) -> bool {
+        self.validate().is_ok()
+    }
+
+    /// Method to validate message
+    ///
+    /// Performs basic checks for message validity, returning
+    /// an error:
+    ///
+    /// * If and error was generated during construction
+    /// * If there are multiple header words (command or status)
+    /// * If any word has a bad parity
+    /// * If the first word is a data word
+    ///
+    pub fn validate(&self) -> Result<()> {
+        // fail if an error is set
+        if let Some(e) = self.error {
+            return Err(e);
+        }
+
+        // fail if there are multiple header words
+        if self.count() != (self.length() - 1) {
+            return Err(Error::InvalidWord);
+        }
+
+        // fail if any word has a bad parity bit
+        if self.words.iter().any(|w| !w.check_parity()) {
+            return Err(Error::InvalidWord);
+        }
+
+        // fail if the first word is a data word
+        if self.words.first().map(|w| w.is_data()).unwrap_or(false) {
+            return Err(Error::HeaderNotFirst);
+        }
+
+        Ok(())
     }
 
     /// Clear all words from the message
     pub fn clear(&mut self) {
-        self.count = 0;
         self.words = [ARRAY_NONE; WORDS];
+        self.error = None;
     }
 
     /// Get the number of data words
@@ -473,6 +498,17 @@ mod tests {
     use super::*;
 
     #[test]
+    fn test_message_with_bad_count_fail() {
+        // adding two header words to the message
+        let message = Message::<2>::new()
+            .with_command(0b0000000000000001)
+            .with_data(0b0000000000000000)
+            .with_data(0b0000000000000000);
+        assert!(message.error.is_some());
+        assert!(!message.is_valid());
+    }
+
+    #[test]
     fn test_message_default() {
         let message: Message = Message::default();
         assert_eq!(message.length(), 0);
@@ -559,6 +595,7 @@ mod tests {
             .with_data(0b0000000000000001)
             .build()
             .unwrap();
+        assert!(message.is_valid());
         assert!(message.is_full());
         assert_eq!(message.length(), 2);
         assert_eq!(message.count(), 1);
