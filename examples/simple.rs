@@ -16,13 +16,13 @@ fn main() -> Result<()> {
         .with_data(DataWord::try_from("Y ")?)
         .build()?;
 
-    let word0 = message.at(0).unwrap();
-    let word1 = message.at(1).unwrap();
-    let word2 = message.at(2).unwrap();
+    let word0: &str = message.get(0).unwrap();
+    let word1: &str = message.get(1).unwrap();
+    let word2: &str = message.get(2).unwrap();
 
-    println!("{}", word0.as_string().unwrap());
-    println!("{}", word1.as_string().unwrap());
-    println!("{}", word2.as_string().unwrap());
+    println!("{}", word0);
+    println!("{}", word1);
+    println!("{}", word2);
 
     Ok(())
 }
