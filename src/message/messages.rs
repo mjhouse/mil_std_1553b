@@ -55,6 +55,32 @@ impl<const WORDS: usize> Message<WORDS> {
         }
     }
 
+    /// Constructor method to set the message body from a string
+    /// 
+    /// See [set_string][Self::set_string] for more information.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - String to include
+    ///
+    pub fn with_string(mut self, data: &str) -> Self {
+        self.set_string(data);
+        self
+    }
+
+    /// Constructor method to set the message body from bytes
+    /// 
+    /// See [set_bytes][Self::set_bytes] for more information.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - Bytes to include
+    ///
+    pub fn with_bytes(mut self, data: &[u8]) -> Self {
+        self.set_bytes(data);
+        self
+    }
+
     /// Constructor method to add a command word to the message
     ///
     /// # Arguments
@@ -240,9 +266,9 @@ impl<const WORDS: usize> Message<WORDS> {
     ///
     /// * `index` - An index
     ///
-    pub fn at(&self, index: usize) -> Option<DataWord> {
+    pub fn at(&self, index: usize) -> Option<&DataWord> {
         if let Some(WordType::Data(w)) = &self.words.get(index + 1) {
-            Some(*w)
+            Some(w)
         } else {
             None
         }
@@ -257,12 +283,12 @@ impl<const WORDS: usize> Message<WORDS> {
     ///
     /// * `index` - An index
     ///
-    pub fn get<T>(&self, index: usize) -> Option<T>
+    pub fn get<'a,T>(&'a self, index: usize) -> Option<T>
     where
-        T: From<DataWord>,
+        T: TryFrom<&'a DataWord>,
     {
         if let Some(WordType::Data(w)) = &self.words.get(index + 1) {
-            Some((*w).into())
+            T::try_from(w).ok()
         } else {
             None
         }
@@ -275,8 +301,7 @@ impl<const WORDS: usize> Message<WORDS> {
     /// * `word` - A word to add
     ///
     pub fn add<T: Word>(&mut self, word: T) {
-        let index = self
-            .words
+        let index = self.words
             .iter()
             .position(WordType::is_none)
             .unwrap_or(self.words.len());
@@ -285,6 +310,60 @@ impl<const WORDS: usize> Message<WORDS> {
             self.words[index] = word.into();
         } else {
             self.error = Some(Error::OutOfBounds);
+        }
+    }
+
+    /// Add words from a string
+    /// 
+    /// This method breaks the string into two-byte
+    /// chunks and adds them as [DataWord]s to the
+    /// message. If it fails, [is_valid][Self::is_valid] will
+    /// return false and [validate][Self::validate] will
+    /// return an error.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - Words to add
+    ///
+    pub fn add_string(&mut self, data: &str) {
+        for chunk in data
+            .as_bytes()
+            .chunks(2)
+            .map(|s| match s.len() {
+                2 => [ s[0], s[1] ],
+                1 => [ s[0], 0 ],
+                _ => [ 0, 0 ]
+            })
+        {
+            self.add_data(chunk.into());
+        }
+    }
+
+    /// Add words from bytes
+    ///
+    /// This method breaks the given bytes into two-byte
+    /// chunks and adds them as [DataWord]s to the
+    /// message. If it fails, [is_valid][Self::is_valid] will
+    /// return false and [validate][Self::validate] will
+    /// return an error.
+    /// 
+    /// **Given data should only contain the words,
+    /// without sync or parity bits.**
+    /// 
+    /// # Arguments
+    ///
+    /// * `data` - Words to add
+    ///
+    pub fn add_bytes(&mut self, data: &[u8]) {
+        for chunk in data
+            .chunks(2)
+            .map(|s| match s.len() {
+                2 => [ s[0], s[1] ],
+                1 => [ s[0], 0 ],
+                _ => [ 0, 0 ]
+            })
+        {
+            self.add_data(chunk.into());
         }
     }
 
@@ -316,6 +395,43 @@ impl<const WORDS: usize> Message<WORDS> {
     ///
     pub fn add_command(&mut self, word: CommandWord) {
         self.add(word);
+    }
+
+    /// Set words from a string
+    /// 
+    /// This method overwrites existing data in the 
+    /// message by breaking the given string into two-byte
+    /// chunks and adding them as [DataWord]s. If it fails, 
+    /// [is_valid][Self::is_valid] will return false and 
+    /// [validate][Self::validate] will return an error.
+    ///
+    /// # Arguments
+    ///
+    /// * `data` - Words to add
+    ///
+    pub fn set_string(&mut self, data: &str) {
+        self.words[1..].fill(WordType::None);
+        self.add_string(data);
+    }
+
+    /// Set words from bytes
+    /// 
+    /// This method overwrites existing data in the 
+    /// message by breaking the given string into two-byte
+    /// chunks and adding them as [DataWord]s. If it fails, 
+    /// [is_valid][Self::is_valid] will return false and 
+    /// [validate][Self::validate] will return an error.
+    ///
+    /// **Given data should only contain the words,
+    /// without sync or parity bits.**
+    /// 
+    /// # Arguments
+    ///
+    /// * `data` - Words to add
+    ///
+    pub fn set_bytes(&mut self, data: &[u8]) {
+        self.words[1..].fill(WordType::None);
+        self.add_bytes(data);
     }
 
     /// Check if message starts with a command word
@@ -386,6 +502,13 @@ impl<const WORDS: usize> Message<WORDS> {
             return Err(Error::HeaderNotFirst);
         }
 
+        // fail if there are multiple header words
+        if let Some(w) = self.command() {
+            if w.count() != self.count() {
+                return Err(Error::InvalidMessage);
+            }
+        }
+
         Ok(())
     }
 
@@ -395,19 +518,26 @@ impl<const WORDS: usize> Message<WORDS> {
         self.error = None;
     }
 
-    /// Get the number of data words
+    /// Get the current number of data words
     pub fn count(&self) -> usize {
         self.words.iter().filter(|w| w.is_data()).count()
     }
 
-    /// Get the total number of words
+    /// Get the current number of words
     pub fn length(&self) -> usize {
         self.words.iter().filter(|w| w.is_some()).count()
     }
 
-    /// Get the maximum number of words
+    /// Get the total possible size of the message
     pub fn size(&self) -> usize {
         self.words.len()
+    }
+
+    /// Get expected number of data words
+    pub fn limit(&self) -> usize {
+        self.command()
+            .map(CommandWord::count)
+            .unwrap_or(self.size().saturating_sub(1))
     }
 
     /// Read bytes as a message
@@ -443,7 +573,7 @@ impl<const WORDS: usize> Message<WORDS> {
         }
 
         // create a new message with the header word
-        let mut message: Self = Self::new().with_word(word);
+        let mut message = Self::new().with_word(word);
 
         let start = 1; // skip the service word
         let end = count + 1; // adjust for service word
@@ -496,6 +626,384 @@ impl Default for Message {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_message_with_string_0() {
+        let message = Message::<3>::new()
+            .with_command(0b0000000000000010)
+            .with_string("TEST")
+            .build()
+            .unwrap();
+        assert!(message.is_full());
+        assert_eq!(message.length(), 3);
+        assert_eq!(message.count(), 2);
+        assert_eq!(message.size(), 3);
+        assert!(message.is_command());
+        assert!(!message.is_status());
+    }
+
+    #[test]
+    fn test_message_with_string_1() {
+        let message = Message::<2>::new()
+            .with_command(0b0000000000000010)
+            .with_string("TEST")
+            .build();
+
+        // error because the string was too long
+        // for the given Message
+        assert!(message.is_err());
+    }
+
+    #[test]
+    fn test_message_with_string_2() {
+        let message = Message::<3>::new()
+            .with_command(0b0000000000000001)
+            .with_string("TEST")
+            .build();
+
+        // error because the string was too long
+        // for the command data word count
+        assert!(message.is_err());
+    }
+
+    #[test]
+    fn test_message_with_string_3() {
+        let message = Message::<2>::new()
+            .with_status(0b0000000000000000)
+            .with_string("TEST")
+            .build();
+
+        // error because the string was too long
+        // for the given Message
+        assert!(message.is_err());
+    }
+    
+    #[test]
+    fn test_message_with_bytes_0() {
+        let message = Message::<3>::new()
+            .with_command(0b0000000000000010)
+            .with_bytes(&[ 1, 2, 3, 4 ])
+            .build()
+            .unwrap();
+        assert!(message.is_full());
+        assert_eq!(message.length(), 3);
+        assert_eq!(message.count(), 2);
+        assert_eq!(message.size(), 3);
+        assert!(message.is_command());
+        assert!(!message.is_status());
+    }
+
+    #[test]
+    fn test_message_with_bytes_1() {
+        let message = Message::<2>::new()
+            .with_command(0b0000000000000010)
+            .with_bytes(&[ 1, 2, 3, 4 ])
+            .build();
+
+        // error because the string was too long
+        // for the given Message
+        assert!(message.is_err());
+    }
+
+    #[test]
+    fn test_message_with_bytes_2() {
+        let message = Message::<3>::new()
+            .with_command(0b0000000000000001)
+            .with_bytes(&[ 1, 2, 3, 4 ])
+            .build();
+
+        // error because the string was too long
+        // for the command data word count
+        assert!(message.is_err());
+    }
+
+    #[test]
+    fn test_message_with_bytes_3() {
+        let message = Message::<2>::new()
+            .with_status(0b0000000000000000)
+            .with_bytes(&[ 1, 2, 3, 4 ])
+            .build();
+
+        // error because the string was too long
+        // for the given Message
+        assert!(message.is_err());
+    }
+
+    #[test]
+    fn test_message_set_string_command_0() {
+        let mut message = Message::<2>::new().with_command(0b0000000000000001);
+
+        message.add_string("TE");
+        let string1 = message.get(0);
+        assert_eq!(string1,Some("TE"));
+
+        message.set_string("ST");
+        let string2 = message.get(0);
+        assert_eq!(string2,Some("ST"));
+
+        assert!(message.is_valid());
+        assert!(message.is_full());
+        assert_eq!(message.length(), 2);
+        assert_eq!(message.count(), 1);
+        assert_eq!(message.size(), 2);
+        assert!(message.is_command());
+        assert!(!message.is_status());
+    }
+
+    #[test]
+    fn test_message_set_string_command_1() {
+        let mut message = Message::<3>::new().with_command(0b0000000000000010);
+
+        message.add_string("TEST");
+        let string1 = message.get(0);
+        let string2 = message.get(1);
+        assert_eq!(string1,Some("TE"));
+        assert_eq!(string2,Some("ST"));
+
+        message.set_string("TSET");
+        let string1 = message.get(0);
+        let string2 = message.get(1);
+        assert_eq!(string1,Some("TS"));
+        assert_eq!(string2,Some("ET"));
+
+        assert!(message.is_valid());
+        assert_eq!(message.length(), 3);
+        assert_eq!(message.count(), 2);
+        assert_eq!(message.size(), 3);
+        assert!(message.is_command());
+        assert!(!message.is_status());
+    }
+
+    #[test]
+    fn test_message_set_string_command_2() {
+        let mut message = Message::<2>::new().with_command(0b0000000000000001);
+
+        message.set_string("TEST");
+        
+        let string1 = message.get::<&str>(0);
+        let string2 = message.get::<&str>(1);
+
+        assert_eq!(string1,Some("TE"));
+        assert_eq!(string2,None);
+
+        // failed because the given string is too long 
+        // to fit in a message with size 2
+        assert!(!message.is_valid());
+
+        assert_eq!(message.length(), 2);
+        assert_eq!(message.count(), 1);
+        assert_eq!(message.size(), 2);
+        assert!(message.is_command());
+        assert!(!message.is_status());
+    }
+
+    #[test]
+    fn test_message_set_bytes_command_0() {
+        let mut message = Message::<2>::new().with_command(0b0000000000000001);
+
+        message.add_bytes(&[ 1, 2 ]);
+        let bytes1 = message.get(0);
+        assert_eq!(bytes1,Some([ 1, 2 ]));
+
+        message.set_bytes(&[ 2, 1 ]);
+        let bytes2 = message.get(0);
+        assert_eq!(bytes2,Some([ 2, 1 ]));
+
+        assert!(message.is_valid());
+        assert!(message.is_full());
+        assert_eq!(message.length(), 2);
+        assert_eq!(message.count(), 1);
+        assert_eq!(message.size(), 2);
+        assert!(message.is_command());
+        assert!(!message.is_status());
+    }
+
+    #[test]
+    fn test_message_set_bytes_command_1() {
+        let mut message = Message::<3>::new().with_command(0b0000000000000010);
+
+        message.set_bytes(&[ 1, 2, 3, 4 ]);
+        let bytes1 = message.get(0);
+        let bytes2 = message.get(1);
+        assert_eq!(bytes1,Some([ 1, 2 ]));
+        assert_eq!(bytes2,Some([ 3, 4 ]));
+
+        message.set_bytes(&[ 4, 3, 2, 1 ]);
+        let bytes1 = message.get(0);
+        let bytes2 = message.get(1);
+        assert_eq!(bytes1,Some([ 4, 3 ]));
+        assert_eq!(bytes2,Some([ 2, 1 ]));
+
+        assert!(message.is_valid());
+        assert_eq!(message.length(), 3);
+        assert_eq!(message.count(), 2);
+        assert_eq!(message.size(), 3);
+        assert!(message.is_command());
+        assert!(!message.is_status());
+    }
+
+    #[test]
+    fn test_message_set_bytes_command_2() {
+        let mut message = Message::<2>::new().with_command(0b0000000000000001);
+
+        message.add_bytes(&[ 1, 2, 3, 4 ]);
+        
+        let string1 = message.get::<[u8;2]>(0);
+        let string2 = message.get::<[u8;2]>(1);
+
+        assert_eq!(string1,Some([ 1, 2 ]));
+        assert_eq!(string2,None);
+
+        // failed because the given string is too long 
+        // to fit in a message with size 2
+        assert!(!message.is_valid());
+
+        assert_eq!(message.length(), 2);
+        assert_eq!(message.count(), 1);
+        assert_eq!(message.size(), 2);
+        assert!(message.is_command());
+        assert!(!message.is_status());
+    }
+
+    #[test]
+    fn test_message_add_string_command_0() {
+
+        // build a command message with word count 1
+        let mut message = Message::<2>::new().with_command(0b0000000000000001);
+
+        message.add_string("TE");
+
+        assert!(message.is_valid());
+        assert!(message.is_full());
+        assert_eq!(message.length(), 2);
+        assert_eq!(message.count(), 1);
+        assert_eq!(message.size(), 2);
+        assert!(message.is_command());
+        assert!(!message.is_status());
+    }
+
+    #[test]
+    fn test_message_add_string_command_1() {
+        // build a command message with word count 1
+        let mut message = Message::<2>::new().with_command(0b0000000000000001);
+
+        message.add_string("TE");
+        message.add_string("ST");
+
+        // failed because the message only has enough space 
+        // for two characters (one data word), but two were given. 
+        assert!(!message.is_valid());
+
+        assert!(message.is_full());
+        assert_eq!(message.length(), 2);
+        assert_eq!(message.count(), 1);
+        assert_eq!(message.size(), 2);
+        assert!(message.is_command());
+        assert!(!message.is_status());
+    }
+
+    #[test]
+    fn test_message_add_string_command_2() {
+        // build a command message with word count 1
+        let mut message = Message::<2>::new().with_command(0b0000000000000001);
+
+        message.add_string("TEST");
+
+        // failed because the given string is too long 
+        // to fit in a message with size 2
+        assert!(!message.is_valid());
+
+        assert_eq!(message.length(), 2);
+        assert_eq!(message.count(), 1);
+        assert_eq!(message.size(), 2);
+        assert!(message.is_command());
+        assert!(!message.is_status());
+    }
+
+    #[test]
+    fn test_message_add_string_command_3() {
+        // build a command message with word count 2
+        let mut message = Message::<3>::new().with_command(0b0000000000000010);
+
+        message.add_string("TEST");
+
+        assert!(message.is_valid());
+        assert_eq!(message.length(), 3);
+        assert_eq!(message.count(), 2);
+        assert_eq!(message.size(), 3);
+        assert!(message.is_command());
+        assert!(!message.is_status());
+    }
+
+    #[test]
+    fn test_message_add_bytes_command_0() {
+
+        // build a command message with word count 1
+        let mut message = Message::<2>::new().with_command(0b0000000000000001);
+
+        message.add_bytes(&[ 1, 2 ]);
+
+        assert!(message.is_valid());
+        assert!(message.is_full());
+        assert_eq!(message.length(), 2);
+        assert_eq!(message.count(), 1);
+        assert_eq!(message.size(), 2);
+        assert!(message.is_command());
+        assert!(!message.is_status());
+    }
+
+    #[test]
+    fn test_message_add_bytes_command_1() {
+        // build a command message with word count 1
+        let mut message = Message::<2>::new().with_command(0b0000000000000001);
+
+        message.add_bytes(&[ 1, 2 ]);
+        message.add_bytes(&[ 3, 4 ]);
+
+        // failed because the message only has enough space 
+        // for two characters (one data word), but two were given. 
+        assert!(!message.is_valid());
+
+        assert!(message.is_full());
+        assert_eq!(message.length(), 2);
+        assert_eq!(message.count(), 1);
+        assert_eq!(message.size(), 2);
+        assert!(message.is_command());
+        assert!(!message.is_status());
+    }
+
+    #[test]
+    fn test_message_add_bytes_command_2() {
+        // build a command message with word count 1
+        let mut message = Message::<2>::new().with_command(0b0000000000000001);
+
+        message.add_bytes(&[ 1, 2, 3, 4 ]);
+
+        // failed because the given string is too long 
+        // to fit in a message with size 2
+        assert!(!message.is_valid());
+
+        assert_eq!(message.length(), 2);
+        assert_eq!(message.count(), 1);
+        assert_eq!(message.size(), 2);
+        assert!(message.is_command());
+        assert!(!message.is_status());
+    }
+
+    #[test]
+    fn test_message_add_bytes_command_3() {
+        // build a command message with word count 2
+        let mut message = Message::<3>::new().with_command(0b0000000000000010);
+
+        message.add_bytes(&[ 1, 2, 3, 4 ]);
+
+        assert!(message.is_valid());
+        assert_eq!(message.length(), 3);
+        assert_eq!(message.count(), 2);
+        assert_eq!(message.size(), 3);
+        assert!(message.is_command());
+        assert!(!message.is_status());
+    }
 
     #[test]
     fn test_message_with_bad_count_fail() {
@@ -819,8 +1327,9 @@ mod tests {
 
     #[test]
     fn test_message_command() {
-        let message = Message::<1>::new()
+        let message = Message::<2>::new()
             .with_command(0b0000000000000001)
+            .with_data(0b0000000000000000)
             .build()
             .unwrap();
         assert!(message.command().is_some());
@@ -845,9 +1354,9 @@ mod tests {
         let word3 = message.at(2);
         let word4 = message.at(3);
 
-        assert_eq!(word1, Some(data1));
-        assert_eq!(word2, Some(data2));
-        assert_eq!(word3, Some(data3));
+        assert_eq!(word1, Some(&data1));
+        assert_eq!(word2, Some(&data2));
+        assert_eq!(word3, Some(&data3));
         assert_eq!(word4, None);
     }
 
