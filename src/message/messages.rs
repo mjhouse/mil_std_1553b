@@ -56,7 +56,7 @@ impl<const WORDS: usize> Message<WORDS> {
     }
 
     /// Constructor method to set the message body from a string
-    /// 
+    ///
     /// See [set_string][Self::set_string] for more information.
     ///
     /// # Arguments
@@ -69,7 +69,7 @@ impl<const WORDS: usize> Message<WORDS> {
     }
 
     /// Constructor method to set the message body from bytes
-    /// 
+    ///
     /// See [set_bytes][Self::set_bytes] for more information.
     ///
     /// # Arguments
@@ -283,7 +283,7 @@ impl<const WORDS: usize> Message<WORDS> {
     ///
     /// * `index` - An index
     ///
-    pub fn get<'a,T>(&'a self, index: usize) -> Option<T>
+    pub fn get<'a, T>(&'a self, index: usize) -> Option<T>
     where
         T: TryFrom<&'a DataWord>,
     {
@@ -301,7 +301,8 @@ impl<const WORDS: usize> Message<WORDS> {
     /// * `word` - A word to add
     ///
     pub fn add<T: Word>(&mut self, word: T) {
-        let index = self.words
+        let index = self
+            .words
             .iter()
             .position(WordType::is_none)
             .unwrap_or(self.words.len());
@@ -314,7 +315,7 @@ impl<const WORDS: usize> Message<WORDS> {
     }
 
     /// Add words from a string
-    /// 
+    ///
     /// This method breaks the string into two-byte
     /// chunks and adds them as [DataWord]s to the
     /// message. If it fails, [is_valid][Self::is_valid] will
@@ -326,15 +327,11 @@ impl<const WORDS: usize> Message<WORDS> {
     /// * `data` - Words to add
     ///
     pub fn add_string(&mut self, data: &str) {
-        for chunk in data
-            .as_bytes()
-            .chunks(2)
-            .map(|s| match s.len() {
-                2 => [ s[0], s[1] ],
-                1 => [ s[0], 0 ],
-                _ => [ 0, 0 ]
-            })
-        {
+        for chunk in data.as_bytes().chunks(2).map(|s| match s.len() {
+            2 => [s[0], s[1]],
+            1 => [s[0], 0],
+            _ => [0, 0],
+        }) {
             self.add_data(chunk.into());
         }
     }
@@ -346,23 +343,20 @@ impl<const WORDS: usize> Message<WORDS> {
     /// message. If it fails, [is_valid][Self::is_valid] will
     /// return false and [validate][Self::validate] will
     /// return an error.
-    /// 
+    ///
     /// **Given data should only contain the words,
     /// without sync or parity bits.**
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `data` - Words to add
     ///
     pub fn add_bytes(&mut self, data: &[u8]) {
-        for chunk in data
-            .chunks(2)
-            .map(|s| match s.len() {
-                2 => [ s[0], s[1] ],
-                1 => [ s[0], 0 ],
-                _ => [ 0, 0 ]
-            })
-        {
+        for chunk in data.chunks(2).map(|s| match s.len() {
+            2 => [s[0], s[1]],
+            1 => [s[0], 0],
+            _ => [0, 0],
+        }) {
             self.add_data(chunk.into());
         }
     }
@@ -398,11 +392,11 @@ impl<const WORDS: usize> Message<WORDS> {
     }
 
     /// Set words from a string
-    /// 
-    /// This method overwrites existing data in the 
+    ///
+    /// This method overwrites existing data in the
     /// message by breaking the given string into two-byte
-    /// chunks and adding them as [DataWord]s. If it fails, 
-    /// [is_valid][Self::is_valid] will return false and 
+    /// chunks and adding them as [DataWord]s. If it fails,
+    /// [is_valid][Self::is_valid] will return false and
     /// [validate][Self::validate] will return an error.
     ///
     /// # Arguments
@@ -415,16 +409,16 @@ impl<const WORDS: usize> Message<WORDS> {
     }
 
     /// Set words from bytes
-    /// 
-    /// This method overwrites existing data in the 
+    ///
+    /// This method overwrites existing data in the
     /// message by breaking the given string into two-byte
-    /// chunks and adding them as [DataWord]s. If it fails, 
-    /// [is_valid][Self::is_valid] will return false and 
+    /// chunks and adding them as [DataWord]s. If it fails,
+    /// [is_valid][Self::is_valid] will return false and
     /// [validate][Self::validate] will return an error.
     ///
     /// **Given data should only contain the words,
     /// without sync or parity bits.**
-    /// 
+    ///
     /// # Arguments
     ///
     /// * `data` - Words to add
@@ -677,12 +671,30 @@ mod tests {
         // for the given Message
         assert!(message.is_err());
     }
-    
+
+    #[test]
+    fn test_message_with_string_4() {
+        let message = Message::<3>::new()
+            .with_command(0b0000000000000010)
+            .with_string("TES")
+            .build()
+            .unwrap();
+
+        // The character will be interpreted as 
+        // zero because it wasn't given.
+        assert!(message.is_full());
+        assert_eq!(message.length(), 3);
+        assert_eq!(message.count(), 2);
+        assert_eq!(message.size(), 3);
+        assert!(message.is_command());
+        assert!(!message.is_status());
+    }
+
     #[test]
     fn test_message_with_bytes_0() {
         let message = Message::<3>::new()
             .with_command(0b0000000000000010)
-            .with_bytes(&[ 1, 2, 3, 4 ])
+            .with_bytes(&[1, 2, 3, 4])
             .build()
             .unwrap();
         assert!(message.is_full());
@@ -697,10 +709,10 @@ mod tests {
     fn test_message_with_bytes_1() {
         let message = Message::<2>::new()
             .with_command(0b0000000000000010)
-            .with_bytes(&[ 1, 2, 3, 4 ])
+            .with_bytes(&[1, 2, 3, 4])
             .build();
 
-        // error because the string was too long
+        // error because too many bytes
         // for the given Message
         assert!(message.is_err());
     }
@@ -709,10 +721,10 @@ mod tests {
     fn test_message_with_bytes_2() {
         let message = Message::<3>::new()
             .with_command(0b0000000000000001)
-            .with_bytes(&[ 1, 2, 3, 4 ])
+            .with_bytes(&[1, 2, 3, 4])
             .build();
 
-        // error because the string was too long
+        // error because too many bytes
         // for the command data word count
         assert!(message.is_err());
     }
@@ -721,12 +733,30 @@ mod tests {
     fn test_message_with_bytes_3() {
         let message = Message::<2>::new()
             .with_status(0b0000000000000000)
-            .with_bytes(&[ 1, 2, 3, 4 ])
+            .with_bytes(&[1, 2, 3, 4])
             .build();
 
-        // error because the string was too long
+        // error because too many bytes
         // for the given Message
         assert!(message.is_err());
+    }
+
+    #[test]
+    fn test_message_with_bytes_4() {
+        let message = Message::<3>::new()
+            .with_command(0b0000000000000010)
+            .with_bytes(&[1, 2, 3])
+            .build()
+            .unwrap();
+
+        // The last byte of the second word will be 
+        // zero because it wasn't given.
+        assert!(message.is_full());
+        assert_eq!(message.length(), 3);
+        assert_eq!(message.count(), 2);
+        assert_eq!(message.size(), 3);
+        assert!(message.is_command());
+        assert!(!message.is_status());
     }
 
     #[test]
@@ -735,11 +765,11 @@ mod tests {
 
         message.add_string("TE");
         let string1 = message.get(0);
-        assert_eq!(string1,Some("TE"));
+        assert_eq!(string1, Some("TE"));
 
         message.set_string("ST");
         let string2 = message.get(0);
-        assert_eq!(string2,Some("ST"));
+        assert_eq!(string2, Some("ST"));
 
         assert!(message.is_valid());
         assert!(message.is_full());
@@ -757,14 +787,14 @@ mod tests {
         message.add_string("TEST");
         let string1 = message.get(0);
         let string2 = message.get(1);
-        assert_eq!(string1,Some("TE"));
-        assert_eq!(string2,Some("ST"));
+        assert_eq!(string1, Some("TE"));
+        assert_eq!(string2, Some("ST"));
 
         message.set_string("TSET");
         let string1 = message.get(0);
         let string2 = message.get(1);
-        assert_eq!(string1,Some("TS"));
-        assert_eq!(string2,Some("ET"));
+        assert_eq!(string1, Some("TS"));
+        assert_eq!(string2, Some("ET"));
 
         assert!(message.is_valid());
         assert_eq!(message.length(), 3);
@@ -779,14 +809,14 @@ mod tests {
         let mut message = Message::<2>::new().with_command(0b0000000000000001);
 
         message.set_string("TEST");
-        
+
         let string1 = message.get::<&str>(0);
         let string2 = message.get::<&str>(1);
 
-        assert_eq!(string1,Some("TE"));
-        assert_eq!(string2,None);
+        assert_eq!(string1, Some("TE"));
+        assert_eq!(string2, None);
 
-        // failed because the given string is too long 
+        // failed because the given string is too long
         // to fit in a message with size 2
         assert!(!message.is_valid());
 
@@ -801,13 +831,13 @@ mod tests {
     fn test_message_set_bytes_command_0() {
         let mut message = Message::<2>::new().with_command(0b0000000000000001);
 
-        message.add_bytes(&[ 1, 2 ]);
+        message.add_bytes(&[1, 2]);
         let bytes1 = message.get(0);
-        assert_eq!(bytes1,Some([ 1, 2 ]));
+        assert_eq!(bytes1, Some([1, 2]));
 
-        message.set_bytes(&[ 2, 1 ]);
+        message.set_bytes(&[2, 1]);
         let bytes2 = message.get(0);
-        assert_eq!(bytes2,Some([ 2, 1 ]));
+        assert_eq!(bytes2, Some([2, 1]));
 
         assert!(message.is_valid());
         assert!(message.is_full());
@@ -822,17 +852,17 @@ mod tests {
     fn test_message_set_bytes_command_1() {
         let mut message = Message::<3>::new().with_command(0b0000000000000010);
 
-        message.set_bytes(&[ 1, 2, 3, 4 ]);
+        message.set_bytes(&[1, 2, 3, 4]);
         let bytes1 = message.get(0);
         let bytes2 = message.get(1);
-        assert_eq!(bytes1,Some([ 1, 2 ]));
-        assert_eq!(bytes2,Some([ 3, 4 ]));
+        assert_eq!(bytes1, Some([1, 2]));
+        assert_eq!(bytes2, Some([3, 4]));
 
-        message.set_bytes(&[ 4, 3, 2, 1 ]);
+        message.set_bytes(&[4, 3, 2, 1]);
         let bytes1 = message.get(0);
         let bytes2 = message.get(1);
-        assert_eq!(bytes1,Some([ 4, 3 ]));
-        assert_eq!(bytes2,Some([ 2, 1 ]));
+        assert_eq!(bytes1, Some([4, 3]));
+        assert_eq!(bytes2, Some([2, 1]));
 
         assert!(message.is_valid());
         assert_eq!(message.length(), 3);
@@ -846,15 +876,15 @@ mod tests {
     fn test_message_set_bytes_command_2() {
         let mut message = Message::<2>::new().with_command(0b0000000000000001);
 
-        message.add_bytes(&[ 1, 2, 3, 4 ]);
-        
-        let string1 = message.get::<[u8;2]>(0);
-        let string2 = message.get::<[u8;2]>(1);
+        message.add_bytes(&[1, 2, 3, 4]);
 
-        assert_eq!(string1,Some([ 1, 2 ]));
-        assert_eq!(string2,None);
+        let string1 = message.get::<[u8; 2]>(0);
+        let string2 = message.get::<[u8; 2]>(1);
 
-        // failed because the given string is too long 
+        assert_eq!(string1, Some([1, 2]));
+        assert_eq!(string2, None);
+
+        // failed because the given string is too long
         // to fit in a message with size 2
         assert!(!message.is_valid());
 
@@ -867,7 +897,6 @@ mod tests {
 
     #[test]
     fn test_message_add_string_command_0() {
-
         // build a command message with word count 1
         let mut message = Message::<2>::new().with_command(0b0000000000000001);
 
@@ -890,8 +919,8 @@ mod tests {
         message.add_string("TE");
         message.add_string("ST");
 
-        // failed because the message only has enough space 
-        // for two characters (one data word), but two were given. 
+        // failed because the message only has enough space
+        // for two characters (one data word), but two were given.
         assert!(!message.is_valid());
 
         assert!(message.is_full());
@@ -909,7 +938,7 @@ mod tests {
 
         message.add_string("TEST");
 
-        // failed because the given string is too long 
+        // failed because the given string is too long
         // to fit in a message with size 2
         assert!(!message.is_valid());
 
@@ -937,11 +966,10 @@ mod tests {
 
     #[test]
     fn test_message_add_bytes_command_0() {
-
         // build a command message with word count 1
         let mut message = Message::<2>::new().with_command(0b0000000000000001);
 
-        message.add_bytes(&[ 1, 2 ]);
+        message.add_bytes(&[1, 2]);
 
         assert!(message.is_valid());
         assert!(message.is_full());
@@ -957,11 +985,11 @@ mod tests {
         // build a command message with word count 1
         let mut message = Message::<2>::new().with_command(0b0000000000000001);
 
-        message.add_bytes(&[ 1, 2 ]);
-        message.add_bytes(&[ 3, 4 ]);
+        message.add_bytes(&[1, 2]);
+        message.add_bytes(&[3, 4]);
 
-        // failed because the message only has enough space 
-        // for two characters (one data word), but two were given. 
+        // failed because the message only has enough space
+        // for two characters (one data word), but two were given.
         assert!(!message.is_valid());
 
         assert!(message.is_full());
@@ -977,9 +1005,9 @@ mod tests {
         // build a command message with word count 1
         let mut message = Message::<2>::new().with_command(0b0000000000000001);
 
-        message.add_bytes(&[ 1, 2, 3, 4 ]);
+        message.add_bytes(&[1, 2, 3, 4]);
 
-        // failed because the given string is too long 
+        // failed because the given string is too long
         // to fit in a message with size 2
         assert!(!message.is_valid());
 
@@ -995,7 +1023,7 @@ mod tests {
         // build a command message with word count 2
         let mut message = Message::<3>::new().with_command(0b0000000000000010);
 
-        message.add_bytes(&[ 1, 2, 3, 4 ]);
+        message.add_bytes(&[1, 2, 3, 4]);
 
         assert!(message.is_valid());
         assert_eq!(message.length(), 3);
@@ -1055,6 +1083,7 @@ mod tests {
         assert_eq!(message.length(), 2);
         assert_eq!(message.count(), 1);
         assert_eq!(message.size(), 2);
+        assert_eq!(message.limit(), 1);
         assert!(message.is_command());
         assert!(!message.is_status());
     }
@@ -1108,6 +1137,7 @@ mod tests {
         assert_eq!(message.length(), 2);
         assert_eq!(message.count(), 1);
         assert_eq!(message.size(), 2);
+        assert_eq!(message.limit(), 1);
         assert!(message.is_status());
         assert!(!message.is_command());
     }
