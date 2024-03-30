@@ -232,6 +232,18 @@ impl From<ModeCode> for u8 {
     }
 }
 
+impl From<u16> for ModeCode {
+    fn from(value: u16) -> Self {
+        Self::from(value as u8)
+    }
+}
+
+impl From<ModeCode> for u16 {
+    fn from(value: ModeCode) -> Self {
+        u8::from(value) as u16
+    }
+}
+
 /// The direction of message transmission from the point of view of the remote terminal.
 ///
 /// This flag is available in bit 9 (index 5). A transmit bit (logic 1)
@@ -281,6 +293,18 @@ impl From<TransmitReceive> for u8 {
             TransmitReceive::Receive => 0,
             TransmitReceive::Transmit => 1,
         }
+    }
+}
+
+impl From<u16> for TransmitReceive {
+    fn from(value: u16) -> Self {
+        Self::from(value as u8)
+    }
+}
+
+impl From<TransmitReceive> for u16 {
+    fn from(value: TransmitReceive) -> Self {
+        u8::from(value) as u16
     }
 }
 
@@ -338,6 +362,18 @@ impl From<Address> for u8 {
     }
 }
 
+impl From<u16> for Address {
+    fn from(value: u16) -> Self {
+        Self::from(value as u8)
+    }
+}
+
+impl From<Address> for u16 {
+    fn from(value: Address) -> Self {
+        u8::from(value) as u16
+    }
+}
+
 /// The address of a subsystem within a remote terminal.
 ///
 /// This 5-bit address is found in the Subaddress (SA) field located at bit times
@@ -389,6 +425,18 @@ impl From<SubAddress> for u8 {
             SubAddress::Value(k) => k,
             SubAddress::ModeCode(k) => k,
         }
+    }
+}
+
+impl From<u16> for SubAddress {
+    fn from(value: u16) -> Self {
+        Self::from(value as u8)
+    }
+}
+
+impl From<SubAddress> for u16 {
+    fn from(value: SubAddress) -> Self {
+        u8::from(value) as u16
     }
 }
 
@@ -450,6 +498,18 @@ impl From<Instrumentation> for u8 {
     }
 }
 
+impl From<u16> for Instrumentation {
+    fn from(value: u16) -> Self {
+        Self::from(value as u8)
+    }
+}
+
+impl From<Instrumentation> for u16 {
+    fn from(value: Instrumentation) -> Self {
+        u8::from(value) as u16
+    }
+}
+
 /// Used by a remote terminal to tell the bus controller that it needs to be serviced.
 ///
 /// This flag is located at bit time 11 (index 7) and is typically used when
@@ -501,6 +561,18 @@ impl From<ServiceRequest> for u8 {
             ServiceRequest::NoService => 0,
             ServiceRequest::Service => 1,
         }
+    }
+}
+
+impl From<u16> for ServiceRequest {
+    fn from(value: u16) -> Self {
+        Self::from(value as u8)
+    }
+}
+
+impl From<ServiceRequest> for u16 {
+    fn from(value: ServiceRequest) -> Self {
+        u8::from(value) as u16
     }
 }
 
@@ -557,6 +629,18 @@ impl From<Reserved> for u8 {
     }
 }
 
+impl From<u16> for Reserved {
+    fn from(value: u16) -> Self {
+        Self::from(value as u8)
+    }
+}
+
+impl From<Reserved> for u16 {
+    fn from(value: Reserved) -> Self {
+        u8::from(value) as u16
+    }
+}
+
 /// Indicates that the remote terminal has received a valid broadcast command.
 ///
 /// On receiving such a command, the remote terminal sets this flag and
@@ -610,6 +694,18 @@ impl From<BroadcastReceived> for u8 {
     }
 }
 
+impl From<u16> for BroadcastReceived {
+    fn from(value: u16) -> Self {
+        Self::from(value as u8)
+    }
+}
+
+impl From<BroadcastReceived> for u16 {
+    fn from(value: BroadcastReceived) -> Self {
+        u8::from(value) as u16
+    }
+}
+
 /// Indicates that the remote terminal is busy
 ///
 /// The Busy bit, located at bit time 16 (index 12) is provided as
@@ -660,6 +756,18 @@ impl From<TerminalBusy> for u8 {
             TerminalBusy::NotBusy => 0,
             TerminalBusy::Busy => 1,
         }
+    }
+}
+
+impl From<u16> for TerminalBusy {
+    fn from(value: u16) -> Self {
+        Self::from(value as u8)
+    }
+}
+
+impl From<TerminalBusy> for u16 {
+    fn from(value: TerminalBusy) -> Self {
+        u8::from(value) as u16
     }
 }
 
@@ -717,6 +825,18 @@ impl From<DynamicBusAcceptance> for u8 {
     }
 }
 
+impl From<u16> for DynamicBusAcceptance {
+    fn from(value: u16) -> Self {
+        Self::from(value as u8)
+    }
+}
+
+impl From<DynamicBusAcceptance> for u16 {
+    fn from(value: DynamicBusAcceptance) -> Self {
+        u8::from(value) as u16
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -730,85 +850,85 @@ mod tests {
 
     #[test]
     fn test_mode_code_value_0() {
-        assert_eq!(ModeCode::DynamicBusControl.value(), 0b00000);
+        assert_eq!(ModeCode::DynamicBusControl.value(), 0b00000u8);
     }
 
     #[test]
     fn test_mode_code_value_1() {
-        assert_eq!(ModeCode::Synchronize.value(), 0b00001);
+        assert_eq!(ModeCode::Synchronize.value(), 0b00001u8);
     }
 
     #[test]
     fn test_mode_code_value_2() {
-        assert_eq!(ModeCode::TransmitStatusWord.value(), 0b00010);
+        assert_eq!(ModeCode::TransmitStatusWord.value(), 0b00010u8);
     }
 
     #[test]
     fn test_mode_code_value_3() {
-        assert_eq!(ModeCode::InitiateSelfTest.value(), 0b00011);
+        assert_eq!(ModeCode::InitiateSelfTest.value(), 0b00011u8);
     }
 
     #[test]
     fn test_mode_code_value_4() {
-        assert_eq!(ModeCode::TransmitterShutdown.value(), 0b00100);
+        assert_eq!(ModeCode::TransmitterShutdown.value(), 0b00100u8);
     }
 
     #[test]
     fn test_mode_code_value_5() {
-        assert_eq!(ModeCode::OverrideTransmitterShutdown.value(), 0b00101);
+        assert_eq!(ModeCode::OverrideTransmitterShutdown.value(), 0b00101u8);
     }
 
     #[test]
     fn test_mode_code_value_6() {
-        assert_eq!(ModeCode::InhibitTerminalFlagBit.value(), 0b00110);
+        assert_eq!(ModeCode::InhibitTerminalFlagBit.value(), 0b00110u8);
     }
 
     #[test]
     fn test_mode_code_value_7() {
-        assert_eq!(ModeCode::OverrideInhibitTerminalFlagBit.value(), 0b00111);
+        assert_eq!(ModeCode::OverrideInhibitTerminalFlagBit.value(), 0b00111u8);
     }
 
     #[test]
     fn test_mode_code_value_8() {
-        assert_eq!(ModeCode::ResetRemoteTerminal.value(), 0b01000);
+        assert_eq!(ModeCode::ResetRemoteTerminal.value(), 0b01000u8);
     }
 
     #[test]
     fn test_mode_code_value_9() {
-        assert_eq!(ModeCode::TransmitVectorWord.value(), 0b10000);
+        assert_eq!(ModeCode::TransmitVectorWord.value(), 0b10000u8);
     }
 
     #[test]
     fn test_mode_code_value_10() {
-        assert_eq!(ModeCode::SynchronizeWithDataWord.value(), 0b10001);
+        assert_eq!(ModeCode::SynchronizeWithDataWord.value(), 0b10001u8);
     }
 
     #[test]
     fn test_mode_code_value_11() {
-        assert_eq!(ModeCode::TransmitLastCommandWord.value(), 0b10010);
+        assert_eq!(ModeCode::TransmitLastCommandWord.value(), 0b10010u8);
     }
 
     #[test]
     fn test_mode_code_value_12() {
-        assert_eq!(ModeCode::TransmitBITWord.value(), 0b10011);
+        assert_eq!(ModeCode::TransmitBITWord.value(), 0b10011u8);
     }
 
     #[test]
     fn test_mode_code_value_13() {
-        assert_eq!(ModeCode::SelectedTransmitterShutdown.value(), 0b10100);
+        assert_eq!(ModeCode::SelectedTransmitterShutdown.value(), 0b10100u8);
     }
 
     #[test]
     fn test_mode_code_value_14() {
         assert_eq!(
             ModeCode::OverrideSelectedTransmitterShutdown.value(),
-            0b10101
+            0b10101u8
         );
     }
 
     #[test]
     fn test_mode_code_value_15() {
-        assert_eq!(ModeCode::UnknownModeCode(0b11111).value(), 0b11111);
+        assert_eq!(ModeCode::UnknownModeCode(0b11111u8).value(), 0b11111u8);
     }
 
     #[test]
@@ -891,7 +1011,7 @@ mod tests {
 
     #[test]
     fn test_mode_code_is_transmit_15() {
-        assert_eq!(ModeCode::UnknownModeCode(0b11111).is_transmit(), false);
+        assert_eq!(ModeCode::UnknownModeCode(0b11111u8).is_transmit(), false);
     }
 
     #[test]
@@ -974,7 +1094,7 @@ mod tests {
 
     #[test]
     fn test_mode_code_is_receive_15() {
-        assert_eq!(ModeCode::UnknownModeCode(0b11111).is_receive(), false);
+        assert_eq!(ModeCode::UnknownModeCode(0b11111u8).is_receive(), false);
     }
 
     #[test]
@@ -1057,7 +1177,7 @@ mod tests {
 
     #[test]
     fn test_mode_code_has_data_15() {
-        assert_eq!(ModeCode::UnknownModeCode(0b11111).has_data(), false);
+        assert_eq!(ModeCode::UnknownModeCode(0b11111u8).has_data(), false);
     }
 
     #[test]
@@ -1143,7 +1263,7 @@ mod tests {
 
     #[test]
     fn test_mode_code_is_broadcast_15() {
-        assert_eq!(ModeCode::UnknownModeCode(0b11111).is_broadcast(), false);
+        assert_eq!(ModeCode::UnknownModeCode(0b11111u8).is_broadcast(), false);
     }
 
     #[test]
@@ -1226,84 +1346,84 @@ mod tests {
 
     #[test]
     fn test_mode_code_is_unknown_15() {
-        assert_eq!(ModeCode::UnknownModeCode(0b11111).is_unknown(), true);
+        assert_eq!(ModeCode::UnknownModeCode(0b11111u8).is_unknown(), true);
     }
 
     #[test]
     fn test_mode_code_from_u8_0() {
-        assert_eq!(ModeCode::from(0b00000), ModeCode::DynamicBusControl);
+        assert_eq!(ModeCode::from(0b00000u8), ModeCode::DynamicBusControl);
     }
 
     #[test]
     fn test_mode_code_from_u8_1() {
-        assert_eq!(ModeCode::from(0b00001), ModeCode::Synchronize);
+        assert_eq!(ModeCode::from(0b00001u8), ModeCode::Synchronize);
     }
 
     #[test]
     fn test_mode_code_from_u8_2() {
-        assert_eq!(ModeCode::from(0b00010), ModeCode::TransmitStatusWord);
+        assert_eq!(ModeCode::from(0b00010u8), ModeCode::TransmitStatusWord);
     }
 
     #[test]
     fn test_mode_code_from_u8_3() {
-        assert_eq!(ModeCode::from(0b00011), ModeCode::InitiateSelfTest);
+        assert_eq!(ModeCode::from(0b00011u8), ModeCode::InitiateSelfTest);
     }
 
     #[test]
     fn test_mode_code_from_u8_4() {
-        assert_eq!(ModeCode::from(0b00100), ModeCode::TransmitterShutdown);
+        assert_eq!(ModeCode::from(0b00100u8), ModeCode::TransmitterShutdown);
     }
 
     #[test]
     fn test_mode_code_from_u8_5() {
         assert_eq!(
-            ModeCode::from(0b00101),
+            ModeCode::from(0b00101u8),
             ModeCode::OverrideTransmitterShutdown
         );
     }
 
     #[test]
     fn test_mode_code_from_u8_6() {
-        assert_eq!(ModeCode::from(0b00110), ModeCode::InhibitTerminalFlagBit);
+        assert_eq!(ModeCode::from(0b00110u8), ModeCode::InhibitTerminalFlagBit);
     }
 
     #[test]
     fn test_mode_code_from_u8_7() {
         assert_eq!(
-            ModeCode::from(0b00111),
+            ModeCode::from(0b00111u8),
             ModeCode::OverrideInhibitTerminalFlagBit
         );
     }
 
     #[test]
     fn test_mode_code_from_u8_8() {
-        assert_eq!(ModeCode::from(0b01000), ModeCode::ResetRemoteTerminal);
+        assert_eq!(ModeCode::from(0b01000u8), ModeCode::ResetRemoteTerminal);
     }
 
     #[test]
     fn test_mode_code_from_u8_9() {
-        assert_eq!(ModeCode::from(0b10000), ModeCode::TransmitVectorWord);
+        assert_eq!(ModeCode::from(0b10000u8), ModeCode::TransmitVectorWord);
     }
 
     #[test]
     fn test_mode_code_from_u8_10() {
-        assert_eq!(ModeCode::from(0b10001), ModeCode::SynchronizeWithDataWord);
+        assert_eq!(ModeCode::from(0b10001u8), ModeCode::SynchronizeWithDataWord);
     }
 
     #[test]
     fn test_mode_code_from_u8_11() {
-        assert_eq!(ModeCode::from(0b10010), ModeCode::TransmitLastCommandWord);
+        assert_eq!(ModeCode::from(0b10010u8), ModeCode::TransmitLastCommandWord);
     }
 
     #[test]
     fn test_mode_code_from_u8_12() {
-        assert_eq!(ModeCode::from(0b10011), ModeCode::TransmitBITWord);
+        assert_eq!(ModeCode::from(0b10011u8), ModeCode::TransmitBITWord);
     }
 
     #[test]
     fn test_mode_code_from_u8_13() {
         assert_eq!(
-            ModeCode::from(0b10100),
+            ModeCode::from(0b10100u8),
             ModeCode::SelectedTransmitterShutdown
         );
     }
@@ -1311,97 +1431,284 @@ mod tests {
     #[test]
     fn test_mode_code_from_u8_14() {
         assert_eq!(
-            ModeCode::from(0b10101),
+            ModeCode::from(0b10101u8),
             ModeCode::OverrideSelectedTransmitterShutdown
         );
     }
 
     #[test]
     fn test_mode_code_from_u8_15() {
-        assert_eq!(ModeCode::from(0b11111), ModeCode::UnknownModeCode(0b11111));
+        assert_eq!(
+            ModeCode::from(0b11111u8),
+            ModeCode::UnknownModeCode(0b11111u8)
+        );
+    }
+
+    #[test]
+    fn test_mode_code_from_u16_0() {
+        assert_eq!(ModeCode::from(0b00000u16), ModeCode::DynamicBusControl);
+    }
+
+    #[test]
+    fn test_mode_code_from_u16_1() {
+        assert_eq!(ModeCode::from(0b00001u16), ModeCode::Synchronize);
+    }
+
+    #[test]
+    fn test_mode_code_from_u16_2() {
+        assert_eq!(ModeCode::from(0b00010u16), ModeCode::TransmitStatusWord);
+    }
+
+    #[test]
+    fn test_mode_code_from_u16_3() {
+        assert_eq!(ModeCode::from(0b00011u16), ModeCode::InitiateSelfTest);
+    }
+
+    #[test]
+    fn test_mode_code_from_u16_4() {
+        assert_eq!(ModeCode::from(0b00100u16), ModeCode::TransmitterShutdown);
+    }
+
+    #[test]
+    fn test_mode_code_from_u16_5() {
+        assert_eq!(
+            ModeCode::from(0b00101u16),
+            ModeCode::OverrideTransmitterShutdown
+        );
+    }
+
+    #[test]
+    fn test_mode_code_from_u16_6() {
+        assert_eq!(ModeCode::from(0b00110u16), ModeCode::InhibitTerminalFlagBit);
+    }
+
+    #[test]
+    fn test_mode_code_from_u16_7() {
+        assert_eq!(
+            ModeCode::from(0b00111u16),
+            ModeCode::OverrideInhibitTerminalFlagBit
+        );
+    }
+
+    #[test]
+    fn test_mode_code_from_u16_8() {
+        assert_eq!(ModeCode::from(0b01000u16), ModeCode::ResetRemoteTerminal);
+    }
+
+    #[test]
+    fn test_mode_code_from_u16_9() {
+        assert_eq!(ModeCode::from(0b10000u16), ModeCode::TransmitVectorWord);
+    }
+
+    #[test]
+    fn test_mode_code_from_u16_10() {
+        assert_eq!(ModeCode::from(0b10001u16), ModeCode::SynchronizeWithDataWord);
+    }
+
+    #[test]
+    fn test_mode_code_from_u16_11() {
+        assert_eq!(ModeCode::from(0b10010u16), ModeCode::TransmitLastCommandWord);
+    }
+
+    #[test]
+    fn test_mode_code_from_u16_12() {
+        assert_eq!(ModeCode::from(0b10011u16), ModeCode::TransmitBITWord);
+    }
+
+    #[test]
+    fn test_mode_code_from_u16_13() {
+        assert_eq!(
+            ModeCode::from(0b10100u16),
+            ModeCode::SelectedTransmitterShutdown
+        );
+    }
+
+    #[test]
+    fn test_mode_code_from_u16_14() {
+        assert_eq!(
+            ModeCode::from(0b10101u16),
+            ModeCode::OverrideSelectedTransmitterShutdown
+        );
+    }
+
+    #[test]
+    fn test_mode_code_from_u16_15() {
+        assert_eq!(
+            ModeCode::from(0b101000_11111u16),
+            ModeCode::UnknownModeCode(0b11111u8)
+        );
     }
 
     #[test]
     fn test_mode_code_to_u8_0() {
-        assert_eq!(u8::from(ModeCode::DynamicBusControl), 0b00000);
+        assert_eq!(u8::from(ModeCode::DynamicBusControl), 0b00000u8);
     }
 
     #[test]
     fn test_mode_code_to_u8_1() {
-        assert_eq!(u8::from(ModeCode::Synchronize), 0b00001);
+        assert_eq!(u8::from(ModeCode::Synchronize), 0b00001u8);
     }
 
     #[test]
     fn test_mode_code_to_u8_2() {
-        assert_eq!(u8::from(ModeCode::TransmitStatusWord), 0b00010);
+        assert_eq!(u8::from(ModeCode::TransmitStatusWord), 0b00010u8);
     }
 
     #[test]
     fn test_mode_code_to_u8_3() {
-        assert_eq!(u8::from(ModeCode::InitiateSelfTest), 0b00011);
+        assert_eq!(u8::from(ModeCode::InitiateSelfTest), 0b00011u8);
     }
 
     #[test]
     fn test_mode_code_to_u8_4() {
-        assert_eq!(u8::from(ModeCode::TransmitterShutdown), 0b00100);
+        assert_eq!(u8::from(ModeCode::TransmitterShutdown), 0b00100u8);
     }
 
     #[test]
     fn test_mode_code_to_u8_5() {
-        assert_eq!(u8::from(ModeCode::OverrideTransmitterShutdown), 0b00101);
+        assert_eq!(u8::from(ModeCode::OverrideTransmitterShutdown), 0b00101u8);
     }
 
     #[test]
     fn test_mode_code_to_u8_6() {
-        assert_eq!(u8::from(ModeCode::InhibitTerminalFlagBit), 0b00110);
+        assert_eq!(u8::from(ModeCode::InhibitTerminalFlagBit), 0b00110u8);
     }
 
     #[test]
     fn test_mode_code_to_u8_7() {
-        assert_eq!(u8::from(ModeCode::OverrideInhibitTerminalFlagBit), 0b00111);
+        assert_eq!(
+            u8::from(ModeCode::OverrideInhibitTerminalFlagBit),
+            0b00111u8
+        );
     }
 
     #[test]
     fn test_mode_code_to_u8_8() {
-        assert_eq!(u8::from(ModeCode::ResetRemoteTerminal), 0b01000);
+        assert_eq!(u8::from(ModeCode::ResetRemoteTerminal), 0b01000u8);
     }
 
     #[test]
     fn test_mode_code_to_u8_9() {
-        assert_eq!(u8::from(ModeCode::TransmitVectorWord), 0b10000);
+        assert_eq!(u8::from(ModeCode::TransmitVectorWord), 0b10000u8);
     }
 
     #[test]
     fn test_mode_code_to_u8_10() {
-        assert_eq!(u8::from(ModeCode::SynchronizeWithDataWord), 0b10001);
+        assert_eq!(u8::from(ModeCode::SynchronizeWithDataWord), 0b10001u8);
     }
 
     #[test]
     fn test_mode_code_to_u8_11() {
-        assert_eq!(u8::from(ModeCode::TransmitLastCommandWord), 0b10010);
+        assert_eq!(u8::from(ModeCode::TransmitLastCommandWord), 0b10010u8);
     }
 
     #[test]
     fn test_mode_code_to_u8_12() {
-        assert_eq!(u8::from(ModeCode::TransmitBITWord), 0b10011);
+        assert_eq!(u8::from(ModeCode::TransmitBITWord), 0b10011u8);
     }
 
     #[test]
     fn test_mode_code_to_u8_13() {
-        assert_eq!(u8::from(ModeCode::SelectedTransmitterShutdown), 0b10100);
+        assert_eq!(u8::from(ModeCode::SelectedTransmitterShutdown), 0b10100u8);
     }
 
     #[test]
     fn test_mode_code_to_u8_14() {
         assert_eq!(
             u8::from(ModeCode::OverrideSelectedTransmitterShutdown),
-            0b10101
+            0b10101u8
         );
     }
 
     #[test]
     fn test_mode_code_to_u8_15() {
-        assert_eq!(u8::from(ModeCode::UnknownModeCode(0b11111)), 0b11111);
+        assert_eq!(u8::from(ModeCode::UnknownModeCode(0b11111u8)), 0b11111u8);
+    }
+
+    #[test]
+    fn test_mode_code_to_u16_0() {
+        assert_eq!(u16::from(ModeCode::DynamicBusControl), 0b00000u16);
+    }
+
+    #[test]
+    fn test_mode_code_to_u16_1() {
+        assert_eq!(u16::from(ModeCode::Synchronize), 0b00001u16);
+    }
+
+    #[test]
+    fn test_mode_code_to_u16_2() {
+        assert_eq!(u16::from(ModeCode::TransmitStatusWord), 0b00010u16);
+    }
+
+    #[test]
+    fn test_mode_code_to_u16_3() {
+        assert_eq!(u16::from(ModeCode::InitiateSelfTest), 0b00011u16);
+    }
+
+    #[test]
+    fn test_mode_code_to_u16_4() {
+        assert_eq!(u16::from(ModeCode::TransmitterShutdown), 0b00100u16);
+    }
+
+    #[test]
+    fn test_mode_code_to_u16_5() {
+        assert_eq!(u16::from(ModeCode::OverrideTransmitterShutdown), 0b00101u16);
+    }
+
+    #[test]
+    fn test_mode_code_to_u16_6() {
+        assert_eq!(u16::from(ModeCode::InhibitTerminalFlagBit), 0b00110u16);
+    }
+
+    #[test]
+    fn test_mode_code_to_u16_7() {
+        assert_eq!(
+            u16::from(ModeCode::OverrideInhibitTerminalFlagBit),
+            0b00111u16
+        );
+    }
+
+    #[test]
+    fn test_mode_code_to_u16_8() {
+        assert_eq!(u16::from(ModeCode::ResetRemoteTerminal), 0b01000u16);
+    }
+
+    #[test]
+    fn test_mode_code_to_u16_9() {
+        assert_eq!(u16::from(ModeCode::TransmitVectorWord), 0b10000u16);
+    }
+
+    #[test]
+    fn test_mode_code_to_u16_10() {
+        assert_eq!(u16::from(ModeCode::SynchronizeWithDataWord), 0b10001u16);
+    }
+
+    #[test]
+    fn test_mode_code_to_u16_11() {
+        assert_eq!(u16::from(ModeCode::TransmitLastCommandWord), 0b10010u16);
+    }
+
+    #[test]
+    fn test_mode_code_to_u16_12() {
+        assert_eq!(u16::from(ModeCode::TransmitBITWord), 0b10011u16);
+    }
+
+    #[test]
+    fn test_mode_code_to_u16_13() {
+        assert_eq!(u16::from(ModeCode::SelectedTransmitterShutdown), 0b10100u16);
+    }
+
+    #[test]
+    fn test_mode_code_to_u16_14() {
+        assert_eq!(
+            u16::from(ModeCode::OverrideSelectedTransmitterShutdown),
+            0b10101u16
+        );
+    }
+
+    #[test]
+    fn test_mode_code_to_u16_15() {
+        assert_eq!(u16::from(ModeCode::UnknownModeCode(0b11111u8)), 0b11111u16);
     }
 
     #[test]
@@ -1433,17 +1740,32 @@ mod tests {
 
     #[test]
     fn test_transmit_receive_from_u8_0() {
-        assert_eq!(TransmitReceive::from(0), TransmitReceive::Receive);
+        assert_eq!(TransmitReceive::from(0u8), TransmitReceive::Receive);
     }
 
     #[test]
     fn test_transmit_receive_from_u8_1() {
-        assert_eq!(TransmitReceive::from(1), TransmitReceive::Transmit);
+        assert_eq!(TransmitReceive::from(1u8), TransmitReceive::Transmit);
     }
 
     #[test]
     fn test_transmit_receive_from_u8_2() {
-        assert_eq!(TransmitReceive::from(2), TransmitReceive::Transmit);
+        assert_eq!(TransmitReceive::from(2u8), TransmitReceive::Transmit);
+    }
+
+    #[test]
+    fn test_transmit_receive_from_u16_0() {
+        assert_eq!(TransmitReceive::from(0u16), TransmitReceive::Receive);
+    }
+
+    #[test]
+    fn test_transmit_receive_from_u16_1() {
+        assert_eq!(TransmitReceive::from(1u16), TransmitReceive::Transmit);
+    }
+
+    #[test]
+    fn test_transmit_receive_from_u16_2() {
+        assert_eq!(TransmitReceive::from(2u16), TransmitReceive::Transmit);
     }
 
     #[test]
@@ -1457,127 +1779,195 @@ mod tests {
     }
 
     #[test]
+    fn test_transmit_receive_to_u16_0() {
+        assert_eq!(u16::from(TransmitReceive::Receive), 0);
+    }
+
+    #[test]
+    fn test_transmit_receive_to_u16_1() {
+        assert_eq!(u16::from(TransmitReceive::Transmit), 1);
+    }
+
+    #[test]
     fn test_address_clone() {
-        let item1 = Address::Broadcast(0b11111);
+        let item1 = Address::Broadcast(0b11111u8);
         let item2 = item1.clone();
         assert_eq!(item1, item2);
     }
 
     #[test]
     fn test_address_is_value_0() {
-        assert_eq!(Address::Value(0b10101).is_value(), true);
+        assert_eq!(Address::Value(0b10101u8).is_value(), true);
     }
 
     #[test]
     fn test_address_is_value_2() {
-        assert_eq!(Address::Broadcast(0b11111).is_value(), false);
+        assert_eq!(Address::Broadcast(0b11111u8).is_value(), false);
     }
 
     #[test]
     fn test_address_is_broadcast_0() {
-        assert_eq!(Address::Value(0b10101).is_broadcast(), false);
+        assert_eq!(Address::Value(0b10101u8).is_broadcast(), false);
     }
 
     #[test]
     fn test_address_is_broadcast_2() {
-        assert_eq!(Address::Broadcast(0b11111).is_broadcast(), true);
-    }
-
-    #[test]
-    fn test_address_to_u8_0() {
-        assert_eq!(u8::from(Address::Value(0b10101)), 0b10101);
-    }
-
-    #[test]
-    fn test_address_to_u8_2() {
-        assert_eq!(u8::from(Address::Broadcast(0b11111)), 0b11111);
+        assert_eq!(Address::Broadcast(0b11111u8).is_broadcast(), true);
     }
 
     #[test]
     fn test_address_from_u8_0() {
-        assert_eq!(Address::from(0b10101), Address::Value(0b10101));
+        assert_eq!(Address::from(0b10101u8), Address::Value(0b10101u8));
     }
 
     #[test]
     fn test_address_from_u8_2() {
-        assert_eq!(Address::from(0b11111), Address::Broadcast(0b11111));
+        assert_eq!(Address::from(0b11111u8), Address::Broadcast(0b11111u8));
     }
 
     #[test]
     fn test_address_from_u8_3() {
-        assert_eq!(Address::from(0b11111111), Address::Broadcast(0b11111));
+        assert_eq!(Address::from(0b11111111u8), Address::Broadcast(0b11111u8));
+    }
+
+    #[test]
+    fn test_address_from_u16_0() {
+        assert_eq!(Address::from(0b10101u16), Address::Value(0b10101u8));
+    }
+
+    #[test]
+    fn test_address_from_u16_2() {
+        assert_eq!(Address::from(0b11111u16), Address::Broadcast(0b11111u8));
+    }
+
+    #[test]
+    fn test_address_from_u16_3() {
+        assert_eq!(Address::from(0b11111111u16), Address::Broadcast(0b11111u8));
+    }
+
+    #[test]
+    fn test_address_to_u8_0() {
+        assert_eq!(u8::from(Address::Value(0b10101u8)), 0b10101u8);
+    }
+
+    #[test]
+    fn test_address_to_u8_2() {
+        assert_eq!(u8::from(Address::Broadcast(0b11111u8)), 0b11111u8);
+    }
+
+    #[test]
+    fn test_address_to_u16_0() {
+        assert_eq!(u16::from(Address::Value(0b10101u8)), 0b10101u16);
+    }
+
+    #[test]
+    fn test_address_to_u16_2() {
+        assert_eq!(u16::from(Address::Broadcast(0b11111u8)), 0b11111u16);
     }
 
     #[test]
     fn test_subaddress_clone() {
-        let item1 = SubAddress::ModeCode(0b11111);
+        let item1 = SubAddress::ModeCode(0b11111u8);
         let item2 = item1.clone();
         assert_eq!(item1, item2);
     }
 
     #[test]
     fn test_subaddress_is_value_0() {
-        assert_eq!(SubAddress::Value(0b10101).is_value(), true);
+        assert_eq!(SubAddress::Value(0b10101u8).is_value(), true);
     }
 
     #[test]
     fn test_subaddress_is_value_2() {
-        assert_eq!(SubAddress::ModeCode(0b11111).is_value(), false);
+        assert_eq!(SubAddress::ModeCode(0b11111u8).is_value(), false);
     }
 
     #[test]
     fn test_subaddress_is_value_3() {
-        assert_eq!(SubAddress::ModeCode(0b00000).is_value(), false);
+        assert_eq!(SubAddress::ModeCode(0b00000u8).is_value(), false);
     }
 
     #[test]
     fn test_subaddress_is_mode_code_0() {
-        assert_eq!(SubAddress::Value(0b10101).is_mode_code(), false);
+        assert_eq!(SubAddress::Value(0b10101u8).is_mode_code(), false);
     }
 
     #[test]
     fn test_subaddress_is_mode_code_2() {
-        assert_eq!(SubAddress::ModeCode(0b11111).is_mode_code(), true);
+        assert_eq!(SubAddress::ModeCode(0b11111u8).is_mode_code(), true);
     }
 
     #[test]
     fn test_subaddress_is_mode_code_3() {
-        assert_eq!(SubAddress::ModeCode(0b00000).is_mode_code(), true);
+        assert_eq!(SubAddress::ModeCode(0b00000u8).is_mode_code(), true);
     }
 
     #[test]
     fn test_subaddress_to_u8_0() {
-        assert_eq!(u8::from(SubAddress::Value(0b10101)), 0b10101);
+        assert_eq!(u8::from(SubAddress::Value(0b10101u8)), 0b10101u8);
     }
 
     #[test]
     fn test_subaddress_to_u8_2() {
-        assert_eq!(u8::from(SubAddress::ModeCode(0b11111)), 0b11111);
+        assert_eq!(u8::from(SubAddress::ModeCode(0b11111u8)), 0b11111u8);
     }
 
     #[test]
     fn test_subaddress_to_u8_3() {
-        assert_eq!(u8::from(SubAddress::ModeCode(0b00000)), 0b00000);
+        assert_eq!(u8::from(SubAddress::ModeCode(0b00000u8)), 0b00000u8);
+    }
+
+    #[test]
+    fn test_subaddress_to_u16_0() {
+        assert_eq!(u16::from(SubAddress::Value(0b10101u8)), 0b10101u16);
+    }
+
+    #[test]
+    fn test_subaddress_to_u16_2() {
+        assert_eq!(u16::from(SubAddress::ModeCode(0b11111u8)), 0b11111u16);
+    }
+
+    #[test]
+    fn test_subaddress_to_u16_3() {
+        assert_eq!(u16::from(SubAddress::ModeCode(0b00000u8)), 0b00000u16);
     }
 
     #[test]
     fn test_subaddress_from_u8_0() {
-        assert_eq!(SubAddress::from(0b10101), SubAddress::Value(0b10101));
+        assert_eq!(SubAddress::from(0b10101u8), SubAddress::Value(0b10101u8));
     }
 
     #[test]
     fn test_subaddress_from_u8_2() {
-        assert_eq!(SubAddress::from(0b00000), SubAddress::ModeCode(0b00000));
+        assert_eq!(SubAddress::from(0b00000u8), SubAddress::ModeCode(0b00000u8));
     }
 
     #[test]
     fn test_subaddress_from_u8_3() {
-        assert_eq!(SubAddress::from(0b11111), SubAddress::ModeCode(0b11111));
+        assert_eq!(SubAddress::from(0b11111u8), SubAddress::ModeCode(0b11111u8));
+    }
+
+    #[test]
+    fn test_subaddress_from_u16_0() {
+        assert_eq!(SubAddress::from(0b10101u16), SubAddress::Value(0b10101u8));
+    }
+
+    #[test]
+    fn test_subaddress_from_u16_2() {
+        assert_eq!(SubAddress::from(0b00000u16), SubAddress::ModeCode(0b00000u8));
+    }
+
+    #[test]
+    fn test_subaddress_from_u16_3() {
+        assert_eq!(SubAddress::from(0b11111u16), SubAddress::ModeCode(0b11111u8));
     }
 
     #[test]
     fn test_subaddress_from_u8_4() {
-        assert_eq!(SubAddress::from(0b11111111), SubAddress::ModeCode(0b11111));
+        assert_eq!(
+            SubAddress::from(0b11111111u8),
+            SubAddress::ModeCode(0b11111u8)
+        );
     }
 
     #[test]
@@ -1609,17 +1999,17 @@ mod tests {
 
     #[test]
     fn test_instrumentation_from_u8_0() {
-        assert_eq!(Instrumentation::from(0), Instrumentation::Status);
+        assert_eq!(Instrumentation::from(0u8), Instrumentation::Status);
     }
 
     #[test]
     fn test_instrumentation_from_u8_1() {
-        assert_eq!(Instrumentation::from(1), Instrumentation::Command);
+        assert_eq!(Instrumentation::from(1u8), Instrumentation::Command);
     }
 
     #[test]
     fn test_instrumentation_from_u8_2() {
-        assert_eq!(Instrumentation::from(2), Instrumentation::Command);
+        assert_eq!(Instrumentation::from(2u8), Instrumentation::Command);
     }
 
     #[test]
@@ -1630,6 +2020,31 @@ mod tests {
     #[test]
     fn test_instrumentation_to_u8_1() {
         assert_eq!(u8::from(Instrumentation::Command), 1);
+    }
+
+    #[test]
+    fn test_instrumentation_from_u16_0() {
+        assert_eq!(Instrumentation::from(0u16), Instrumentation::Status);
+    }
+
+    #[test]
+    fn test_instrumentation_from_u16_1() {
+        assert_eq!(Instrumentation::from(1u16), Instrumentation::Command);
+    }
+
+    #[test]
+    fn test_instrumentation_from_u16_2() {
+        assert_eq!(Instrumentation::from(2u16), Instrumentation::Command);
+    }
+
+    #[test]
+    fn test_instrumentation_to_u16_0() {
+        assert_eq!(u16::from(Instrumentation::Status), 0);
+    }
+
+    #[test]
+    fn test_instrumentation_to_u16_1() {
+        assert_eq!(u16::from(Instrumentation::Command), 1);
     }
 
     #[test]
@@ -1661,17 +2076,17 @@ mod tests {
 
     #[test]
     fn test_service_request_from_u8_0() {
-        assert_eq!(ServiceRequest::from(0), ServiceRequest::NoService);
+        assert_eq!(ServiceRequest::from(0u8), ServiceRequest::NoService);
     }
 
     #[test]
     fn test_service_request_from_u8_1() {
-        assert_eq!(ServiceRequest::from(1), ServiceRequest::Service);
+        assert_eq!(ServiceRequest::from(1u8), ServiceRequest::Service);
     }
 
     #[test]
     fn test_service_request_from_u8_2() {
-        assert_eq!(ServiceRequest::from(2), ServiceRequest::Service);
+        assert_eq!(ServiceRequest::from(2u8), ServiceRequest::Service);
     }
 
     #[test]
@@ -1685,8 +2100,33 @@ mod tests {
     }
 
     #[test]
+    fn test_service_request_from_u16_0() {
+        assert_eq!(ServiceRequest::from(0u16), ServiceRequest::NoService);
+    }
+
+    #[test]
+    fn test_service_request_from_u16_1() {
+        assert_eq!(ServiceRequest::from(1u16), ServiceRequest::Service);
+    }
+
+    #[test]
+    fn test_service_request_from_u16_2() {
+        assert_eq!(ServiceRequest::from(2u16), ServiceRequest::Service);
+    }
+
+    #[test]
+    fn test_service_request_to_u16_0() {
+        assert_eq!(u16::from(ServiceRequest::NoService), 0);
+    }
+
+    #[test]
+    fn test_service_request_to_u16_1() {
+        assert_eq!(u16::from(ServiceRequest::Service), 1);
+    }
+
+    #[test]
     fn test_reserved_clone() {
-        let item1 = Reserved::Value(0b111);
+        let item1 = Reserved::Value(0b111u8);
         let item2 = item1.clone();
         assert_eq!(item1, item2);
     }
@@ -1698,7 +2138,7 @@ mod tests {
 
     #[test]
     fn test_reserved_is_none_1() {
-        assert_eq!(Reserved::Value(0b111).is_none(), false);
+        assert_eq!(Reserved::Value(0b111u8).is_none(), false);
     }
 
     #[test]
@@ -1708,17 +2148,17 @@ mod tests {
 
     #[test]
     fn test_reserved_is_value_1() {
-        assert_eq!(Reserved::Value(0b111).is_value(), true);
+        assert_eq!(Reserved::Value(0b111u8).is_value(), true);
     }
 
     #[test]
     fn test_reserved_from_u8_0() {
-        assert_eq!(Reserved::from(0), Reserved::None);
+        assert_eq!(Reserved::from(0u8), Reserved::None);
     }
 
     #[test]
     fn test_reserved_from_u8_1() {
-        assert_eq!(Reserved::from(0b111), Reserved::Value(0b111));
+        assert_eq!(Reserved::from(0b111u8), Reserved::Value(0b111u8));
     }
 
     #[test]
@@ -1728,7 +2168,27 @@ mod tests {
 
     #[test]
     fn test_reserved_to_u8_1() {
-        assert_eq!(u8::from(Reserved::Value(0b111)), 0b111);
+        assert_eq!(u8::from(Reserved::Value(0b111u8)), 0b111u8);
+    }
+
+    #[test]
+    fn test_reserved_from_u16_0() {
+        assert_eq!(Reserved::from(0u16), Reserved::None);
+    }
+
+    #[test]
+    fn test_reserved_from_u16_1() {
+        assert_eq!(Reserved::from(0b111u16), Reserved::Value(0b111u8));
+    }
+
+    #[test]
+    fn test_reserved_to_u16_0() {
+        assert_eq!(u16::from(Reserved::None), 0);
+    }
+
+    #[test]
+    fn test_reserved_to_u16_1() {
+        assert_eq!(u16::from(Reserved::Value(0b111u8)), 0b111u16);
     }
 
     #[test]
@@ -1760,17 +2220,17 @@ mod tests {
 
     #[test]
     fn test_broadcast_received_from_u8_0() {
-        assert_eq!(BroadcastReceived::from(0), BroadcastReceived::NotReceived);
+        assert_eq!(BroadcastReceived::from(0u8), BroadcastReceived::NotReceived);
     }
 
     #[test]
     fn test_broadcast_received_from_u8_1() {
-        assert_eq!(BroadcastReceived::from(1), BroadcastReceived::Received);
+        assert_eq!(BroadcastReceived::from(1u8), BroadcastReceived::Received);
     }
 
     #[test]
     fn test_broadcast_received_from_u8_2() {
-        assert_eq!(BroadcastReceived::from(2), BroadcastReceived::Received);
+        assert_eq!(BroadcastReceived::from(2u8), BroadcastReceived::Received);
     }
 
     #[test]
@@ -1781,6 +2241,31 @@ mod tests {
     #[test]
     fn test_broadcast_received_to_u8_1() {
         assert_eq!(u8::from(BroadcastReceived::Received), 1);
+    }
+
+    #[test]
+    fn test_broadcast_received_from_u16_0() {
+        assert_eq!(BroadcastReceived::from(0u16), BroadcastReceived::NotReceived);
+    }
+
+    #[test]
+    fn test_broadcast_received_from_u16_1() {
+        assert_eq!(BroadcastReceived::from(1u16), BroadcastReceived::Received);
+    }
+
+    #[test]
+    fn test_broadcast_received_from_u16_2() {
+        assert_eq!(BroadcastReceived::from(2u16), BroadcastReceived::Received);
+    }
+
+    #[test]
+    fn test_broadcast_received_to_u16_0() {
+        assert_eq!(u16::from(BroadcastReceived::NotReceived), 0);
+    }
+
+    #[test]
+    fn test_broadcast_received_to_u16_1() {
+        assert_eq!(u16::from(BroadcastReceived::Received), 1);
     }
 
     #[test]
@@ -1812,17 +2297,17 @@ mod tests {
 
     #[test]
     fn test_terminal_busy_from_u8_0() {
-        assert_eq!(TerminalBusy::from(0), TerminalBusy::NotBusy);
+        assert_eq!(TerminalBusy::from(0u8), TerminalBusy::NotBusy);
     }
 
     #[test]
     fn test_terminal_busy_from_u8_1() {
-        assert_eq!(TerminalBusy::from(1), TerminalBusy::Busy);
+        assert_eq!(TerminalBusy::from(1u8), TerminalBusy::Busy);
     }
 
     #[test]
     fn test_terminal_busy_from_u8_2() {
-        assert_eq!(TerminalBusy::from(2), TerminalBusy::Busy);
+        assert_eq!(TerminalBusy::from(2u8), TerminalBusy::Busy);
     }
 
     #[test]
@@ -1833,6 +2318,31 @@ mod tests {
     #[test]
     fn test_terminal_busy_to_u8_1() {
         assert_eq!(u8::from(TerminalBusy::Busy), 1);
+    }
+
+    #[test]
+    fn test_terminal_busy_from_u16_0() {
+        assert_eq!(TerminalBusy::from(0u16), TerminalBusy::NotBusy);
+    }
+
+    #[test]
+    fn test_terminal_busy_from_u16_1() {
+        assert_eq!(TerminalBusy::from(1u16), TerminalBusy::Busy);
+    }
+
+    #[test]
+    fn test_terminal_busy_from_u16_2() {
+        assert_eq!(TerminalBusy::from(2u16), TerminalBusy::Busy);
+    }
+
+    #[test]
+    fn test_terminal_busy_to_u16_0() {
+        assert_eq!(u16::from(TerminalBusy::NotBusy), 0);
+    }
+
+    #[test]
+    fn test_terminal_busy_to_u16_1() {
+        assert_eq!(u16::from(TerminalBusy::Busy), 1);
     }
 
     #[test]
@@ -1865,7 +2375,7 @@ mod tests {
     #[test]
     fn test_dynamic_bus_acceptance_from_u8_0() {
         assert_eq!(
-            DynamicBusAcceptance::from(0),
+            DynamicBusAcceptance::from(0u8),
             DynamicBusAcceptance::NotAccepted
         );
     }
@@ -1873,7 +2383,7 @@ mod tests {
     #[test]
     fn test_dynamic_bus_acceptance_from_u8_1() {
         assert_eq!(
-            DynamicBusAcceptance::from(1),
+            DynamicBusAcceptance::from(1u8),
             DynamicBusAcceptance::Accepted
         );
     }
@@ -1881,7 +2391,7 @@ mod tests {
     #[test]
     fn test_dynamic_bus_acceptance_from_u8_2() {
         assert_eq!(
-            DynamicBusAcceptance::from(2),
+            DynamicBusAcceptance::from(2u8),
             DynamicBusAcceptance::Accepted
         );
     }
@@ -1895,4 +2405,39 @@ mod tests {
     fn test_dynamic_bus_acceptance_to_u8_1() {
         assert_eq!(u8::from(DynamicBusAcceptance::Accepted), 1);
     }
+
+    #[test]
+    fn test_dynamic_bus_acceptance_from_u16_0() {
+        assert_eq!(
+            DynamicBusAcceptance::from(0u16),
+            DynamicBusAcceptance::NotAccepted
+        );
+    }
+
+    #[test]
+    fn test_dynamic_bus_acceptance_from_u16_1() {
+        assert_eq!(
+            DynamicBusAcceptance::from(1u16),
+            DynamicBusAcceptance::Accepted
+        );
+    }
+
+    #[test]
+    fn test_dynamic_bus_acceptance_from_u16_2() {
+        assert_eq!(
+            DynamicBusAcceptance::from(2u16),
+            DynamicBusAcceptance::Accepted
+        );
+    }
+
+    #[test]
+    fn test_dynamic_bus_acceptance_to_u16_0() {
+        assert_eq!(u16::from(DynamicBusAcceptance::NotAccepted), 0);
+    }
+
+    #[test]
+    fn test_dynamic_bus_acceptance_to_u16_1() {
+        assert_eq!(u16::from(DynamicBusAcceptance::Accepted), 1);
+    }
+    
 }
