@@ -1438,7 +1438,10 @@ mod tests {
 
     #[test]
     fn test_mode_code_from_u8_15() {
-        assert_eq!(ModeCode::from(0b11111u8), ModeCode::UnknownModeCode(0b11111u8));
+        assert_eq!(
+            ModeCode::from(0b11111u8),
+            ModeCode::UnknownModeCode(0b11111u8)
+        );
     }
 
     #[test]
@@ -1478,7 +1481,10 @@ mod tests {
 
     #[test]
     fn test_mode_code_to_u8_7() {
-        assert_eq!(u8::from(ModeCode::OverrideInhibitTerminalFlagBit), 0b00111u8);
+        assert_eq!(
+            u8::from(ModeCode::OverrideInhibitTerminalFlagBit),
+            0b00111u8
+        );
     }
 
     #[test]
@@ -1697,7 +1703,10 @@ mod tests {
 
     #[test]
     fn test_subaddress_from_u8_4() {
-        assert_eq!(SubAddress::from(0b11111111u8), SubAddress::ModeCode(0b11111u8));
+        assert_eq!(
+            SubAddress::from(0b11111111u8),
+            SubAddress::ModeCode(0b11111u8)
+        );
     }
 
     #[test]
