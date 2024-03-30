@@ -39,9 +39,9 @@ impl Field {
     }
 
     /// Read the value of the field from a data word
-    pub fn get<T: Word>(&self, word: &T) -> u16 {
+    pub fn get<T: Word, F: From<u16>>(&self, word: &T) -> F {
         let value = word.as_value() & self.mask;
-        value >> self.offset
+        F::from(value >> self.offset)
     }
 
     /// Write the value of the field to a data word
@@ -236,7 +236,7 @@ mod tests {
         let expected = 0b101;
         let field = Field::from(mask);
         let word = DataWord::from(input);
-        let value = field.get(&word);
+        let value: u16 = field.get(&word);
         assert_eq!(value, expected);
     }
 
@@ -247,7 +247,7 @@ mod tests {
         let expected = 0b1011;
         let field = Field::from(mask);
         let word = DataWord::from(input);
-        let value = field.get(&word);
+        let value: u16 = field.get(&word);
         assert_eq!(value, expected);
     }
 
@@ -258,7 +258,7 @@ mod tests {
         let expected = 0b10101;
         let field = Field::from(mask);
         let word = DataWord::from(input);
-        let value = field.get(&word);
+        let value: u16 = field.get(&word);
         assert_eq!(value, expected);
     }
 
@@ -269,7 +269,7 @@ mod tests {
         let expected = 0b101101;
         let field = Field::from(mask);
         let word = DataWord::from(input);
-        let value = field.get(&word);
+        let value: u16 = field.get(&word);
         assert_eq!(value, expected);
     }
 
@@ -280,7 +280,7 @@ mod tests {
         let expected = 0b0000011;
         let field = Field::from(mask);
         let word = DataWord::from(input);
-        let value = field.get(&word);
+        let value: u16 = field.get(&word);
         assert_eq!(value, expected);
     }
 

@@ -108,7 +108,7 @@ impl CommandWord {
     /// See [Address](crate::flags::Address) for more information
     /// about this field.
     pub fn address(&self) -> Address {
-        COMMAND_ADDRESS_FIELD.get(self).into()
+        COMMAND_ADDRESS_FIELD.get(self)
     }
 
     /// Set the terminal address of this word
@@ -146,7 +146,7 @@ impl CommandWord {
     /// See [SubAddress](crate::flags::SubAddress) for more information
     /// about this field.
     pub fn subaddress(&self) -> SubAddress {
-        COMMAND_SUBADDRESS_FIELD.get(self).into()
+        COMMAND_SUBADDRESS_FIELD.get(self)
     }
 
     /// Set the subaddress of this word
@@ -181,7 +181,7 @@ impl CommandWord {
     /// See [TransmitReceive](crate::flags::TransmitReceive) enum for
     /// more information about this field.
     pub fn transmit_receive(&self) -> TransmitReceive {
-        COMMAND_TRANSMIT_RECEIVE_FIELD.get(self).into()
+        COMMAND_TRANSMIT_RECEIVE_FIELD.get(self)
     }
 
     /// Set the direction of transmission
@@ -218,7 +218,7 @@ impl CommandWord {
     /// more information about this field, or [SubAddress](crate::flags::SubAddress)
     /// for details about the ModeCode setting of the subaddress.
     pub fn mode_code(&self) -> ModeCode {
-        COMMAND_MODE_CODE_FIELD.get(self).into()
+        COMMAND_MODE_CODE_FIELD.get(self)
     }
 
     /// Set the mode code of this word
@@ -341,7 +341,7 @@ impl StatusWord {
     /// See [Address](crate::flags::Address) for more information
     /// about this field.
     pub fn address(&self) -> Address {
-        STATUS_ADDRESS_FIELD.get(self).into()
+        STATUS_ADDRESS_FIELD.get(self)
     }
 
     /// Set the terminal address of this word
@@ -379,7 +379,7 @@ impl StatusWord {
     /// See [Instrumentation](crate::flags::Instrumentation) for
     /// more information.
     pub fn instrumentation(&self) -> Instrumentation {
-        STATUS_INSTRUMENTATION_FIELD.get(self).into()
+        STATUS_INSTRUMENTATION_FIELD.get(self)
     }
 
     /// Set Instrumentation flag of the status word
@@ -414,7 +414,7 @@ impl StatusWord {
     /// See [ServiceRequest](crate::flags::ServiceRequest) for
     /// more information.
     pub fn service_request(&self) -> ServiceRequest {
-        STATUS_SERVICE_REQUEST_FIELD.get(self).into()
+        STATUS_SERVICE_REQUEST_FIELD.get(self)
     }
 
     /// Set Service Request flag of the status word
@@ -449,7 +449,7 @@ impl StatusWord {
     /// See [Reserved](crate::flags::Reserved) for
     /// more information.
     pub fn reserved(&self) -> Reserved {
-        STATUS_RESERVED_FIELD.get(self).into()
+        STATUS_RESERVED_FIELD.get(self)
     }
 
     /// Set the value of the reserved portion of the status word
@@ -485,7 +485,7 @@ impl StatusWord {
     /// broadcast command. See [BroadcastReceived](crate::flags::BroadcastReceived) for
     /// more information.
     pub fn broadcast_received(&self) -> BroadcastReceived {
-        STATUS_BROADCAST_RECEIVED_FIELD.get(self).into()
+        STATUS_BROADCAST_RECEIVED_FIELD.get(self)
     }
 
     /// Set the Broadcast Command flag of the status word
@@ -521,7 +521,7 @@ impl StatusWord {
     /// commands at this time. See [TerminalBusy](crate::flags::TerminalBusy) for
     /// more information.
     pub fn terminal_busy(&self) -> TerminalBusy {
-        STATUS_TERMINAL_BUSY_FIELD.get(self).into()
+        STATUS_TERMINAL_BUSY_FIELD.get(self)
     }
 
     /// Set the Busy flag on the status word
@@ -557,7 +557,7 @@ impl StatusWord {
     /// of the bus. See [DynamicBusAcceptance](crate::flags::DynamicBusAcceptance) for
     /// more information.
     pub fn dynamic_bus_acceptance(&self) -> DynamicBusAcceptance {
-        STATUS_DYNAMIC_BUS_ACCEPTANCE_FIELD.get(self).into()
+        STATUS_DYNAMIC_BUS_ACCEPTANCE_FIELD.get(self)
     }
 
     /// Set the Dynamic Bus Control Acceptance flag on the status word
@@ -592,7 +592,7 @@ impl StatusWord {
     /// See [MessageError] for more
     /// information.
     pub fn message_error(&self) -> MessageError {
-        STATUS_MESSAGE_ERROR_FIELD.get(self).into()
+        STATUS_MESSAGE_ERROR_FIELD.get(self)
     }
 
     /// Set the message error flag on this word
@@ -627,7 +627,7 @@ impl StatusWord {
     /// See [SubsystemError](crate::errors::SubsystemError) for more
     /// information.
     pub fn subsystem_error(&self) -> SubsystemError {
-        STATUS_SUBSYSTEM_ERROR_FIELD.get(self).into()
+        STATUS_SUBSYSTEM_ERROR_FIELD.get(self)
     }
 
     /// Set the subsystem error flag on this word
@@ -662,7 +662,7 @@ impl StatusWord {
     /// See [`TerminalError`](crate::errors::TerminalError) for more
     /// information.
     pub fn terminal_error(&self) -> TerminalError {
-        STATUS_TERMINAL_ERROR_FIELD.get(self).into()
+        STATUS_TERMINAL_ERROR_FIELD.get(self)
     }
 
     /// Set the terminal error flag on this word
