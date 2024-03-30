@@ -340,6 +340,24 @@ mod tests {
     }
 
     #[test]
+    fn test_terminal_error_from_u16() {
+        let error = TerminalError::from(0u16);
+        assert!(error.is_none());
+
+        let error = TerminalError::from(1u16);
+        assert!(error.is_error());
+    }
+
+    #[test]
+    fn test_u16_from_terminal_error() {
+        let error = u16::from(TerminalError::None);
+        assert_eq!(error, 0);
+
+        let error = u16::from(TerminalError::Error);
+        assert_eq!(error, 1);
+    }
+
+    #[test]
     fn test_subsystem_error_clone() {
         let error1 = SubsystemError::Error;
         let error2 = error1.clone();
@@ -374,6 +392,24 @@ mod tests {
     }
 
     #[test]
+    fn test_subsystem_error_from_u16() {
+        let error = SubsystemError::from(0u16);
+        assert!(error.is_none());
+
+        let error = SubsystemError::from(1u16);
+        assert!(error.is_error());
+    }
+
+    #[test]
+    fn test_u16_from_subsystem_error() {
+        let error = u16::from(SubsystemError::None);
+        assert_eq!(error, 0);
+
+        let error = u16::from(SubsystemError::Error);
+        assert_eq!(error, 1);
+    }
+
+    #[test]
     fn test_message_error_clone() {
         let error1 = MessageError::Error;
         let error2 = error1.clone();
@@ -404,6 +440,24 @@ mod tests {
         assert_eq!(error, 0);
 
         let error = u8::from(MessageError::Error);
+        assert_eq!(error, 1);
+    }
+
+    #[test]
+    fn test_message_error_from_u16() {
+        let error = MessageError::from(0u16);
+        assert!(error.is_none());
+
+        let error = MessageError::from(1u16);
+        assert!(error.is_error());
+    }
+
+    #[test]
+    fn test_u16_from_message_error() {
+        let error = u16::from(MessageError::None);
+        assert_eq!(error, 0);
+
+        let error = u16::from(MessageError::Error);
         assert_eq!(error, 1);
     }
 }
