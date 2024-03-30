@@ -673,6 +673,24 @@ mod tests {
     }
 
     #[test]
+    fn test_message_with_string_4() {
+        let message = Message::<3>::new()
+            .with_command(0b0000000000000010)
+            .with_string("TES")
+            .build()
+            .unwrap();
+
+        // The character will be interpreted as 
+        // zero because it wasn't given.
+        assert!(message.is_full());
+        assert_eq!(message.length(), 3);
+        assert_eq!(message.count(), 2);
+        assert_eq!(message.size(), 3);
+        assert!(message.is_command());
+        assert!(!message.is_status());
+    }
+
+    #[test]
     fn test_message_with_bytes_0() {
         let message = Message::<3>::new()
             .with_command(0b0000000000000010)
@@ -694,7 +712,7 @@ mod tests {
             .with_bytes(&[1, 2, 3, 4])
             .build();
 
-        // error because the string was too long
+        // error because too many bytes
         // for the given Message
         assert!(message.is_err());
     }
@@ -706,7 +724,7 @@ mod tests {
             .with_bytes(&[1, 2, 3, 4])
             .build();
 
-        // error because the string was too long
+        // error because too many bytes
         // for the command data word count
         assert!(message.is_err());
     }
@@ -718,9 +736,27 @@ mod tests {
             .with_bytes(&[1, 2, 3, 4])
             .build();
 
-        // error because the string was too long
+        // error because too many bytes
         // for the given Message
         assert!(message.is_err());
+    }
+
+    #[test]
+    fn test_message_with_bytes_4() {
+        let message = Message::<3>::new()
+            .with_command(0b0000000000000010)
+            .with_bytes(&[1, 2, 3])
+            .build()
+            .unwrap();
+
+        // The last byte of the second word will be 
+        // zero because it wasn't given.
+        assert!(message.is_full());
+        assert_eq!(message.length(), 3);
+        assert_eq!(message.count(), 2);
+        assert_eq!(message.size(), 3);
+        assert!(message.is_command());
+        assert!(!message.is_status());
     }
 
     #[test]
@@ -1047,6 +1083,7 @@ mod tests {
         assert_eq!(message.length(), 2);
         assert_eq!(message.count(), 1);
         assert_eq!(message.size(), 2);
+        assert_eq!(message.limit(), 1);
         assert!(message.is_command());
         assert!(!message.is_status());
     }
@@ -1100,6 +1137,7 @@ mod tests {
         assert_eq!(message.length(), 2);
         assert_eq!(message.count(), 1);
         assert_eq!(message.size(), 2);
+        assert_eq!(message.limit(), 1);
         assert!(message.is_status());
         assert!(!message.is_command());
     }
