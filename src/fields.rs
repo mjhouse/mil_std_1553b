@@ -39,9 +39,9 @@ impl Field {
     }
 
     /// Read the value of the field from a data word
-    pub fn get<T: Word>(&self, word: &T) -> u8 {
+    pub fn get<T: Word>(&self, word: &T) -> u16 {
         let value = word.as_value() & self.mask;
-        (value >> self.offset) as u8
+        value >> self.offset
     }
 
     /// Write the value of the field to a data word

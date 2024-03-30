@@ -260,8 +260,8 @@ impl CommandWord {
     /// the ModeCode setting of the subaddress.
     pub fn word_count(&self) -> u8 {
         match COMMAND_WORD_COUNT_FIELD.get(self) {
-            0 => 32,
-            k => k,
+            0 => 32u8,
+            k => k as u8,
         }
     }
 

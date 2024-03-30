@@ -126,6 +126,18 @@ impl From<TerminalError> for u8 {
     }
 }
 
+impl From<u16> for TerminalError {
+    fn from(value: u16) -> Self {
+        Self::from(value as u8)
+    }
+}
+
+impl From<TerminalError> for u16 {
+    fn from(value: TerminalError) -> Self {
+        u8::from(value) as u16
+    }
+}
+
 /// This flag provides health data regarding subsystems of a remote terminal.
 ///
 /// The Subsystem Flag bit located at bit time 17 (index 13) is used to provide
@@ -177,6 +189,18 @@ impl From<SubsystemError> for u8 {
             SubsystemError::Error => 1,
             SubsystemError::None => 0,
         }
+    }
+}
+
+impl From<u16> for SubsystemError {
+    fn from(value: u16) -> Self {
+        Self::from(value as u8)
+    }
+}
+
+impl From<SubsystemError> for u16 {
+    fn from(value: SubsystemError) -> Self {
+        u8::from(value) as u16
     }
 }
 
@@ -234,6 +258,18 @@ impl From<MessageError> for u8 {
     }
 }
 
+impl From<u16> for MessageError {
+    fn from(value: u16) -> Self {
+        Self::from(value as u8)
+    }
+}
+
+impl From<MessageError> for u16 {
+    fn from(value: MessageError) -> Self {
+        u8::from(value) as u16
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -287,10 +323,10 @@ mod tests {
 
     #[test]
     fn test_terminal_error_from_u8() {
-        let error = TerminalError::from(0);
+        let error = TerminalError::from(0u8);
         assert!(error.is_none());
 
-        let error = TerminalError::from(1);
+        let error = TerminalError::from(1u8);
         assert!(error.is_error());
     }
 
@@ -321,10 +357,10 @@ mod tests {
 
     #[test]
     fn test_subsystem_error_from_u8() {
-        let error = SubsystemError::from(0);
+        let error = SubsystemError::from(0u8);
         assert!(error.is_none());
 
-        let error = SubsystemError::from(1);
+        let error = SubsystemError::from(1u8);
         assert!(error.is_error());
     }
 
@@ -355,10 +391,10 @@ mod tests {
 
     #[test]
     fn test_message_error_from_u8() {
-        let error = MessageError::from(0);
+        let error = MessageError::from(0u8);
         assert!(error.is_none());
 
-        let error = MessageError::from(1);
+        let error = MessageError::from(1u8);
         assert!(error.is_error());
     }
 
