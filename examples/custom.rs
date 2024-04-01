@@ -21,7 +21,7 @@ struct CustomWord {
 impl CustomWord {
     #[field(STATUS_LIGHT, 0b1000000000000000)]
     pub fn status_light_on(&self) -> bool {
-        Self::STATUS_LIGHT.get(self) == 1
+        Self::STATUS_LIGHT.get::<_, u16>(self) == 1
     }
 }
 
