@@ -25,7 +25,7 @@ categories = [
 derive = [ "dep:mil_std_1553b_derive" ]
 
 [dependencies]
-mil_std_1553b_derive = { version = "0.5.0", path = "crates/mil_std_1553b_derive", optional = true }
+mil_std_1553b_derive = { version = "0.5.0", optional = true }
 
 [[example]]
 name = "custom"
