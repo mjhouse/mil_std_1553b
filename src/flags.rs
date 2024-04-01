@@ -1502,12 +1502,18 @@ mod tests {
 
     #[test]
     fn test_mode_code_from_u16_10() {
-        assert_eq!(ModeCode::from(0b10001u16), ModeCode::SynchronizeWithDataWord);
+        assert_eq!(
+            ModeCode::from(0b10001u16),
+            ModeCode::SynchronizeWithDataWord
+        );
     }
 
     #[test]
     fn test_mode_code_from_u16_11() {
-        assert_eq!(ModeCode::from(0b10010u16), ModeCode::TransmitLastCommandWord);
+        assert_eq!(
+            ModeCode::from(0b10010u16),
+            ModeCode::TransmitLastCommandWord
+        );
     }
 
     #[test]
@@ -1954,12 +1960,18 @@ mod tests {
 
     #[test]
     fn test_subaddress_from_u16_2() {
-        assert_eq!(SubAddress::from(0b00000u16), SubAddress::ModeCode(0b00000u8));
+        assert_eq!(
+            SubAddress::from(0b00000u16),
+            SubAddress::ModeCode(0b00000u8)
+        );
     }
 
     #[test]
     fn test_subaddress_from_u16_3() {
-        assert_eq!(SubAddress::from(0b11111u16), SubAddress::ModeCode(0b11111u8));
+        assert_eq!(
+            SubAddress::from(0b11111u16),
+            SubAddress::ModeCode(0b11111u8)
+        );
     }
 
     #[test]
@@ -2245,7 +2257,10 @@ mod tests {
 
     #[test]
     fn test_broadcast_received_from_u16_0() {
-        assert_eq!(BroadcastReceived::from(0u16), BroadcastReceived::NotReceived);
+        assert_eq!(
+            BroadcastReceived::from(0u16),
+            BroadcastReceived::NotReceived
+        );
     }
 
     #[test]
@@ -2439,5 +2454,4 @@ mod tests {
     fn test_dynamic_bus_acceptance_to_u16_1() {
         assert_eq!(u16::from(DynamicBusAcceptance::Accepted), 1);
     }
-    
 }

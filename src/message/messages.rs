@@ -680,7 +680,7 @@ mod tests {
             .build()
             .unwrap();
 
-        // The character will be interpreted as 
+        // The character will be interpreted as
         // zero because it wasn't given.
         assert!(message.is_full());
         assert_eq!(message.length(), 3);
@@ -749,7 +749,7 @@ mod tests {
             .build()
             .unwrap();
 
-        // The last byte of the second word will be 
+        // The last byte of the second word will be
         // zero because it wasn't given.
         assert!(message.is_full());
         assert_eq!(message.length(), 3);
