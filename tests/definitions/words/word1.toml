@@ -1,0 +1,8 @@
+[data]
+kind = "CommandWord"
+from = 0b0000000000000000
+method = "from"
+
+[result]
+count = 32
+subaddress = "SubAddress::ModeCode(0)"
