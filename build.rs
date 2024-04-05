@@ -1,16 +1,16 @@
-use std::collections::HashMap;
 use std::fs::{read_dir,read_to_string};
 use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use serde::Deserialize;
 use toml::Value;
+use indexmap::IndexMap;
 
 #[derive(Deserialize,Debug)]
 struct WordDefinition {
     kind: String,
     value: u16,
-    result: HashMap<String,Value>
+    result: IndexMap<String,Value>
 }
 
 fn main() {
