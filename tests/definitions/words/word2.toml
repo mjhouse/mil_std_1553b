@@ -1,0 +1,21 @@
+kind = "StatusWord"
+value = 0b0000000000000000
+
+[result]
+address = 0
+instrumentation = 0
+service_request = 0
+reserved = 0
+broadcast_received = 0
+terminal_busy = 0
+dynamic_bus_acceptance = 0
+message_error = 0
+subsystem_error = 0
+terminal_error = 0
+
+# header
+count = "None"
+
+# word
+as_bytes = [ 0b00000000, 0b00000000 ]
+as_value = "0b0000000000000000"

@@ -1,0 +1,6 @@
+kind = "DataWord"
+value = 0b0000000000000000
+
+[result]
+as_bytes = [ 0b00000000, 0b00000000 ]
+as_value = "0b0000000000000000"

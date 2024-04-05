@@ -327,12 +327,6 @@ impl CommandWord {
     pub fn is_receive(&self) -> bool {
         self.transmit_receive().is_receive()
     }
-
-    /// Get the data word count of the command word
-    #[must_use = "Returned value is not used"]
-    pub fn count(&self) -> usize {
-        self.word_count() as usize
-    }
 }
 
 impl StatusWord {
@@ -1303,10 +1297,10 @@ mod tests {
     #[test]
     fn test_command_count() {
         let mut word = CommandWord::new().with_word_count(33);
-        assert_eq!(word.count(), 32);
+        assert_eq!(word.word_count(), 32);
 
         word.set_word_count(5);
-        assert_eq!(word.count(), 5);
+        assert_eq!(word.word_count(), 5);
     }
 
     #[test]

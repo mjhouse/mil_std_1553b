@@ -447,7 +447,7 @@ impl<const WORDS: usize> Message<WORDS> {
     #[must_use = "Returned value is not used"]
     pub fn is_full(&self) -> bool {
         if let Some(w) = self.command() {
-            self.count() == w.count()
+            self.count() == w.word_count().into()
         } else {
             self.length() == self.size()
         }
@@ -498,7 +498,7 @@ impl<const WORDS: usize> Message<WORDS> {
 
         // fail if there are multiple header words
         if let Some(w) = self.command() {
-            if w.count() != self.count() {
+            if usize::from(w.word_count()) != self.count() {
                 return Err(Error::InvalidMessage);
             }
         }
@@ -530,7 +530,8 @@ impl<const WORDS: usize> Message<WORDS> {
     /// Get expected number of data words
     pub fn limit(&self) -> usize {
         self.command()
-            .map(CommandWord::count)
+            .map(CommandWord::word_count)
+            .map(usize::from)
             .unwrap_or(self.size().saturating_sub(1))
     }
 

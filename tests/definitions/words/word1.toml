@@ -1,8 +1,19 @@
-[data]
 kind = "CommandWord"
-from = 0b0000000000000000
-method = "from"
+value = 0b0000000000000000
 
 [result]
-count = 32
-subaddress = "SubAddress::ModeCode(0)"
+subaddress = 0
+transmit_receive = 0
+mode_code = 0
+word_count = 32
+address = 0
+is_mode_code = true
+is_transmit = false
+is_receive = true
+
+# header
+count = "Some(32)"
+
+# word
+as_bytes = [ 0b00000000, 0b00000000 ]
+as_value = "0b0000000000000000"
