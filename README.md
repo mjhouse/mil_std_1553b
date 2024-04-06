@@ -104,8 +104,6 @@ from strings.
 
 ## Roadmap
 
-### 1.0.0
-
 - [x] Words implemented
     - [x] Command, Status, and Data words created
     - [x] Words can be parsed from binary
@@ -120,21 +118,15 @@ from strings.
     - [x] Messages have parsing tests
     - [x] Messages have conversion tests
     - [x] Documentation exists for messages
-- [ ] Conveniance, standardization, documentation
+- [x] Conveniance, standardization, documentation
     - [x] Derive/macro creation of custom words for a message
     - [x] Small fixes for enum and flag standardization
     - [x] Fully documented code base
     - [x] Maximum lints enforced and no unsafe code
-- [ ] Integration tests implemented
+- [x] Integration tests implemented
     - [x] CI/CD pipelines building for all host -> cross compile targets
     - [x] Round-trip tests (binary -> struct -> binary) exist for messages
     - [x] Round-trip tests (binary -> struct -> binary) exist for words
-    - [ ] Configuration tests (JSON) exist for words
-    - [ ] Configuration tests (JSON) exist for messages
-
-
-### 2.0.0
-
 - [ ] Message pattern constructors designed
 - [ ] Directed pattern constructors implemented
     - [ ] BC - RT pattern implemented
